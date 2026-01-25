@@ -110,7 +110,7 @@ function NewsRow(props: { item: NewsItem }) {
   );
 }
 
-export function TickerScreen({ route }: Props) {
+export function TickerScreen({ route, navigation }: Props) {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
   const symbol = route.params.symbol;
   const [tab, setTab] = React.useState<Tab>('Trades');
@@ -173,6 +173,11 @@ export function TickerScreen({ route }: Props) {
           {tab === 'Trades' ? (
             <View style={styles.card}>
               <Body>Trades (à venir: FE-042)</Body>
+              <AppButton
+                title="Voir transactions"
+                variant="secondary"
+                onPress={() => navigation.navigate('Transactions', { symbol })}
+              />
             </View>
           ) : tab === 'News' ? (
             <View style={{ gap: tokens.spacing.sm }}>

@@ -44,7 +44,7 @@
 
 - [x] FE-040 — TickerScreen: summary (P&L total, primes, dividendes, fees) + tabs (Trades/News/Wheel/Insights). Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-ticker).
 - [ ] FE-041 — Timeline P&L (daily) + interactions “voir sources” → TransactionsFilter. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
-- [ ] FE-042 — TransactionsFilterScreen: filtres (symbol/type/date) + pagination cursor + export/share. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-portfolio).
+- [x] FE-042 — TransactionsFilterScreen: filtres (symbol/type/date) + pagination cursor + export/share. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-portfolio).
 
 <a id="fe-wheel"></a>
 ## Wheel / Covered Calls

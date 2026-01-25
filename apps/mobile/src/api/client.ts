@@ -52,6 +52,46 @@ export type TickerNewsResponse = {
   nextCursor?: string;
 };
 
+export type TransactionInstrument = {
+  id: string;
+  type: string;
+  symbol?: string;
+  exchange?: string;
+  currency: string;
+  name?: string;
+};
+
+export type TransactionOptionContract = {
+  id: string;
+  occSymbol: string;
+  expiry: string;
+  strike: string;
+  right: string;
+  multiplier: number;
+  currency: string;
+  underlyingSymbol?: string;
+};
+
+export type TransactionItem = {
+  id: string;
+  accountId: string;
+  executedAt: string;
+  type: string;
+  symbol?: string;
+  quantity?: string;
+  price?: Money;
+  grossAmount?: Money;
+  fees?: Money;
+  instrument?: TransactionInstrument;
+  optionContract?: TransactionOptionContract;
+  notes?: string;
+};
+
+export type TransactionsResponse = {
+  items: TransactionItem[];
+  nextCursor?: string;
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -107,6 +147,15 @@ export type ApiClient = {
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
   tickerSummary(input: { symbol: string }): Promise<TickerSummaryResponse>;
   tickerNews(input: { symbol: string; cursor?: string; limit?: number }): Promise<TickerNewsResponse>;
+  transactions(input: {
+    accountId?: string;
+    symbol?: string;
+    type?: string;
+    from?: string;
+    to?: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<TransactionsResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -253,6 +302,25 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.GET('/v1/tickers/{symbol}/news', {
           params: { path: { symbol: input.symbol }, query: { limit, cursor } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    transactions: async (input) => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/transactions', {
+          params: {
+            query: {
+              accountId: input.accountId,
+              symbol: input.symbol,
+              type: input.type,
+              from: input.from,
+              to: input.to,
+              cursor: input.cursor,
+              limit: input.limit,
+            },
+          },
           headers: { Authorization: bearer(accessToken) },
         }),
       );
