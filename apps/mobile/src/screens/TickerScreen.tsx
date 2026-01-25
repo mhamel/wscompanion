@@ -309,7 +309,11 @@ export function TickerScreen({ route, navigation }: Props) {
               ) : (
                 <View style={{ gap: tokens.spacing.sm }}>
                   {wheelCycles.map((c) => (
-                    <View key={c.id} style={styles.card}>
+                    <Pressable
+                      key={c.id}
+                      onPress={() => navigation.navigate('WheelCycle', { id: c.id })}
+                      style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
+                    >
                       <View style={styles.row}>
                         <Text style={styles.symbol}>{c.symbol}</Text>
                         {c.netPnl ? (
@@ -332,7 +336,7 @@ export function TickerScreen({ route, navigation }: Props) {
                         {c.closedAt ? ` → ${formatDateTime(c.closedAt)}` : ''}
                       </Body>
                       <Body>Legs: {c.legCount} • Tags: {c.tags.join(', ') || '—'}</Body>
-                    </View>
+                    </Pressable>
                   ))}
                 </View>
               )}

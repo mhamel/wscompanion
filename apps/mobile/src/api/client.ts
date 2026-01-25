@@ -128,6 +128,35 @@ export type WheelCyclesResponse = {
   items: WheelCycleSummary[];
 };
 
+export type WheelLeg = {
+  id: string;
+  kind: string;
+  occurredAt: string;
+  transactionId?: string;
+  linkedTransactionIds: string[];
+  pnl?: Money;
+};
+
+export type WheelCycleAggregates = {
+  optionPremiums: Money;
+  stockPnl?: Money;
+};
+
+export type WheelCycleDetail = {
+  id: string;
+  symbol: string;
+  status: string;
+  openedAt: string;
+  closedAt?: string;
+  baseCurrency: string;
+  netPnl?: Money;
+  autoDetected: boolean;
+  tags: string[];
+  notes?: string;
+  aggregates: WheelCycleAggregates;
+  legs: WheelLeg[];
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -195,6 +224,8 @@ export type ApiClient = {
   }): Promise<TransactionsResponse>;
   wheelDetect(input?: { symbol?: string }): Promise<WheelDetectResponse>;
   wheelCycles(input?: { symbol?: string; status?: 'open' | 'closed'; limit?: number }): Promise<WheelCyclesResponse>;
+  wheelCycle(input: { id: string }): Promise<WheelCycleDetail>;
+  wheelCyclePatch(input: { id: string; notes?: string; tags?: string[] }): Promise<{ ok: boolean }>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -389,6 +420,25 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.GET('/v1/wheel/cycles', {
           params: { query: { symbol: input?.symbol, status: input?.status, limit } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    wheelCycle: async (input) => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/wheel/cycles/{id}', {
+          params: { path: { id: input.id } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    wheelCyclePatch: async (input) => {
+      return withAuth((accessToken) =>
+        client.PATCH('/v1/wheel/cycles/{id}', {
+          params: { path: { id: input.id } },
+          body: { notes: input.notes, tags: input.tags },
           headers: { Authorization: bearer(accessToken) },
         }),
       );
