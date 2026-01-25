@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import {
   Alert,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -188,7 +189,13 @@ export function HomeScreen() {
               const neg = moneyIsNegative(net.amountMinor);
 
               return (
-                <View key={item.symbol} style={styles.card}>
+                <Pressable
+                  key={item.symbol}
+                  onPress={() =>
+                    (navigation.getParent() as any)?.navigate('Ticker', { symbol: item.symbol })
+                  }
+                  style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
+                >
                   <View style={styles.row}>
                     <Text style={styles.symbol}>{item.symbol}</Text>
                     <Text
@@ -203,7 +210,7 @@ export function HomeScreen() {
                   <Body>
                     Réalisé {formatMoney(item.pnl.realized)} • Non-réalisé {formatMoney(item.pnl.unrealized)}
                   </Body>
-                </View>
+                </Pressable>
               );
             })}
           </View>
@@ -227,6 +234,7 @@ const styles = StyleSheet.create({
   net: { fontSize: 16, fontWeight: '600' },
   total: { color: tokens.colors.text, fontSize: 24, fontWeight: '700' },
   error: { color: tokens.colors.negative },
+  pressed: { opacity: 0.85 },
   skeletonCard: {
     height: 64,
     borderRadius: 12,

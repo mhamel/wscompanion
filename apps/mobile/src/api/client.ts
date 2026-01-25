@@ -24,6 +24,19 @@ export type TickerListItem = {
   lastUpdatedAt: string;
 };
 
+export type TickerPositionSummary = {
+  quantity: string;
+  avgCost?: Money;
+  marketValue?: Money;
+};
+
+export type TickerSummaryResponse = {
+  symbol: string;
+  position?: TickerPositionSummary;
+  pnl: TickerPnl;
+  lastUpdatedAt: string;
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -77,6 +90,7 @@ export type ApiClient = {
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
+  tickerSummary(input: { symbol: string }): Promise<TickerSummaryResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -202,6 +216,15 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.GET('/v1/tickers', {
           params: { query: { limit } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    tickerSummary: async (input) => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/tickers/{symbol}/summary', {
+          params: { path: { symbol: input.symbol } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );

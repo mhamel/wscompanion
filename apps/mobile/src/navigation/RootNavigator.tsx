@@ -2,7 +2,7 @@ import React from 'react';
 import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthScreen } from '../screens/AuthScreen';
-import { MainTabs } from './MainTabs';
+import { MainStack } from './MainStack';
 import { useAuthStore } from '../auth/authStore';
 
 export type RootStackParamList = {
@@ -24,7 +24,7 @@ export function RootNavigator() {
     <NavigationContainer theme={DarkTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthed ? (
-          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="Main" component={MainStack} />
         ) : (
           <Stack.Screen name="Auth" component={AuthScreen} />
         )}
