@@ -12,6 +12,7 @@ import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
 import { registerPortfolioRoutes } from "./routes/portfolio";
 import { registerSyncRoutes } from "./routes/sync";
+import { registerTransactionsRoutes } from "./routes/transactions";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -224,6 +225,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       registerDeviceRoutes(v1);
       registerPortfolioRoutes(v1);
       registerSyncRoutes(v1);
+      registerTransactionsRoutes(v1);
     },
     { prefix: "/v1" },
   );
