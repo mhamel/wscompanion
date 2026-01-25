@@ -4,10 +4,15 @@ import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { loadConfig } from "./config";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
+import { computeTickerPnl360 } from "./analytics/pnl";
 
 type SyncJob = {
   syncRunId: string;
   brokerConnectionId: string;
+  userId: string;
+};
+
+type AnalyticsJob = {
   userId: string;
 };
 
@@ -60,6 +65,7 @@ async function handleSyncJob(
   prisma: PrismaClient,
   job: Job<SyncJob>,
   mode: "initial" | "incremental",
+  analyticsQueue?: Queue<AnalyticsJob>,
 ) {
   const now = new Date();
 
@@ -140,6 +146,18 @@ async function handleSyncJob(
     },
   });
 
+  if (analyticsQueue) {
+    try {
+      await analyticsQueue.add(
+        "pnl-recompute",
+        { userId: job.data.userId },
+        { jobId: `pnl-recompute:${job.data.userId}`, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },
+      );
+    } catch (err) {
+      console.error("analytics: enqueue pnl-recompute failed", err);
+    }
+  }
+
   return { ok: true };
 }
 
@@ -187,6 +205,87 @@ async function handleSyncScanJob(prisma: PrismaClient, syncQueue: Queue) {
   return { ok: true, scanned: connections.length, enqueued };
 }
 
+async function handlePnlRecomputeJob(prisma: PrismaClient, job: Job<AnalyticsJob>) {
+  const userId = job.data.userId;
+  const now = new Date();
+
+  const preferences = await prisma.userPreferences.findUnique({ where: { userId } });
+  const baseCurrency = preferences?.baseCurrency ?? "USD";
+
+  const transactions = await prisma.transaction.findMany({
+    where: { userId },
+    include: {
+      instrument: true,
+      optionContract: { include: { underlyingInstrument: true } },
+    },
+    orderBy: [{ executedAt: "asc" }, { id: "asc" }],
+    take: 50_000,
+  });
+
+  const positionSnapshots = await prisma.positionSnapshot.findMany({
+    where: { account: { userId } },
+    include: { instrument: true },
+    take: 50_000,
+  });
+
+  const result = computeTickerPnl360({
+    userId,
+    baseCurrency,
+    asOf: now,
+    transactions,
+    positionSnapshots,
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.tickerPnlDaily.deleteMany({ where: { userId, baseCurrency } });
+    await tx.tickerPnlTotal.deleteMany({ where: { userId, baseCurrency } });
+
+    if (result.totals.length > 0) {
+      await tx.tickerPnlTotal.createMany({
+        data: result.totals.map((row) => ({
+          userId,
+          symbol: row.symbol,
+          baseCurrency: row.baseCurrency,
+          realizedPnlMinor: row.realizedPnlMinor,
+          unrealizedPnlMinor: row.unrealizedPnlMinor,
+          optionPremiumsMinor: row.optionPremiumsMinor,
+          dividendsMinor: row.dividendsMinor,
+          feesMinor: row.feesMinor,
+          netPnlMinor: row.netPnlMinor,
+          lastRecomputedAt: row.lastRecomputedAt,
+        })),
+      });
+    }
+
+    if (result.daily.length > 0) {
+      await tx.tickerPnlDaily.createMany({
+        data: result.daily.map((row) => ({
+          userId,
+          symbol: row.symbol,
+          baseCurrency: row.baseCurrency,
+          date: row.date,
+          netPnlMinor: row.netPnlMinor,
+          marketValueMinor: row.marketValueMinor,
+          realizedPnlMinor: row.realizedPnlMinor,
+          unrealizedPnlMinor: row.unrealizedPnlMinor,
+        })),
+      });
+    }
+  });
+
+  if (result.anomalies.length > 0) {
+    console.warn("pnl: anomalies", { userId, anomalies: result.anomalies.slice(0, 20) });
+  }
+
+  return {
+    ok: true,
+    symbols: result.totals.length,
+    dailyRows: result.daily.length,
+    anomalies: result.anomalies.length,
+    baseCurrency,
+  };
+}
+
 async function main() {
   dotenv.config();
   const config = loadConfig();
@@ -195,6 +294,8 @@ async function main() {
   const connection = new IORedis(config.REDIS_URL, { maxRetriesPerRequest: null });
   const syncQueue = new Queue("sync", { connection });
   const dlq = new Queue("sync-dlq", { connection });
+  const analyticsQueue = new Queue<AnalyticsJob>("analytics", { connection });
+  const analyticsDlq = new Queue("analytics-dlq", { connection });
 
   const scheduleEverySeconds = Number(process.env.SYNC_SCHEDULE_EVERY_SECONDS ?? "3600");
   if (Number.isFinite(scheduleEverySeconds) && scheduleEverySeconds > 0) {
@@ -210,11 +311,11 @@ async function main() {
     async (job) => {
       try {
         if (job.name === "sync-initial") {
-          return await handleSyncJob(prisma, job as Job<SyncJob>, "initial");
+          return await handleSyncJob(prisma, job as Job<SyncJob>, "initial", analyticsQueue);
         }
 
         if (job.name === "sync-incremental") {
-          return await handleSyncJob(prisma, job as Job<SyncJob>, "incremental");
+          return await handleSyncJob(prisma, job as Job<SyncJob>, "incremental", analyticsQueue);
         }
 
         if (job.name === "sync-scan") {
@@ -248,10 +349,41 @@ async function main() {
     { connection },
   );
 
+  const analyticsWorker = new Worker(
+    "analytics",
+    async (job) => {
+      try {
+        if (job.name === "pnl-recompute") {
+          return await handlePnlRecomputeJob(prisma, job as Job<AnalyticsJob>);
+        }
+
+        throw new Error(`Unknown job: ${job.name}`);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+
+        const attempts = job.opts.attempts ?? 1;
+        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+        if (isFinalAttempt) {
+          await analyticsDlq.add(
+            job.name,
+            { ...(job.data as AnalyticsJob), error: errorMessage },
+            { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
+          );
+        }
+
+        throw err;
+      }
+    },
+    { connection },
+  );
+
   const shutdown = async () => {
+    await analyticsWorker.close();
     await worker.close();
     await syncQueue.close();
     await dlq.close();
+    await analyticsQueue.close();
+    await analyticsDlq.close();
     await connection.quit();
     await prisma.$disconnect();
   };
