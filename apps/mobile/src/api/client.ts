@@ -4,6 +4,30 @@ import type { paths } from './schema';
 import { ApiError } from './http';
 import type { ProblemDetails } from './types';
 
+export type Money = {
+  amountMinor: string;
+  currency: string;
+};
+
+export type TickerPnl = {
+  net: Money;
+  realized: Money;
+  unrealized: Money;
+  optionPremiums: Money;
+  dividends: Money;
+  fees: Money;
+};
+
+export type TickerListItem = {
+  symbol: string;
+  pnl: TickerPnl;
+  lastUpdatedAt: string;
+};
+
+export type TickersResponse = {
+  items: TickerListItem[];
+};
+
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
@@ -11,6 +35,7 @@ export type ApiClient = {
   authRefresh(input: { refreshToken: string }): Promise<AuthTokens>;
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
+  tickers(input?: { limit?: number }): Promise<TickersResponse>;
   logout(): Promise<void>;
 };
 
@@ -123,6 +148,17 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
     me: async () => {
       return withAuth((accessToken) =>
         client.GET('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    tickers: async (input) => {
+      const limit = input?.limit ? String(input.limit) : undefined;
+
+      return withAuth((accessToken) =>
+        client.GET('/v1/tickers', {
+          params: { query: { limit } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
