@@ -3,12 +3,58 @@ import { PrismaClient } from "@prisma/client";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { loadConfig } from "./config";
+import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 
 type SyncInitialJob = {
   syncRunId: string;
   brokerConnectionId: string;
   userId: string;
 };
+
+type MockTransaction = {
+  externalId: string;
+  executedAt: Date;
+  type: string;
+  raw: Record<string, unknown>;
+};
+
+function parseMockTransactions(rawJson: string): MockTransaction[] {
+  const parsed = JSON.parse(rawJson) as unknown;
+  if (!Array.isArray(parsed)) {
+    throw new Error("SYNC_MOCK_TRANSACTIONS_JSON must be a JSON array");
+  }
+
+  return parsed.map((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new Error(`SYNC_MOCK_TRANSACTIONS_JSON[${index}] must be an object`);
+    }
+
+    const obj = item as Record<string, unknown>;
+    const externalId =
+      typeof obj.externalId === "string"
+        ? obj.externalId
+        : typeof obj.id === "string"
+          ? obj.id
+          : "";
+
+    const executedAtRaw =
+      typeof obj.executedAt === "string"
+        ? obj.executedAt
+        : typeof obj.executed_at === "string"
+          ? obj.executed_at
+          : "";
+
+    const executedAt = new Date(executedAtRaw);
+    if (!externalId || !Number.isFinite(executedAt.getTime())) {
+      throw new Error(`SYNC_MOCK_TRANSACTIONS_JSON[${index}] missing externalId/executedAt`);
+    }
+
+    const type =
+      typeof obj.type === "string" ? obj.type : typeof obj.kind === "string" ? obj.kind : "unknown";
+
+    return { externalId, executedAt, type, raw: obj };
+  });
+}
 
 async function handleSyncInitialJob(prisma: PrismaClient, job: Job<SyncInitialJob>) {
   const now = new Date();
@@ -27,14 +73,61 @@ async function handleSyncInitialJob(prisma: PrismaClient, job: Job<SyncInitialJo
     data: { status: "running", startedAt: now, error: null },
   });
 
-  // TODO(BE-043/044): SnapTrade sync logic (transactions + positions + aggregates)
+  const brokerConnection = await prisma.brokerConnection.findUnique({
+    where: { id: job.data.brokerConnectionId },
+  });
+
+  if (!brokerConnection || brokerConnection.userId !== job.data.userId) {
+    throw new Error("BrokerConnection not found");
+  }
+
+  const account = await prisma.account.upsert({
+    where: {
+      brokerConnectionId_externalAccountId: {
+        brokerConnectionId: brokerConnection.id,
+        externalAccountId: "default",
+      },
+    },
+    create: {
+      userId: job.data.userId,
+      brokerConnectionId: brokerConnection.id,
+      externalAccountId: "default",
+      name: "Main",
+      type: "unknown",
+      status: "active",
+    },
+    update: { status: "active" },
+  });
+
+  const mockRaw = process.env.SYNC_MOCK_TRANSACTIONS_JSON?.trim();
+  const mockTransactions = mockRaw ? parseMockTransactions(mockRaw) : [];
+
+  const ingestionResult = await ingestTransactions(
+    prisma,
+    mockTransactions.map((tx) => ({
+      userId: job.data.userId,
+      accountId: account.id,
+      provider: brokerConnection.provider,
+      externalId: tx.externalId,
+      executedAt: tx.executedAt,
+      type: tx.type,
+      raw: toJsonValue(tx.raw),
+    })),
+  );
+
+  // TODO(BE-044): call real providers + incremental sync strategy
   const finishedAt = new Date();
   await prisma.syncRun.update({
     where: { id: syncRun.id },
     data: {
       status: "done",
       finishedAt,
-      stats: { stub: true },
+      stats: {
+        brokerConnectionId: brokerConnection.id,
+        accountId: account.id,
+        usedMockTransactions: Boolean(mockRaw),
+        transactions: ingestionResult,
+      },
     },
   });
 
