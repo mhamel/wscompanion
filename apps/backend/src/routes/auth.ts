@@ -43,6 +43,31 @@ function getOtpConfig(): OtpConfig {
   };
 }
 
+type SessionConfig = {
+  accessTokenTtlSeconds: number;
+  refreshTokenTtlSeconds: number;
+};
+
+function getSessionConfig(): SessionConfig {
+  const accessTokenTtlSeconds = Number(process.env.AUTH_ACCESS_TOKEN_TTL_SECONDS ?? "900");
+  const refreshTokenTtlSeconds = Number(process.env.AUTH_REFRESH_TOKEN_TTL_SECONDS ?? "2592000");
+
+  return {
+    accessTokenTtlSeconds:
+      Number.isFinite(accessTokenTtlSeconds) && accessTokenTtlSeconds > 0
+        ? accessTokenTtlSeconds
+        : 900,
+    refreshTokenTtlSeconds:
+      Number.isFinite(refreshTokenTtlSeconds) && refreshTokenTtlSeconds > 0
+        ? refreshTokenTtlSeconds
+        : 2_592_000,
+  };
+}
+
+function generateRefreshToken(): string {
+  return crypto.randomBytes(32).toString("base64url");
+}
+
 type SmtpConfig = {
   host: string;
   port: number;
@@ -186,6 +211,8 @@ async function authVerifyHandler(req: FastifyRequest) {
     });
   }
 
+  const sessionCfg = getSessionConfig();
+
   const body = req.body as { email?: unknown; code?: unknown };
   const email = typeof body.email === "string" ? normalizeEmail(body.email) : "";
   const code = typeof body.code === "string" ? body.code.trim() : "";
@@ -279,7 +306,125 @@ async function authVerifyHandler(req: FastifyRequest) {
     },
   });
 
+  const user = await prisma.user.upsert({
+    where: { email },
+    create: { email },
+    update: {},
+  });
+
+  const refreshToken = generateRefreshToken();
+  const refreshTokenHash = sha256Hex(refreshToken);
+  const refreshExpiresAt = new Date(now.getTime() + sessionCfg.refreshTokenTtlSeconds * 1000);
+
+  const session = await prisma.session.create({
+    data: {
+      userId: user.id,
+      refreshTokenHash,
+      expiresAt: refreshExpiresAt,
+    },
+  });
+
+  const accessToken = req.server.jwt.sign(
+    { sub: user.id, sid: session.id },
+    { expiresIn: sessionCfg.accessTokenTtlSeconds },
+  );
+
+  return { accessToken, refreshToken };
+}
+
+async function authRefreshHandler(req: FastifyRequest) {
+  const prisma = req.server.prisma;
+  if (!prisma) {
+    throw new AppError({
+      code: "PRISMA_NOT_CONFIGURED",
+      message: "Database is not configured",
+      statusCode: 500,
+    });
+  }
+
+  const sessionCfg = getSessionConfig();
+
+  const body = req.body as { refreshToken?: unknown };
+  const refreshToken = typeof body.refreshToken === "string" ? body.refreshToken.trim() : "";
+  if (!refreshToken) {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid refresh token",
+      statusCode: 400,
+    });
+  }
+
+  const now = new Date();
+  const session = await prisma.session.findFirst({
+    where: {
+      refreshTokenHash: sha256Hex(refreshToken),
+      revokedAt: null,
+      expiresAt: { gt: now },
+    },
+  });
+
+  if (!session) {
+    throw new AppError({ code: "UNAUTHORIZED", message: "Unauthorized", statusCode: 401 });
+  }
+
+  const nextRefreshToken = generateRefreshToken();
+  await prisma.session.update({
+    where: { id: session.id },
+    data: { refreshTokenHash: sha256Hex(nextRefreshToken) },
+  });
+
+  const accessToken = req.server.jwt.sign(
+    { sub: session.userId, sid: session.id },
+    { expiresIn: sessionCfg.accessTokenTtlSeconds },
+  );
+
+  return { accessToken, refreshToken: nextRefreshToken };
+}
+
+async function authLogoutHandler(req: FastifyRequest) {
+  const prisma = req.server.prisma;
+  if (!prisma) {
+    throw new AppError({
+      code: "PRISMA_NOT_CONFIGURED",
+      message: "Database is not configured",
+      statusCode: 500,
+    });
+  }
+
+  const body = req.body as { refreshToken?: unknown };
+  const refreshToken = typeof body.refreshToken === "string" ? body.refreshToken.trim() : "";
+  if (!refreshToken) {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid refresh token",
+      statusCode: 400,
+    });
+  }
+
+  await prisma.session.updateMany({
+    where: { refreshTokenHash: sha256Hex(refreshToken), revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+
   return { ok: true };
+}
+
+async function meHandler(req: FastifyRequest) {
+  const prisma = req.server.prisma;
+  if (!prisma) {
+    throw new AppError({
+      code: "PRISMA_NOT_CONFIGURED",
+      message: "Database is not configured",
+      statusCode: 500,
+    });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.sub } });
+  if (!user) {
+    throw new AppError({ code: "UNAUTHORIZED", message: "Unauthorized", statusCode: 401 });
+  }
+
+  return { id: user.id, email: user.email };
 }
 
 export function registerAuthRoutes(app: FastifyInstance) {
@@ -320,6 +465,46 @@ export function registerAuthRoutes(app: FastifyInstance) {
         required: ["email", "code"],
       },
       response: {
+        200: { $ref: "AuthTokens#" },
+        400: { $ref: "ProblemDetails#" },
+        429: { $ref: "ProblemDetails#" },
+        500: { $ref: "ProblemDetails#" },
+      },
+    },
+    handler: authVerifyHandler,
+  });
+
+  app.post("/auth/refresh", {
+    schema: {
+      body: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          refreshToken: { type: "string" },
+        },
+        required: ["refreshToken"],
+      },
+      response: {
+        200: { $ref: "AuthTokens#" },
+        400: { $ref: "ProblemDetails#" },
+        401: { $ref: "ProblemDetails#" },
+        500: { $ref: "ProblemDetails#" },
+      },
+    },
+    handler: authRefreshHandler,
+  });
+
+  app.post("/auth/logout", {
+    schema: {
+      body: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          refreshToken: { type: "string" },
+        },
+        required: ["refreshToken"],
+      },
+      response: {
         200: {
           type: "object",
           additionalProperties: false,
@@ -327,10 +512,22 @@ export function registerAuthRoutes(app: FastifyInstance) {
           required: ["ok"],
         },
         400: { $ref: "ProblemDetails#" },
-        429: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },
-    handler: authVerifyHandler,
+    handler: authLogoutHandler,
+  });
+
+  app.get("/me", {
+    preHandler: app.authenticate,
+    schema: {
+      security: [{ bearerAuth: [] }],
+      response: {
+        200: { $ref: "Me#" },
+        401: { $ref: "ProblemDetails#" },
+        500: { $ref: "ProblemDetails#" },
+      },
+    },
+    handler: meHandler,
   });
 }

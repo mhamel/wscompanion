@@ -1,6 +1,7 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import jwt from "@fastify/jwt";
 import { AppError } from "./errors";
 import type { PrismaClient } from "@prisma/client";
 import { registerAuthRoutes } from "./routes/auth";
@@ -9,6 +10,16 @@ type BuildServerOptions = {
   logger?: boolean;
   prisma?: PrismaClient;
 };
+
+function getJwtSecret(): string {
+  const secret = process.env.AUTH_JWT_SECRET?.trim();
+  if (secret) return secret;
+
+  const nodeEnv = process.env.NODE_ENV ?? "development";
+  if (nodeEnv !== "production") return "dev-secret-change-me";
+
+  throw new Error("AUTH_JWT_SECRET is required in production");
+}
 
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   const app = Fastify({
@@ -65,17 +76,72 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     type: "string",
   });
 
+  app.addSchema({
+    $id: "AuthTokens",
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      accessToken: { type: "string" },
+      refreshToken: { type: "string" },
+    },
+    required: ["accessToken", "refreshToken"],
+  });
+
+  app.addSchema({
+    $id: "Me",
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      id: { type: "string" },
+      email: { type: "string" },
+    },
+    required: ["id", "email"],
+  });
+
   app.register(swagger, {
     openapi: {
       info: {
         title: "JUSTLOVETHESTOCKS API",
         version: "0.0.0",
       },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+        },
+      },
     },
   });
 
   app.register(swaggerUi, {
     routePrefix: "/docs",
+  });
+
+  app.register(jwt, { secret: getJwtSecret() });
+
+  app.decorate("authenticate", async (request: FastifyRequest) => {
+    try {
+      await request.jwtVerify();
+    } catch {
+      throw new AppError({ code: "UNAUTHORIZED", message: "Unauthorized", statusCode: 401 });
+    }
+
+    const prisma = request.server.prisma;
+    if (!prisma) return;
+
+    const now = new Date();
+    const session = await prisma.session.findUnique({ where: { id: request.user.sid } });
+    if (
+      !session ||
+      session.userId !== request.user.sub ||
+      session.revokedAt ||
+      session.expiresAt <= now
+    ) {
+      throw new AppError({ code: "UNAUTHORIZED", message: "Unauthorized", statusCode: 401 });
+    }
   });
 
   app.setNotFoundHandler(async (_req, reply) => {

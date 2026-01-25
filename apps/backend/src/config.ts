@@ -12,6 +12,9 @@ const schema = z.object({
   S3_BUCKET: z.string().min(1).optional(),
   S3_FORCE_PATH_STYLE: z.coerce.boolean().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  AUTH_JWT_SECRET: z.string().min(1).optional(),
+  AUTH_ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  AUTH_REFRESH_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(2_592_000),
 });
 
 export type AppConfig = z.infer<typeof schema>;
@@ -24,6 +27,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       message: issue.message,
     }));
     throw new Error(`Invalid environment variables: ${JSON.stringify(issues)}`);
+  }
+
+  if (parsed.data.NODE_ENV === "production" && !parsed.data.AUTH_JWT_SECRET) {
+    throw new Error(
+      `Invalid environment variables: [{"path":"AUTH_JWT_SECRET","message":"Required"}]`,
+    );
   }
 
   return parsed.data;
