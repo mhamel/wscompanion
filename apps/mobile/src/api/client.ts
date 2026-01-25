@@ -1,4 +1,5 @@
 import createClient from 'openapi-fetch';
+import { useAuthStore, type AuthTokens } from '../auth/authStore';
 import type { paths } from './schema';
 import { ApiError } from './http';
 import type { ProblemDetails } from './types';
@@ -6,11 +7,16 @@ import type { ProblemDetails } from './types';
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
-  authVerify(input: { email: string; code: string }): Promise<{ accessToken: string; refreshToken: string }>;
+  authVerify(input: { email: string; code: string }): Promise<AuthTokens>;
+  authRefresh(input: { refreshToken: string }): Promise<AuthTokens>;
+  authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
+  me(): Promise<{ id: string; email: string }>;
+  logout(): Promise<void>;
 };
 
 export function createApiClient(input: { baseUrl: string }): ApiClient {
   const client = createClient<paths>({ baseUrl: input.baseUrl });
+  let refreshInFlight: Promise<AuthTokens> | null = null;
 
   function toProblemDetails(error: unknown): ProblemDetails | undefined {
     if (!error || typeof error !== 'object') return undefined;
@@ -40,6 +46,54 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
     return res.data;
   }
 
+  function bearer(accessToken: string): string {
+    return `Bearer ${accessToken}`;
+  }
+
+  async function refreshTokens(): Promise<AuthTokens> {
+    if (refreshInFlight) return refreshInFlight;
+
+    const { refreshToken, setTokens } = useAuthStore.getState();
+    if (!refreshToken) {
+      throw new ApiError({ status: 401, message: 'Not authenticated' });
+    }
+
+    refreshInFlight = (async () => {
+      try {
+        const tokens = unwrap(await client.POST('/v1/auth/refresh', { body: { refreshToken } }));
+        await setTokens(tokens);
+        return tokens;
+      } catch (e) {
+        await setTokens(null);
+        throw e;
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+
+    return refreshInFlight;
+  }
+
+  async function withAuth<T>(
+    makeRequest: (accessToken: string) => Promise<{ data?: T; error?: unknown; response: Response }>,
+  ): Promise<T> {
+    const { accessToken } = useAuthStore.getState();
+
+    if (!accessToken) {
+      const tokens = await refreshTokens();
+      const res = await makeRequest(tokens.accessToken);
+      return unwrap(res);
+    }
+
+    const first = await makeRequest(accessToken);
+    if (!first.error) return unwrap(first);
+    if (first.response.status !== 401) return unwrap(first);
+
+    const tokens = await refreshTokens();
+    const retry = await makeRequest(tokens.accessToken);
+    return unwrap(retry);
+  }
+
   return {
     health: async () => {
       const res = await client.GET('/v1/health');
@@ -54,6 +108,34 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
     authVerify: async (body) => {
       const res = await client.POST('/v1/auth/verify', { body });
       return unwrap(res);
+    },
+
+    authRefresh: async (body) => {
+      const res = await client.POST('/v1/auth/refresh', { body });
+      return unwrap(res);
+    },
+
+    authLogout: async (body) => {
+      const res = await client.POST('/v1/auth/logout', { body });
+      return unwrap(res);
+    },
+
+    me: async () => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    logout: async () => {
+      const { refreshToken, setTokens } = useAuthStore.getState();
+
+      try {
+        if (refreshToken) {
+          await unwrap(await client.POST('/v1/auth/logout', { body: { refreshToken } }));
+        }
+      } finally {
+        await setTokens(null);
+      }
     },
   };
 }

@@ -32,7 +32,7 @@ function formatAuthError(error: unknown): string {
 }
 
 export function AuthScreen() {
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+  const setTokens = useAuthStore((s) => s.setTokens);
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
 
   const [step, setStep] = React.useState<Step>('email');
@@ -67,7 +67,7 @@ export function AuthScreen() {
 
     try {
       const tokensRes = await api.authVerify({ email, code });
-      await setAccessToken(tokensRes.accessToken);
+      await setTokens(tokensRes);
     } catch (e) {
       setError(formatAuthError(e));
     } finally {
