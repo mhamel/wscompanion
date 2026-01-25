@@ -32,7 +32,7 @@
 <a id="be-db"></a>
 ## Base de données & migrations (PostgreSQL + ORM)
 
-- [ ] BE-020 — Mettre en place Prisma (ou ORM choisi) + migrations + seed dev. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-model).
+- [x] BE-020 — Mettre en place Prisma (ou ORM choisi) + migrations + seed dev. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-model).
 - [ ] BE-021 — Implémenter le schéma “noyau” (users/sessions/devices/entitlements). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-core), [PRODUIT.md](../PRODUIT.md#prd-confiance).
 - [ ] BE-022 — Implémenter les entités portefeuille (accounts/instruments/positions/transactions). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-portfolio).
 - [ ] BE-023 — Implémenter les tables d’agrégats (P&L, wheel, news, alerts, exports). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).

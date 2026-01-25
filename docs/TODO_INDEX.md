@@ -27,7 +27,7 @@ Ce dépôt ne contient pour l’instant que la vision **Produit** et l’**Archi
 ### M0 — Foundations (débloque le parallélisme)
 
 - [x] M0-01 — Décider mono-repo vs multi-repos (mobile/backend) + conventions (naming, env, versions). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement), [TODO_PLATFORM_DEVOPS.md](./TODO_PLATFORM_DEVOPS.md#pl-top).
-- [ ] M0-02 — Créer un squelette backend + worker + DB/Redis locaux + Swagger/OpenAPI. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-backend), [TODO_BACKEND.md](./TODO_BACKEND.md#be-foundations).
+- [x] M0-02 — Créer un squelette backend + worker + DB/Redis locaux + Swagger/OpenAPI. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-backend), [TODO_BACKEND.md](./TODO_BACKEND.md#be-foundations).
 - [ ] M0-03 — Créer un squelette mobile (Expo) + navigation + auth placeholder + client API typé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-mobile), [TODO_MOBILE.md](./TODO_MOBILE.md#fe-foundations).
 - [ ] M0-04 — ADRs “structurants” (choix ORM, cache, provider news, billing). Réf: [TODO_PLATFORM_DEVOPS.md](./TODO_PLATFORM_DEVOPS.md#pl-adr).
 
