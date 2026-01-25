@@ -60,7 +60,7 @@
 
 - [x] BE-050 — Endpoints comptes + positions + snapshots, paginés. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-portfolio).
 - [x] BE-051 — Endpoint transactions avec filtres (symbol/type/date) + pagination cursor. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-transactions).
-- [ ] BE-052 — “Sources partout”: endpoints pour relier une métrique (P&L, primes, dividendes) aux transactions sources. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
+- [x] BE-052 — “Sources partout”: endpoints pour relier une métrique (P&L, primes, dividendes) aux transactions sources. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="be-analytics"></a>
 ## Analytics / P&L 360°

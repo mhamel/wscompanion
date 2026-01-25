@@ -1121,6 +1121,216 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/transactions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            accountId: string;
+                            provider: string;
+                            externalId: string;
+                            /** Format: date-time */
+                            executedAt: string;
+                            type: string;
+                            symbol?: string;
+                            quantity?: string;
+                            price?: components["schemas"]["def-1"];
+                            grossAmount?: components["schemas"]["def-1"];
+                            fees?: components["schemas"]["def-1"];
+                            instrument?: {
+                                id: string;
+                                type: string;
+                                symbol?: string;
+                                exchange?: string;
+                                currency: string;
+                                name?: string;
+                            };
+                            optionContract?: {
+                                id: string;
+                                occSymbol: string;
+                                expiry: string;
+                                strike: string;
+                                right: string;
+                                multiplier: number;
+                                currency: string;
+                                underlyingSymbol?: string;
+                            };
+                            notes?: string;
+                            raw?: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/transactions/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        ids: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: {
+                                id: string;
+                                accountId: string;
+                                provider: string;
+                                externalId: string;
+                                /** Format: date-time */
+                                executedAt: string;
+                                type: string;
+                                symbol?: string;
+                                quantity?: string;
+                                price?: components["schemas"]["def-1"];
+                                grossAmount?: components["schemas"]["def-1"];
+                                fees?: components["schemas"]["def-1"];
+                                instrument?: {
+                                    id: string;
+                                    type: string;
+                                    symbol?: string;
+                                    exchange?: string;
+                                    currency: string;
+                                    name?: string;
+                                };
+                                optionContract?: {
+                                    id: string;
+                                    occSymbol: string;
+                                    expiry: string;
+                                    strike: string;
+                                    right: string;
+                                    multiplier: number;
+                                    currency: string;
+                                    underlyingSymbol?: string;
+                                };
+                                notes?: string;
+                                raw?: unknown;
+                            }[];
+                            missingIds: string[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
