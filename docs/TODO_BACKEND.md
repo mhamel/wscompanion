@@ -66,7 +66,7 @@
 ## Analytics / P&L 360°
 
 - [x] BE-060 — Pipeline de calcul P&L (worker): réalisé/non-réalisé, primes options, assignations, dividendes, frais, multi-devises. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360).
-- [ ] BE-061 — Tables `ticker_pnl_totals` + `ticker_pnl_daily` + invalidation/cache Redis. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
+- [x] BE-061 — Tables `ticker_pnl_totals` + `ticker_pnl_daily` + invalidation/cache Redis. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
 - [ ] BE-062 — Endpoints: top tickers, ticker summary, timeline P&L, breakdown (cash vs rendement). Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-portfolio).
 - [ ] BE-063 — Comparatif “si j’avais juste hold” (optionnel) + doc des hypothèses. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
 

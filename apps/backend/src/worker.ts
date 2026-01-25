@@ -5,6 +5,7 @@ import IORedis from "ioredis";
 import { loadConfig } from "./config";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
+import { bumpPnlCacheVersion } from "./analytics/pnlCache";
 
 type SyncJob = {
   syncRunId: string;
@@ -205,7 +206,11 @@ async function handleSyncScanJob(prisma: PrismaClient, syncQueue: Queue) {
   return { ok: true, scanned: connections.length, enqueued };
 }
 
-async function handlePnlRecomputeJob(prisma: PrismaClient, job: Job<AnalyticsJob>) {
+async function handlePnlRecomputeJob(
+  prisma: PrismaClient,
+  job: Job<AnalyticsJob>,
+  cacheRedis?: { incr: (key: string) => Promise<number>; expire?: (key: string, seconds: number) => Promise<unknown> },
+) {
   const userId = job.data.userId;
   const now = new Date();
 
@@ -276,6 +281,8 @@ async function handlePnlRecomputeJob(prisma: PrismaClient, job: Job<AnalyticsJob
   if (result.anomalies.length > 0) {
     console.warn("pnl: anomalies", { userId, anomalies: result.anomalies.slice(0, 20) });
   }
+
+  await bumpPnlCacheVersion(cacheRedis, userId, baseCurrency);
 
   return {
     ok: true,
@@ -354,7 +361,7 @@ async function main() {
     async (job) => {
       try {
         if (job.name === "pnl-recompute") {
-          return await handlePnlRecomputeJob(prisma, job as Job<AnalyticsJob>);
+          return await handlePnlRecomputeJob(prisma, job as Job<AnalyticsJob>, connection);
         }
 
         throw new Error(`Unknown job: ${job.name}`);
