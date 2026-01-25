@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://justlove:justlove@localhost:5432/justlove?schema=public
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Contract check
+        run: npm run api:check
+
+      - name: Backend lint
+        run: npm --workspace apps/backend run lint
+
+      - name: Backend format
+        run: npm --workspace apps/backend run format
+
+      - name: Backend test
+        run: npm --workspace apps/backend test
+
+      - name: Backend build
+        run: npm --workspace apps/backend run build
+
+      - name: Prisma validate
+        run: npm --workspace apps/backend exec prisma validate
+
+      - name: Mobile typecheck
+        run: npx tsc -p apps/mobile/tsconfig.json --noEmit
+

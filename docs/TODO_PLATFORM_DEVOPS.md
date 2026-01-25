@@ -22,7 +22,7 @@
 <a id="pl-ci"></a>
 ## CI (qualité & contrats)
 
-- [ ] PL-010 — CI backend: lint + typecheck + tests unitaires + migrations check. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
+- [x] PL-010 — CI backend: lint + typecheck + tests unitaires + migrations check. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
 - [ ] PL-011 — CI OpenAPI: vérifier compatibilité (breaking changes) + génération client. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
 - [ ] PL-012 — CI mobile: lint + typecheck + build (EAS si Expo) sur PR. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-mobile).
 
