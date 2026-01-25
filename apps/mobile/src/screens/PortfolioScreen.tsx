@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { StyleSheet, View } from 'react-native';
@@ -80,6 +81,7 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 
 export function PortfolioScreen() {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const navigation = useNavigation<any>();
   const [connectBusy, setConnectBusy] = React.useState(false);
   const [connectError, setConnectError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -191,6 +193,12 @@ export function PortfolioScreen() {
             onPress={() => void connectSnaptrade()}
           />
         )}
+
+        <AppButton
+          title="Exports"
+          variant="secondary"
+          onPress={() => navigation.getParent()?.navigate('Exports')}
+        />
       </View>
 
       <View style={{ flex: 1 }} />

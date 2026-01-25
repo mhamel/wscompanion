@@ -1,0 +1,160 @@
+import React from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Share, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { createApiClient, type ExportJob } from '../api/client';
+import { ApiError } from '../api/http';
+import { config } from '../config';
+import { tokens } from '../theme/tokens';
+import { AppButton } from '../ui/AppButton';
+import { Screen } from '../ui/Screen';
+import { Body, Title } from '../ui/Typography';
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return iso;
+  return d.toLocaleString();
+}
+
+function ExportRow(props: { job: ExportJob; onShare: () => void; sharing: boolean }) {
+  const hasFile = props.job.status === 'succeeded' && Boolean(props.job.file);
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.row}>
+        <Text style={styles.title}>{props.job.type}</Text>
+        <Text style={styles.badge}>{props.job.status}</Text>
+      </View>
+
+      <Body>Cree: {formatDateTime(props.job.createdAt)}</Body>
+      {props.job.completedAt ? <Body>Termine: {formatDateTime(props.job.completedAt)}</Body> : null}
+      {props.job.error ? <Body style={styles.error}>{props.job.error}</Body> : null}
+
+      {props.job.file ? (
+        <Body>
+          {props.job.file.fileName} â€¢ {props.job.file.sizeBytes} bytes
+        </Body>
+      ) : null}
+
+      {hasFile ? (
+        <AppButton
+          title={props.sharing ? 'Partage...' : 'Partager / telecharger'}
+          variant="secondary"
+          disabled={props.sharing}
+          onPress={props.onShare}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+export function ExportsScreen() {
+  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const [sharingId, setSharingId] = React.useState<string | null>(null);
+  const [shareError, setShareError] = React.useState<string | null>(null);
+
+  const exportsQuery = useInfiniteQuery({
+    queryKey: ['exports'],
+    queryFn: ({ pageParam }) =>
+      api.exportsList({
+        cursor: typeof pageParam === 'string' ? pageParam : undefined,
+        limit: 20,
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+
+  const jobs = exportsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+  async function shareExport(jobId: string) {
+    setSharingId(jobId);
+    setShareError(null);
+    try {
+      const res = await api.exportDownload({ id: jobId });
+      await Share.share({ message: res.url });
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setShareError(e.problem?.message ?? e.message);
+      } else {
+        setShareError('Erreur reseau.');
+      }
+    } finally {
+      setSharingId(null);
+    }
+  }
+
+  return (
+    <Screen style={{ paddingHorizontal: 0, paddingVertical: 0 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
+          <Title>Exports</Title>
+          <Body>Liste des jobs + telechargement (MVP)</Body>
+          {shareError ? <Body style={styles.error}>{shareError}</Body> : null}
+        </View>
+
+        <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
+          {exportsQuery.isLoading ? (
+            <View style={styles.card}>
+              <Body>Chargement...</Body>
+            </View>
+          ) : exportsQuery.isError ? (
+            <View style={{ gap: tokens.spacing.sm }}>
+              <Body style={styles.error}>
+                {exportsQuery.error instanceof ApiError
+                  ? exportsQuery.error.problem?.message ?? exportsQuery.error.message
+                  : 'Erreur reseau.'}
+              </Body>
+              <AppButton
+                title="Reessayer"
+                variant="secondary"
+                onPress={() => void exportsQuery.refetch()}
+              />
+            </View>
+          ) : jobs.length === 0 ? (
+            <View style={styles.card}>
+              <Body>Aucun export.</Body>
+            </View>
+          ) : (
+            <View style={{ gap: tokens.spacing.sm }}>
+              {jobs.map((job) => (
+                <ExportRow
+                  key={job.id}
+                  job={job}
+                  sharing={sharingId === job.id}
+                  onShare={() => void shareExport(job.id)}
+                />
+              ))}
+
+              {exportsQuery.hasNextPage ? (
+                <AppButton
+                  title={exportsQuery.isFetchingNextPage ? 'Chargement...' : 'Charger plus'}
+                  variant="secondary"
+                  disabled={exportsQuery.isFetchingNextPage}
+                  onPress={() => void exportsQuery.fetchNextPage()}
+                />
+              ) : null}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: tokens.spacing.md,
+    gap: tokens.spacing.md,
+  },
+  card: {
+    backgroundColor: tokens.colors.card,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    borderRadius: 12,
+    padding: tokens.spacing.md,
+    gap: tokens.spacing.xs,
+  },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  title: { color: tokens.colors.text, fontSize: 16, fontWeight: '600' },
+  badge: { color: tokens.colors.mutedText, fontSize: 13, fontWeight: '600' },
+  error: { color: tokens.colors.negative },
+});

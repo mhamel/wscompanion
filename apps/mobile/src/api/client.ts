@@ -247,6 +247,38 @@ export type SnaptradeCallbackResponse = {
   syncRunId: string;
 };
 
+export type ExportJobFile = {
+  fileName: string;
+  contentType: string;
+  sizeBytes: string;
+};
+
+export type ExportJob = {
+  id: string;
+  type: string;
+  format: string;
+  status: string;
+  createdAt: string;
+  completedAt?: string;
+  error?: string;
+  file?: ExportJobFile;
+};
+
+export type ExportsListResponse = {
+  items: ExportJob[];
+  nextCursor?: string;
+};
+
+export type ExportCreateResponse = {
+  exportJobId: string;
+  status: string;
+};
+
+export type ExportDownloadResponse = {
+  url: string;
+  expiresAt: string;
+};
+
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
@@ -279,6 +311,8 @@ export type ApiClient = {
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
   snaptradeCallback(input: SnaptradeCallbackBody): Promise<SnaptradeCallbackResponse>;
+  exportsList(input?: { cursor?: string; limit?: number }): Promise<ExportsListResponse>;
+  exportDownload(input: { id: string }): Promise<ExportDownloadResponse>;
   logout(): Promise<void>;
 };
 
@@ -554,6 +588,27 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.POST('/v1/connections/snaptrade/callback', {
           body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    exportsList: async (input) => {
+      const limit = input?.limit ? String(input.limit) : undefined;
+      const cursor = input?.cursor ? input.cursor : undefined;
+
+      return withAuth((accessToken) =>
+        client.GET('/v1/exports', {
+          params: { query: { limit, cursor } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    exportDownload: async (input) => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/exports/{id}/download', {
+          params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );
