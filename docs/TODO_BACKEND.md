@@ -80,7 +80,7 @@
 <a id="be-news"></a>
 ## News & événements par ticker
 
-- [ ] BE-080 — Ingestion RSS/Atom (worker) + cache + dédup URL hash + mapping ticker↔article. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
+- [x] BE-080 — Ingestion RSS/Atom (worker) + cache + dédup URL hash + mapping ticker↔article. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
 - [ ] BE-081 — Endpoint `/tickers/:symbol/news` paginé + tri “pertinence”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
 - [ ] BE-082 — (Plus tard) résumé LLM premium avec citations + garde-fous. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-assistant).
 

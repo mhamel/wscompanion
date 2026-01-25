@@ -7,6 +7,8 @@ import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
 import { loadDevSecrets } from "./devSecrets";
+import { getNewsScheduleEverySeconds, loadNewsRssFeeds } from "./news/config";
+import { ingestNewsRssFeed } from "./news/ingest";
 
 type SyncJob = {
   syncRunId: string;
@@ -18,6 +20,8 @@ type AnalyticsJob = {
   userId: string;
   symbol?: string;
 };
+
+type NewsJob = Record<string, never>;
 
 type MockTransaction = {
   externalId: string;
@@ -513,6 +517,49 @@ async function handleWheelDetectJob(prisma: PrismaClient, job: Job<AnalyticsJob>
   return { ok: true, symbols: bySymbol.size, cycles: cyclesCreated, baseCurrency };
 }
 
+async function handleNewsScanJob(prisma: PrismaClient, redis: IORedis) {
+  const feeds = loadNewsRssFeeds(process.env);
+  if (feeds.length === 0) {
+    return { ok: true, skipped: true, reason: "NO_FEEDS_CONFIGURED" };
+  }
+
+  let fetchedFeeds = 0;
+  let itemsParsed = 0;
+  let itemsInserted = 0;
+  let symbolsLinked = 0;
+  const errors: Array<{ provider: string; url: string; error: string }> = [];
+
+  for (const feed of feeds) {
+    try {
+      const res = await ingestNewsRssFeed({ prisma, redis, feed });
+      if (res.fetched) fetchedFeeds += 1;
+      itemsParsed += res.itemsParsed;
+      itemsInserted += res.itemsInserted;
+      symbolsLinked += res.symbolsLinked;
+    } catch (err) {
+      errors.push({
+        provider: feed.provider,
+        url: feed.url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn("news: ingestion errors", { count: errors.length, errors: errors.slice(0, 3) });
+  }
+
+  return {
+    ok: true,
+    feeds: feeds.length,
+    fetchedFeeds,
+    itemsParsed,
+    itemsInserted,
+    symbolsLinked,
+    errors: errors.length,
+  };
+}
+
 async function main() {
   dotenv.config();
   loadDevSecrets();
@@ -524,6 +571,8 @@ async function main() {
   const dlq = new Queue("sync-dlq", { connection });
   const analyticsQueue = new Queue<AnalyticsJob>("analytics", { connection });
   const analyticsDlq = new Queue("analytics-dlq", { connection });
+  const newsQueue = new Queue<NewsJob>("news", { connection });
+  const newsDlq = new Queue("news-dlq", { connection });
 
   const scheduleEverySeconds = Number(process.env.SYNC_SCHEDULE_EVERY_SECONDS ?? "3600");
   if (Number.isFinite(scheduleEverySeconds) && scheduleEverySeconds > 0) {
@@ -532,6 +581,11 @@ async function main() {
       {},
       { repeat: { every: scheduleEverySeconds * 1000 }, jobId: "sync-scan" },
     );
+  }
+
+  const newsEverySeconds = getNewsScheduleEverySeconds(process.env);
+  if (newsEverySeconds > 0) {
+    await newsQueue.add("news-scan", {}, { repeat: { every: newsEverySeconds * 1000 }, jobId: "news-scan" });
   }
 
   const worker = new Worker(
@@ -609,13 +663,40 @@ async function main() {
     { connection },
   );
 
+  const newsWorker = new Worker(
+    "news",
+    async (job) => {
+      try {
+        if (job.name === "news-scan") {
+          return await handleNewsScanJob(prisma, connection);
+        }
+
+        throw new Error(`Unknown job: ${job.name}`);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+
+        const attempts = job.opts.attempts ?? 1;
+        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+        if (isFinalAttempt) {
+          await newsDlq.add(job.name, { error: errorMessage }, { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` });
+        }
+
+        throw err;
+      }
+    },
+    { connection },
+  );
+
   const shutdown = async () => {
+    await newsWorker.close();
     await analyticsWorker.close();
     await worker.close();
     await syncQueue.close();
     await dlq.close();
     await analyticsQueue.close();
     await analyticsDlq.close();
+    await newsQueue.close();
+    await newsDlq.close();
     await connection.quit();
     await prisma.$disconnect();
   };
