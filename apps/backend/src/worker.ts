@@ -22,6 +22,7 @@ type AnalyticsJob = {
 };
 
 type NewsJob = Record<string, never>;
+type AlertsJob = Record<string, never>;
 
 type MockTransaction = {
   externalId: string;
@@ -560,6 +561,65 @@ async function handleNewsScanJob(prisma: PrismaClient, redis: IORedis) {
   };
 }
 
+function parseNewsSpikeConfig(config: unknown): { lookbackHours: number; minArticles: number } {
+  const defaults = { lookbackHours: 12, minArticles: 5 };
+  if (!config || typeof config !== "object" || Array.isArray(config)) return defaults;
+  const obj = config as Record<string, unknown>;
+  const lookbackHours = typeof obj.lookbackHours === "number" ? obj.lookbackHours : defaults.lookbackHours;
+  const minArticles = typeof obj.minArticles === "number" ? obj.minArticles : defaults.minArticles;
+  return {
+    lookbackHours: Number.isFinite(lookbackHours) && lookbackHours > 0 ? Math.min(Math.trunc(lookbackHours), 168) : defaults.lookbackHours,
+    minArticles: Number.isFinite(minArticles) && minArticles > 0 ? Math.min(Math.trunc(minArticles), 1000) : defaults.minArticles,
+  };
+}
+
+async function handleAlertsEvaluateJob(prisma: PrismaClient) {
+  const now = new Date();
+  const rules = await prisma.alertRule.findMany({
+    where: { enabled: true, type: "news_spike", symbol: { not: null } },
+    take: 500,
+    orderBy: { createdAt: "desc" },
+  });
+
+  let evaluated = 0;
+  let triggered = 0;
+  let skipped = 0;
+
+  for (const rule of rules) {
+    const symbol = rule.symbol?.trim().toUpperCase();
+    if (!symbol) continue;
+    const cfg = parseNewsSpikeConfig(rule.config);
+    const windowStart = new Date(now.getTime() - cfg.lookbackHours * 60 * 60 * 1000);
+
+    const recentEvent = await prisma.alertEvent.findFirst({
+      where: { alertRuleId: rule.id, triggeredAt: { gte: windowStart } },
+      orderBy: { triggeredAt: "desc" },
+    });
+    if (recentEvent) {
+      skipped += 1;
+      continue;
+    }
+
+    const count = await prisma.newsItemSymbol.count({
+      where: { symbol, newsItem: { publishedAt: { gte: windowStart } } },
+    });
+
+    evaluated += 1;
+    if (count < cfg.minArticles) continue;
+
+    await prisma.alertEvent.create({
+      data: {
+        alertRuleId: rule.id,
+        triggeredAt: now,
+        payload: { kind: "news_spike", symbol, count, lookbackHours: cfg.lookbackHours, minArticles: cfg.minArticles },
+      },
+    });
+    triggered += 1;
+  }
+
+  return { ok: true, rules: rules.length, evaluated, triggered, skipped };
+}
+
 async function main() {
   dotenv.config();
   loadDevSecrets();
@@ -573,6 +633,8 @@ async function main() {
   const analyticsDlq = new Queue("analytics-dlq", { connection });
   const newsQueue = new Queue<NewsJob>("news", { connection });
   const newsDlq = new Queue("news-dlq", { connection });
+  const alertsQueue = new Queue<AlertsJob>("alerts", { connection });
+  const alertsDlq = new Queue("alerts-dlq", { connection });
 
   const scheduleEverySeconds = Number(process.env.SYNC_SCHEDULE_EVERY_SECONDS ?? "3600");
   if (Number.isFinite(scheduleEverySeconds) && scheduleEverySeconds > 0) {
@@ -586,6 +648,15 @@ async function main() {
   const newsEverySeconds = getNewsScheduleEverySeconds(process.env);
   if (newsEverySeconds > 0) {
     await newsQueue.add("news-scan", {}, { repeat: { every: newsEverySeconds * 1000 }, jobId: "news-scan" });
+  }
+
+  const alertsEverySeconds = Number(process.env.ALERTS_SCHEDULE_EVERY_SECONDS ?? "300");
+  if (Number.isFinite(alertsEverySeconds) && alertsEverySeconds > 0) {
+    await alertsQueue.add(
+      "alerts-evaluate",
+      {},
+      { repeat: { every: alertsEverySeconds * 1000 }, jobId: "alerts-evaluate" },
+    );
   }
 
   const worker = new Worker(
@@ -687,7 +758,32 @@ async function main() {
     { connection },
   );
 
+  const alertsWorker = new Worker(
+    "alerts",
+    async (job) => {
+      try {
+        if (job.name === "alerts-evaluate") {
+          return await handleAlertsEvaluateJob(prisma);
+        }
+
+        throw new Error(`Unknown job: ${job.name}`);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+
+        const attempts = job.opts.attempts ?? 1;
+        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+        if (isFinalAttempt) {
+          await alertsDlq.add(job.name, { error: errorMessage }, { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` });
+        }
+
+        throw err;
+      }
+    },
+    { connection },
+  );
+
   const shutdown = async () => {
+    await alertsWorker.close();
     await newsWorker.close();
     await analyticsWorker.close();
     await worker.close();
@@ -697,6 +793,8 @@ async function main() {
     await analyticsDlq.close();
     await newsQueue.close();
     await newsDlq.close();
+    await alertsQueue.close();
+    await alertsDlq.close();
     await connection.quit();
     await prisma.$disconnect();
   };
