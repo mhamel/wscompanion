@@ -5,6 +5,7 @@ import jwt from "@fastify/jwt";
 import { AppError } from "./errors";
 import type { PrismaClient } from "@prisma/client";
 import { registerAuthRoutes } from "./routes/auth";
+import { registerDeviceRoutes } from "./routes/devices";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -187,6 +188,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       );
 
       registerAuthRoutes(v1);
+      registerDeviceRoutes(v1);
     },
     { prefix: "/v1" },
   );

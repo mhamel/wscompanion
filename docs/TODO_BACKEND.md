@@ -43,7 +43,7 @@
 
 - [x] BE-030 — OTP/magic link: génération, hash, expiration, rate limit, verrouillage progressif. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [x] BE-031 — Sessions: JWT access court + refresh long, rotation, révocation, device binding. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-auth).
-- [ ] BE-032 — Devices/push: enregistrement token push, opt-in, invalidation. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
+- [x] BE-032 — Devices/push: enregistrement token push, opt-in, invalidation. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
 - [ ] BE-033 — Middleware d’entitlements (free/pro) + cache Redis + overrides admin (si besoin). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation), [PRODUIT.md](../PRODUIT.md#prd-monetisation).
 
 <a id="be-snaptrade"></a>
