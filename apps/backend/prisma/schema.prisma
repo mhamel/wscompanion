@@ -65,3 +65,18 @@ model UserPreferences {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model AuthOtp {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String
+  codeSalt     String
+  codeHashHex  String
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  attemptCount Int      @default(0)
+  lastAttemptAt DateTime?
+  ipAddress    String?
+
+  @@index([email, createdAt])
+}

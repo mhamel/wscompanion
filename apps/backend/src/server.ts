@@ -2,9 +2,12 @@ import Fastify, { type FastifyInstance } from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import { AppError } from "./errors";
+import type { PrismaClient } from "@prisma/client";
+import { registerAuthRoutes } from "./routes/auth";
 
 type BuildServerOptions = {
   logger?: boolean;
+  prisma?: PrismaClient;
 };
 
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
@@ -19,12 +22,20 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
                 "req.headers.authorization",
                 "req.headers.cookie",
                 "req.body.password",
+                "req.body.code",
                 "req.body.refreshToken",
               ],
               remove: true,
             },
           },
   });
+
+  if (options.prisma) {
+    app.decorate("prisma", options.prisma);
+    app.addHook("onClose", async () => {
+      await options.prisma?.$disconnect();
+    });
+  }
 
   app.addSchema({
     $id: "ProblemDetails",
@@ -108,6 +119,8 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
           return { ok: true };
         },
       );
+
+      registerAuthRoutes(v1);
     },
     { prefix: "/v1" },
   );
