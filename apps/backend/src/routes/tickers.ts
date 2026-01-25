@@ -335,6 +335,212 @@ async function tickerPnlHandler(req: FastifyRequest) {
   };
 }
 
+function classifyStockSide(type: string): "buy" | "sell" | "other" {
+  const t = type.trim().toLowerCase();
+  if (!t) return "other";
+  if (t.includes("buy")) return "buy";
+  if (t.includes("sell")) return "sell";
+  return "other";
+}
+
+async function tickerHoldHandler(req: FastifyRequest) {
+  const prisma = req.server.prisma;
+  if (!prisma) {
+    throw new AppError({
+      code: "PRISMA_NOT_CONFIGURED",
+      message: "Database is not configured",
+      statusCode: 500,
+    });
+  }
+
+  const params = req.params as { symbol?: unknown };
+  const symbolRaw = typeof params.symbol === "string" ? params.symbol : "";
+  const symbol = symbolRaw ? normalizeSymbol(symbolRaw) : "";
+  if (!symbol) {
+    throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid symbol", statusCode: 400 });
+  }
+
+  const baseCurrency = await getUserBaseCurrency(req);
+
+  const totals = await getTickerPnlTotalsCached({
+    prisma,
+    redis: req.server.redis,
+    userId: req.user.sub,
+    baseCurrency,
+  });
+  const row = totals.find((r) => normalizeSymbol(r.symbol) === symbol);
+  if (!row) {
+    throw new AppError({ code: "NOT_FOUND", message: "Not found", statusCode: 404 });
+  }
+
+  const fx = createEnvFxRateProvider();
+
+  const stockTxs = await prisma.transaction.findMany({
+    where: {
+      userId: req.user.sub,
+      instrument: { symbol },
+    },
+    include: { instrument: true },
+    orderBy: [{ executedAt: "asc" }, { id: "asc" }],
+    take: 50_000,
+  });
+
+  const firstBuy = stockTxs.find((tx) => classifyStockSide(tx.type) === "buy");
+  if (!firstBuy) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires at least one buy transaction",
+      statusCode: 422,
+    });
+  }
+
+  const firstBuyQtyMinor =
+    firstBuy.quantity !== null ? parseDecimalToQuantityMinor(firstBuy.quantity.toString()) : null;
+  if (!firstBuyQtyMinor || firstBuyQtyMinor === 0n) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires buy quantity",
+      statusCode: 422,
+    });
+  }
+
+  const firstBuyGrossMinor = firstBuy.grossAmountMinor !== null ? absBigInt(firstBuy.grossAmountMinor) : null;
+  const firstBuyGrossCurrency = normalizeCurrency(firstBuy.priceCurrency ?? firstBuy.instrument?.currency ?? baseCurrency);
+
+  const firstBuyPriceMinorRaw =
+    firstBuy.priceAmountMinor !== null
+      ? firstBuy.priceAmountMinor
+      : firstBuyGrossMinor !== null
+        ? divRound(firstBuyGrossMinor * QUANTITY_SCALE, absBigInt(firstBuyQtyMinor))
+        : null;
+
+  if (firstBuyPriceMinorRaw === null) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires buy price or gross amount",
+      statusCode: 422,
+    });
+  }
+
+  const firstBuyPriceBase = convertMinorAmount({
+    amountMinor: firstBuyPriceMinorRaw,
+    fromCurrency: firstBuyGrossCurrency,
+    toCurrency: baseCurrency,
+    asOf: firstBuy.executedAt,
+    fx,
+  });
+  if (!firstBuyPriceBase.ok) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires FX rate for first buy price",
+      statusCode: 422,
+    });
+  }
+
+  let heldQtyMinor = 0n;
+  let maxHeldQtyMinor = 0n;
+  for (const tx of stockTxs) {
+    const side = classifyStockSide(tx.type);
+    if (side === "other") continue;
+    const qtyMinor = tx.quantity !== null ? parseDecimalToQuantityMinor(tx.quantity.toString()) : null;
+    if (!qtyMinor) continue;
+    heldQtyMinor += side === "buy" ? absBigInt(qtyMinor) : -absBigInt(qtyMinor);
+    if (heldQtyMinor > maxHeldQtyMinor) maxHeldQtyMinor = heldQtyMinor;
+  }
+
+  if (maxHeldQtyMinor <= 0n) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires a positive held quantity",
+      statusCode: 422,
+    });
+  }
+
+  const snap = await prisma.positionSnapshot.findFirst({
+    where: { account: { userId: req.user.sub }, instrument: { symbol } },
+    include: { instrument: true },
+    orderBy: { asOf: "desc" },
+  });
+
+  let referencePriceMinorRaw: bigint | null = null;
+  let referencePriceCurrency: string | null = null;
+  let referencePriceAsOf = new Date();
+
+  if (snap) {
+    referencePriceAsOf = snap.asOf;
+    if (snap.marketPriceAmountMinor !== null) {
+      referencePriceMinorRaw = snap.marketPriceAmountMinor;
+      referencePriceCurrency = snap.marketPriceCurrency ?? snap.instrument.currency;
+    } else if (snap.marketValueAmountMinor !== null && snap.quantity) {
+      const qtyMinor = parseDecimalToQuantityMinor(snap.quantity.toString());
+      if (qtyMinor && qtyMinor !== 0n) {
+        referencePriceMinorRaw = divRound(snap.marketValueAmountMinor * QUANTITY_SCALE, absBigInt(qtyMinor));
+        referencePriceCurrency = snap.marketValueCurrency ?? snap.instrument.currency;
+      }
+    }
+  }
+
+  if (referencePriceMinorRaw === null) {
+    const lastWithPrice = [...stockTxs].reverse().find((tx) => tx.priceAmountMinor !== null);
+    if (lastWithPrice) {
+      referencePriceMinorRaw = lastWithPrice.priceAmountMinor!;
+      referencePriceCurrency = normalizeCurrency(
+        lastWithPrice.priceCurrency ?? lastWithPrice.instrument?.currency ?? baseCurrency,
+      );
+      referencePriceAsOf = lastWithPrice.executedAt;
+    }
+  }
+
+  if (referencePriceMinorRaw === null || !referencePriceCurrency) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires a reference market price",
+      statusCode: 422,
+    });
+  }
+
+  const referencePriceBase = convertMinorAmount({
+    amountMinor: referencePriceMinorRaw,
+    fromCurrency: referencePriceCurrency,
+    toCurrency: baseCurrency,
+    asOf: referencePriceAsOf,
+    fx,
+  });
+  if (!referencePriceBase.ok) {
+    throw new AppError({
+      code: "HOLD_NOT_AVAILABLE",
+      message: "Hold comparison requires FX rate for reference price",
+      statusCode: 422,
+    });
+  }
+
+  const holdNetMinor = divRound(
+    (referencePriceBase.amountMinor - firstBuyPriceBase.amountMinor) * maxHeldQtyMinor,
+    QUANTITY_SCALE,
+  );
+
+  return {
+    symbol: row.symbol,
+    baseCurrency,
+    actualNet: money(row.netPnlMinor, baseCurrency),
+    holdNet: money(holdNetMinor, baseCurrency),
+    deltaVsHold: money(row.netPnlMinor - holdNetMinor, baseCurrency),
+    inputs: {
+      firstBuyAt: firstBuy.executedAt.toISOString(),
+      firstBuyPrice: money(firstBuyPriceBase.amountMinor, baseCurrency),
+      referenceQuantity: formatQuantity(maxHeldQtyMinor),
+      referencePriceAsOf: referencePriceAsOf.toISOString(),
+      referencePrice: money(referencePriceBase.amountMinor, baseCurrency),
+    },
+    assumptions: [
+      "Uses first buy price as entry price.",
+      "Uses maximum shares held (from buy/sell history) as held quantity.",
+      "Reference market price comes from latest position snapshot when available, otherwise last trade price.",
+      "Ignores options, fees, dividends, and cashflow timing; for MVP only.",
+    ],
+  };
+}
+
 async function tickerTimelineHandler(req: FastifyRequest) {
   const prisma = req.server.prisma;
   if (!prisma) {
@@ -541,5 +747,65 @@ export function registerTickerRoutes(app: FastifyInstance) {
       },
     },
     handler: tickerTimelineHandler,
+  });
+
+  app.get("/tickers/:symbol/hold", {
+    preHandler: app.authenticate,
+    schema: {
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: "object",
+        additionalProperties: false,
+        properties: { symbol: { type: "string" } },
+        required: ["symbol"],
+      },
+      response: {
+        200: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            symbol: { type: "string" },
+            baseCurrency: { type: "string", pattern: "^[A-Z]{3}$" },
+            actualNet: { $ref: "Money#" },
+            holdNet: { $ref: "Money#" },
+            deltaVsHold: { $ref: "Money#" },
+            inputs: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                firstBuyAt: { type: "string", format: "date-time" },
+                firstBuyPrice: { $ref: "Money#" },
+                referenceQuantity: { type: "string" },
+                referencePriceAsOf: { type: "string", format: "date-time" },
+                referencePrice: { $ref: "Money#" },
+              },
+              required: [
+                "firstBuyAt",
+                "firstBuyPrice",
+                "referenceQuantity",
+                "referencePriceAsOf",
+                "referencePrice",
+              ],
+            },
+            assumptions: { type: "array", items: { type: "string" } },
+          },
+          required: [
+            "symbol",
+            "baseCurrency",
+            "actualNet",
+            "holdNet",
+            "deltaVsHold",
+            "inputs",
+            "assumptions",
+          ],
+        },
+        400: { $ref: "ProblemDetails#" },
+        401: { $ref: "ProblemDetails#" },
+        404: { $ref: "ProblemDetails#" },
+        422: { $ref: "ProblemDetails#" },
+        500: { $ref: "ProblemDetails#" },
+      },
+    },
+    handler: tickerHoldHandler,
   });
 }

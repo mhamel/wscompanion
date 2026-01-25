@@ -1774,6 +1774,151 @@
         }
       }
     },
+    "/v1/tickers/{symbol}/hold": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "symbol",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "baseCurrency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "actualNet": {
+                      "$ref": "#/components/schemas/def-1"
+                    },
+                    "holdNet": {
+                      "$ref": "#/components/schemas/def-1"
+                    },
+                    "deltaVsHold": {
+                      "$ref": "#/components/schemas/def-1"
+                    },
+                    "inputs": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "firstBuyAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "firstBuyPrice": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "referenceQuantity": {
+                          "type": "string"
+                        },
+                        "referencePriceAsOf": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "referencePrice": {
+                          "$ref": "#/components/schemas/def-1"
+                        }
+                      },
+                      "required": [
+                        "firstBuyAt",
+                        "firstBuyPrice",
+                        "referenceQuantity",
+                        "referencePriceAsOf",
+                        "referencePrice"
+                      ]
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "symbol",
+                    "baseCurrency",
+                    "actualNet",
+                    "holdNet",
+                    "deltaVsHold",
+                    "inputs",
+                    "assumptions"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/transactions": {
       "get": {
         "parameters": [

@@ -374,6 +374,21 @@ PK:
 PK:
 - `(user_id, symbol, base_currency, date)`
 
+<a id="arch-pnl-hold"></a>
+#### Comparatif “Just Hold” (heuristique MVP)
+
+Objectif: donner une intuition (“est-ce que mes trades ont fait mieux/moins bien que buy&hold?”), **sans** prétendre à une vérité fiscale.
+
+Hypothèses (MVP):
+- Prix d’entrée = prix du **premier achat** (première transaction stock `buy`).
+- Quantité “hold” = **max** de shares détenues au fil du temps (cumul buy/sell).
+- Prix de référence = `position_snapshot.market_price` le plus récent si dispo, sinon dernier prix de trade.
+- N’inclut pas (pour l’instant): options, frais, dividendes, timing des cashflows, splits.
+
+Limites:
+- Peut diverger fortement d’un calcul “juste” (DCA, cashflows réels, FX historique, etc.).
+- À exposer comme optionnel (et documenté côté API).
+
 <a id="arch-data-wheel"></a>
 ### Wheel / Covered Calls
 
