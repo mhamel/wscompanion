@@ -27,7 +27,7 @@
 
 - [x] BE-010 — Exposer OpenAPI `/v1` (swagger) + versionnement + conventions de pagination (cursor). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
 - [x] BE-011 — Définir schémas `ProblemDetails` + `PaginationCursor` + `Money` (multi-devises) partagés. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
-- [ ] BE-012 — Générer un client typé (pour mobile) à partir d’OpenAPI + CI qui bloque si contrat cassé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
+- [x] BE-012 — Générer un client typé (pour mobile) à partir d’OpenAPI + CI qui bloque si contrat cassé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
 
 <a id="be-db"></a>
 ## Base de données & migrations (PostgreSQL + ORM)

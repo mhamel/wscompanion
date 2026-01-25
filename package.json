@@ -1,9 +1,15 @@
 {
   "name": "justlovethestocks",
   "private": true,
+  "scripts": {
+    "api:generate": "npm --workspace apps/backend run openapi:export && openapi-typescript packages/contract/openapi.json -o apps/mobile/src/api/schema.ts",
+    "api:check": "npm run api:generate && git diff --exit-code"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.7.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ]
 }
-
