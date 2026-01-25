@@ -2637,6 +2637,307 @@
           }
         }
       }
+    },
+    "/v1/wheel/cycles": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "symbol",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "closed"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "symbol": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "openedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "closedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "baseCurrency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$"
+                          },
+                          "netPnl": {
+                            "$ref": "#/components/schemas/def-1"
+                          },
+                          "autoDetected": {
+                            "type": "boolean"
+                          },
+                          "legCount": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "symbol",
+                          "status",
+                          "openedAt",
+                          "baseCurrency",
+                          "autoDetected",
+                          "legCount"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/wheel/cycles/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "openedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "closedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "baseCurrency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "netPnl": {
+                      "$ref": "#/components/schemas/def-1"
+                    },
+                    "autoDetected": {
+                      "type": "boolean"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "aggregates": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "optionPremiums": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "stockPnl": {
+                          "$ref": "#/components/schemas/def-1"
+                        }
+                      },
+                      "required": [
+                        "optionPremiums"
+                      ]
+                    },
+                    "legs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string"
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "transactionId": {
+                            "type": "string"
+                          },
+                          "linkedTransactionIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "pnl": {
+                            "$ref": "#/components/schemas/def-1"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "occurredAt",
+                          "linkedTransactionIds"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "symbol",
+                    "status",
+                    "openedAt",
+                    "baseCurrency",
+                    "autoDetected",
+                    "aggregates",
+                    "legs"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
