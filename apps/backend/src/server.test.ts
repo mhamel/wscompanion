@@ -3,7 +3,7 @@ import { buildServer } from "./server";
 
 describe("health", () => {
   it("returns ok", async () => {
-    const app = buildServer();
+    const app = buildServer({ logger: false });
     await app.ready();
     const res = await app.inject({ method: "GET", url: "/health" });
     expect(res.statusCode).toBe(200);
