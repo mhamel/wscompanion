@@ -17,6 +17,8 @@ model User {
   devices      Device[]
   entitlements Entitlement[]
   preferences  UserPreferences?
+  accounts     Account[]
+  transactions Transaction[]
 }
 
 model Session {
@@ -79,4 +81,113 @@ model AuthOtp {
   ipAddress    String?
 
   @@index([email, createdAt])
+}
+
+model Account {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @db.Uuid
+  user              User     @relation(fields: [userId], references: [id])
+  brokerConnectionId String? @db.Uuid
+  externalAccountId String?
+  name              String
+  type              String
+  baseCurrency      String   @default("USD")
+  status            String
+  raw               Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  positionSnapshots PositionSnapshot[]
+  transactions      Transaction[]
+
+  @@index([userId])
+  @@unique([brokerConnectionId, externalAccountId])
+}
+
+model Instrument {
+  id       String @id @default(uuid()) @db.Uuid
+  type     String
+  symbol   String?
+  exchange String?
+  currency String
+  name     String?
+  isin     String?
+  raw      Json?
+
+  optionContracts   OptionContract[]
+  positionSnapshots PositionSnapshot[]
+  transactions      Transaction[]
+
+  @@index([symbol])
+}
+
+model OptionContract {
+  id                   String     @id @default(uuid()) @db.Uuid
+  underlyingInstrumentId String   @db.Uuid
+  underlyingInstrument Instrument @relation(fields: [underlyingInstrumentId], references: [id])
+  occSymbol             String    @unique
+  expiry                DateTime  @db.Date
+  strike                Decimal   @db.Decimal(20, 10)
+  right                 String
+  multiplier            Int       @default(100)
+  currency              String
+  raw                   Json?
+
+  transactions Transaction[]
+
+  @@index([underlyingInstrumentId])
+}
+
+model PositionSnapshot {
+  accountId    String   @db.Uuid
+  account      Account  @relation(fields: [accountId], references: [id])
+  instrumentId String   @db.Uuid
+  instrument   Instrument @relation(fields: [instrumentId], references: [id])
+
+  asOf                 DateTime
+  quantity             Decimal @db.Decimal(20, 10)
+  avgCostAmountMinor   BigInt  @db.BigInt
+  avgCostCurrency      String
+  marketPriceAmountMinor BigInt? @db.BigInt
+  marketPriceCurrency    String?
+  marketValueAmountMinor BigInt? @db.BigInt
+  marketValueCurrency    String?
+  unrealizedPnlAmountMinor BigInt? @db.BigInt
+  unrealizedPnlCurrency    String?
+  raw                  Json?
+  updatedAt            DateTime @updatedAt
+
+  @@id([accountId, instrumentId])
+  @@index([instrumentId])
+}
+
+model Transaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  user           User     @relation(fields: [userId], references: [id])
+  accountId      String   @db.Uuid
+  account        Account  @relation(fields: [accountId], references: [id])
+  provider       String
+  externalId     String
+  executedAt     DateTime
+  type           String
+  instrumentId   String?  @db.Uuid
+  instrument     Instrument? @relation(fields: [instrumentId], references: [id])
+  optionContractId String? @db.Uuid
+  optionContract   OptionContract? @relation(fields: [optionContractId], references: [id])
+  quantity       Decimal? @db.Decimal(20, 10)
+  priceAmountMinor BigInt? @db.BigInt
+  priceCurrency  String?
+  grossAmountMinor BigInt? @db.BigInt
+  feesAmountMinor BigInt? @db.BigInt
+  feesCurrency   String?
+  notes          String?
+  raw            Json?
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, accountId, externalId])
+  @@index([userId, executedAt])
+  @@index([accountId, executedAt])
+  @@index([instrumentId])
+  @@index([optionContractId])
 }

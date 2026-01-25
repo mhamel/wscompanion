@@ -34,7 +34,7 @@
 
 - [x] BE-020 — Mettre en place Prisma (ou ORM choisi) + migrations + seed dev. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-model).
 - [x] BE-021 — Implémenter le schéma “noyau” (users/sessions/devices/entitlements). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-core), [PRODUIT.md](../PRODUIT.md#prd-confiance).
-- [ ] BE-022 — Implémenter les entités portefeuille (accounts/instruments/positions/transactions). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-portfolio).
+- [x] BE-022 — Implémenter les entités portefeuille (accounts/instruments/positions/transactions). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-portfolio).
 - [ ] BE-023 — Implémenter les tables d’agrégats (P&L, wheel, news, alerts, exports). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
 - [ ] BE-024 — Indexes/counters alignés sur les queries (user_id, symbol, executed_at, published_at) + contraintes d’intégrité. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
 
