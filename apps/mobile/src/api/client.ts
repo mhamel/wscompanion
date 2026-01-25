@@ -28,6 +28,27 @@ export type TickersResponse = {
   items: TickerListItem[];
 };
 
+export type SyncRun = {
+  id: string;
+  status: string;
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  error?: string;
+};
+
+export type SyncStatusItem = {
+  brokerConnectionId: string;
+  provider: string;
+  status: string;
+  lastSyncAt?: string;
+  lastRun?: SyncRun;
+};
+
+export type SyncStatusResponse = {
+  items: SyncStatusItem[];
+};
+
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
@@ -36,6 +57,8 @@ export type ApiClient = {
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
+  syncStatus(): Promise<SyncStatusResponse>;
+  syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   logout(): Promise<void>;
 };
 
@@ -157,6 +180,21 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.GET('/v1/tickers', {
           params: { query: { limit } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    syncStatus: async () => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/sync/status', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    syncConnection: async (input) => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/connections/{id}/sync', {
+          params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );

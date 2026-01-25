@@ -31,7 +31,7 @@
 ## Home / Dashboard (time-to-wow)
 
 - [x] FE-020 — HomeScreen: top tickers P&L + cartes insights + skeleton loaders. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-home).
-- [ ] FE-021 — Pull-to-refresh + feedback de sync + gestion “zéro data” (CTA connecter/sync). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
+- [x] FE-021 — Pull-to-refresh + feedback de sync + gestion “zéro data” (CTA connecter/sync). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="fe-search"></a>
 ## Search-first (unifiée)
