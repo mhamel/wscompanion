@@ -8,6 +8,7 @@ declare module "fastify" {
     prisma?: PrismaClient;
     redis?: RedisClientType;
     syncQueue?: Queue;
+    analyticsQueue?: Queue;
     authenticate: (request: FastifyRequest) => Promise<void>;
   }
 }

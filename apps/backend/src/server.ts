@@ -14,12 +14,14 @@ import { registerPortfolioRoutes } from "./routes/portfolio";
 import { registerSyncRoutes } from "./routes/sync";
 import { registerTickerRoutes } from "./routes/tickers";
 import { registerTransactionsRoutes } from "./routes/transactions";
+import { registerWheelRoutes } from "./routes/wheel";
 
 type BuildServerOptions = {
   logger?: boolean;
   prisma?: PrismaClient;
   redis?: RedisClientType;
   syncQueue?: Queue;
+  analyticsQueue?: Queue;
 };
 
 function getJwtSecret(): string {
@@ -76,6 +78,17 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     app.addHook("onClose", async () => {
       try {
         await options.syncQueue?.close();
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  if (options.analyticsQueue) {
+    app.decorate("analyticsQueue", options.analyticsQueue);
+    app.addHook("onClose", async () => {
+      try {
+        await options.analyticsQueue?.close();
       } catch {
         // ignore
       }
@@ -228,6 +241,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       registerSyncRoutes(v1);
       registerTickerRoutes(v1);
       registerTransactionsRoutes(v1);
+      registerWheelRoutes(v1);
     },
     { prefix: "/v1" },
   );

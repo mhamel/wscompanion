@@ -73,7 +73,7 @@
 <a id="be-wheel"></a>
 ## Wheel / Covered Calls
 
-- [ ] BE-070 — Détection de cycles wheel (MVP) à partir des legs options + assignations + expirations. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
+- [x] BE-070 — Détection de cycles wheel (MVP) à partir des legs options + assignations + expirations. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
 - [ ] BE-071 — Endpoints cycles: liste (open/closed), détail (timeline legs), agrégats net premiums/stock P&L. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-wheel).
 - [ ] BE-072 — Overrides manuels (corriger cycle, fusion/scission, tags) + audit. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 

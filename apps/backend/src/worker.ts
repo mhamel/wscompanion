@@ -15,6 +15,7 @@ type SyncJob = {
 
 type AnalyticsJob = {
   userId: string;
+  symbol?: string;
 };
 
 type MockTransaction = {
@@ -293,6 +294,224 @@ async function handlePnlRecomputeJob(
   };
 }
 
+type WheelLegDraft = {
+  kind: string;
+  occurredAt: Date;
+  transactionId: string | null;
+  raw: unknown | null;
+};
+
+type WheelCycleDraft = {
+  symbol: string;
+  status: "open" | "closed";
+  openedAt: Date;
+  closedAt: Date | null;
+  legs: WheelLegDraft[];
+};
+
+function normalizeSymbol(value: string): string {
+  return value.trim().toUpperCase();
+}
+
+function classifyWheelLegKind(tx: {
+  type: string;
+  optionContract: { right: string } | null;
+}): string | null {
+  const t = tx.type.trim().toLowerCase();
+  if (!t) return null;
+
+  if (t.includes("dividend")) return "dividend";
+  if (t.includes("fee") || t.includes("commission")) return "fee";
+
+  const rightRaw = tx.optionContract?.right?.trim().toLowerCase() ?? "";
+  const right = rightRaw.startsWith("p") || t.includes("put") ? "put" : rightRaw.startsWith("c") || t.includes("call") ? "call" : "";
+  const isOption = Boolean(tx.optionContract) || t.includes("option") || right.length > 0;
+  const isAssignment = t.includes("assigned") || t.includes("assignment") || t.includes("exercise");
+
+  if (isOption) {
+    if (isAssignment) {
+      if (right === "put") return "assigned_put";
+      if (right === "call") return "called_away";
+      return null;
+    }
+
+    if (t.includes("sell") || t.includes("sto")) {
+      if (right === "put") return "sold_put";
+      if (right === "call") return "sold_call";
+      return null;
+    }
+
+    if (t.includes("buy") || t.includes("bto")) {
+      if (right === "put") return "bought_put";
+      return null;
+    }
+
+    return null;
+  }
+
+  if (t.includes("buy")) return "stock_buy";
+  if (t.includes("sell")) return "stock_sell";
+  return null;
+}
+
+function detectWheelCycles(input: {
+  symbol: string;
+  transactions: Array<{
+    id: string;
+    executedAt: Date;
+    type: string;
+    optionContract: { right: string } | null;
+    raw: unknown | null;
+  }>;
+}): WheelCycleDraft[] {
+  const cycles: WheelCycleDraft[] = [];
+  let current: WheelCycleDraft | null = null;
+
+  for (const tx of input.transactions) {
+    const kind = classifyWheelLegKind(tx);
+    if (!kind) continue;
+
+    const isCycleStart = kind === "sold_put" || kind === "sold_call";
+
+    if (!current) {
+      if (!isCycleStart) continue;
+      current = {
+        symbol: input.symbol,
+        status: "open",
+        openedAt: tx.executedAt,
+        closedAt: null,
+        legs: [],
+      };
+    } else if (kind === "sold_put" && current.legs.some((l) => l.kind === "sold_put")) {
+      const lastAt = current.legs[current.legs.length - 1]?.occurredAt ?? tx.executedAt;
+      current.closedAt = lastAt;
+      current.status = "open";
+      cycles.push(current);
+      current = {
+        symbol: input.symbol,
+        status: "open",
+        openedAt: tx.executedAt,
+        closedAt: null,
+        legs: [],
+      };
+    }
+
+    current.legs.push({
+      kind,
+      occurredAt: tx.executedAt,
+      transactionId: tx.id,
+      raw: tx.raw,
+    });
+
+    if (kind === "called_away") {
+      current.status = "closed";
+      current.closedAt = tx.executedAt;
+      cycles.push(current);
+      current = null;
+    }
+  }
+
+  if (current) {
+    cycles.push(current);
+  }
+
+  return cycles;
+}
+
+async function handleWheelDetectJob(prisma: PrismaClient, job: Job<AnalyticsJob>) {
+  const userId = job.data.userId;
+  const symbolFilter = typeof job.data.symbol === "string" ? normalizeSymbol(job.data.symbol) : "";
+
+  const preferences = await prisma.userPreferences.findUnique({ where: { userId } });
+  const baseCurrency = preferences?.baseCurrency ?? "USD";
+
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      userId,
+      ...(symbolFilter
+        ? {
+            OR: [
+              { instrument: { symbol: symbolFilter } },
+              { optionContract: { underlyingInstrument: { symbol: symbolFilter } } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      instrument: true,
+      optionContract: { include: { underlyingInstrument: true } },
+    },
+    orderBy: [{ executedAt: "asc" }, { id: "asc" }],
+    take: 100_000,
+  });
+
+  const bySymbol = new Map<string, typeof transactions>();
+  for (const tx of transactions) {
+    const symbol =
+      tx.instrument?.symbol ?? tx.optionContract?.underlyingInstrument?.symbol ?? undefined;
+    if (!symbol) continue;
+    const key = normalizeSymbol(symbol);
+    const arr = bySymbol.get(key) ?? [];
+    arr.push(tx);
+    bySymbol.set(key, arr);
+  }
+
+  let cyclesCreated = 0;
+  for (const [symbol, txs] of bySymbol.entries()) {
+    const detected = detectWheelCycles({
+      symbol,
+      transactions: txs.map((tx) => ({
+        id: tx.id,
+        executedAt: tx.executedAt,
+        type: tx.type,
+        optionContract: tx.optionContract ? { right: tx.optionContract.right } : null,
+        raw: tx.raw,
+      })),
+    });
+
+    await prisma.$transaction(async (db) => {
+      const existing = await db.wheelCycle.findMany({
+        where: { userId, symbol, autoDetected: true },
+        select: { id: true },
+      });
+      const ids = existing.map((c) => c.id);
+      if (ids.length > 0) {
+        await db.wheelLeg.deleteMany({ where: { wheelCycleId: { in: ids } } });
+        await db.wheelCycle.deleteMany({ where: { id: { in: ids } } });
+      }
+
+      for (const cycle of detected) {
+        await db.wheelCycle.create({
+          data: {
+            userId,
+            symbol: cycle.symbol,
+            status: cycle.status,
+            openedAt: cycle.openedAt,
+            closedAt: cycle.closedAt,
+            netPnlMinor: null,
+            baseCurrency,
+            autoDetected: true,
+            legs: {
+              create: cycle.legs.map((leg) => ({
+                kind: leg.kind,
+                transactionId: leg.transactionId,
+                linkedTransactionIds: [],
+                occurredAt: leg.occurredAt,
+                pnlMinor: null,
+                raw: leg.raw ?? undefined,
+              })),
+            },
+          },
+        });
+      }
+    });
+
+    cyclesCreated += detected.length;
+  }
+
+  return { ok: true, symbols: bySymbol.size, cycles: cyclesCreated, baseCurrency };
+}
+
 async function main() {
   dotenv.config();
   const config = loadConfig();
@@ -362,6 +581,10 @@ async function main() {
       try {
         if (job.name === "pnl-recompute") {
           return await handlePnlRecomputeJob(prisma, job as Job<AnalyticsJob>, connection);
+        }
+
+        if (job.name === "wheel-detect") {
+          return await handleWheelDetectJob(prisma, job as Job<AnalyticsJob>);
         }
 
         throw new Error(`Unknown job: ${job.name}`);
