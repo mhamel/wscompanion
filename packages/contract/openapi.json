@@ -1286,6 +1286,494 @@
         }
       }
     },
+    "/v1/tickers": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "symbol": {
+                            "type": "string"
+                          },
+                          "pnl": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "net": {
+                                "$ref": "#/components/schemas/def-1"
+                              },
+                              "realized": {
+                                "$ref": "#/components/schemas/def-1"
+                              },
+                              "unrealized": {
+                                "$ref": "#/components/schemas/def-1"
+                              },
+                              "optionPremiums": {
+                                "$ref": "#/components/schemas/def-1"
+                              },
+                              "dividends": {
+                                "$ref": "#/components/schemas/def-1"
+                              },
+                              "fees": {
+                                "$ref": "#/components/schemas/def-1"
+                              }
+                            },
+                            "required": [
+                              "net",
+                              "realized",
+                              "unrealized",
+                              "optionPremiums",
+                              "dividends",
+                              "fees"
+                            ]
+                          },
+                          "lastUpdatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "symbol",
+                          "pnl",
+                          "lastUpdatedAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tickers/{symbol}/summary": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "symbol",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "position": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "quantity": {
+                          "type": "string"
+                        },
+                        "avgCost": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "marketValue": {
+                          "$ref": "#/components/schemas/def-1"
+                        }
+                      },
+                      "required": [
+                        "quantity"
+                      ]
+                    },
+                    "pnl": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "net": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "realized": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "unrealized": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "optionPremiums": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "dividends": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "fees": {
+                          "$ref": "#/components/schemas/def-1"
+                        }
+                      },
+                      "required": [
+                        "net",
+                        "realized",
+                        "unrealized",
+                        "optionPremiums",
+                        "dividends",
+                        "fees"
+                      ]
+                    },
+                    "lastUpdatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "symbol",
+                    "pnl",
+                    "lastUpdatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tickers/{symbol}/pnl": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "symbol",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "baseCurrency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "pnl": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "net": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "realized": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "unrealized": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "optionPremiums": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "dividends": {
+                          "$ref": "#/components/schemas/def-1"
+                        },
+                        "fees": {
+                          "$ref": "#/components/schemas/def-1"
+                        }
+                      },
+                      "required": [
+                        "net",
+                        "realized",
+                        "unrealized",
+                        "optionPremiums",
+                        "dividends",
+                        "fees"
+                      ]
+                    },
+                    "deployedCash": {
+                      "$ref": "#/components/schemas/def-1"
+                    },
+                    "returnOnDeployedCashPct": {
+                      "type": [
+                        "null",
+                        "number"
+                      ]
+                    },
+                    "lastUpdatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "symbol",
+                    "baseCurrency",
+                    "pnl",
+                    "deployedCash",
+                    "returnOnDeployedCashPct",
+                    "lastUpdatedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tickers/{symbol}/timeline": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "symbol",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "baseCurrency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "net": {
+                            "$ref": "#/components/schemas/def-1"
+                          },
+                          "realized": {
+                            "$ref": "#/components/schemas/def-1"
+                          },
+                          "unrealized": {
+                            "$ref": "#/components/schemas/def-1"
+                          },
+                          "marketValue": {
+                            "$ref": "#/components/schemas/def-1"
+                          }
+                        },
+                        "required": [
+                          "date",
+                          "net",
+                          "realized",
+                          "unrealized",
+                          "marketValue"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "symbol",
+                    "baseCurrency",
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/transactions": {
       "get": {
         "parameters": [
