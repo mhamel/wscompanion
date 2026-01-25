@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { Prisma } from "@prisma/client";
 import { ALERT_TEMPLATES, getAlertTemplate } from "../alerts/templates";
 import { AppError } from "../errors";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
@@ -81,8 +82,8 @@ async function alertRuleCreateHandler(req: FastifyRequest) {
 
   const config =
     body.config && typeof body.config === "object" && !Array.isArray(body.config)
-      ? (body.config as Record<string, unknown>)
-      : null;
+      ? (body.config as Prisma.InputJsonValue)
+      : undefined;
 
   if (!config) {
     throw new AppError({
@@ -157,8 +158,8 @@ async function alertRulePatchHandler(req: FastifyRequest) {
     body.config === undefined
       ? undefined
       : body.config && typeof body.config === "object" && !Array.isArray(body.config)
-        ? (body.config as Record<string, unknown>)
-        : null;
+        ? (body.config as Prisma.InputJsonValue)
+        : undefined;
 
   if (body.config !== undefined && !config) {
     throw new AppError({
