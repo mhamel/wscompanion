@@ -10,6 +10,7 @@ import { registerAuthRoutes } from "./routes/auth";
 import { registerBillingRoutes } from "./routes/billing";
 import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
+import { registerPortfolioRoutes } from "./routes/portfolio";
 import { registerSyncRoutes } from "./routes/sync";
 
 type BuildServerOptions = {
@@ -221,6 +222,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       registerBillingRoutes(v1);
       registerConnectionRoutes(v1);
       registerDeviceRoutes(v1);
+      registerPortfolioRoutes(v1);
       registerSyncRoutes(v1);
     },
     { prefix: "/v1" },
