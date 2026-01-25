@@ -5,9 +5,11 @@ import IORedis from "ioredis";
 import { createClient, type RedisClientType } from "redis";
 import { buildServer } from "./server";
 import { loadConfig } from "./config";
+import { loadDevSecrets } from "./devSecrets";
 
 async function main() {
   dotenv.config();
+  loadDevSecrets();
   const config = loadConfig();
   const prisma = new PrismaClient();
 

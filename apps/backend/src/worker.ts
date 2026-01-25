@@ -6,6 +6,7 @@ import { loadConfig } from "./config";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
+import { loadDevSecrets } from "./devSecrets";
 
 type SyncJob = {
   syncRunId: string;
@@ -514,6 +515,7 @@ async function handleWheelDetectJob(prisma: PrismaClient, job: Job<AnalyticsJob>
 
 async function main() {
   dotenv.config();
+  loadDevSecrets();
   const config = loadConfig();
 
   const prisma = new PrismaClient();
