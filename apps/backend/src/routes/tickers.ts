@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { AppError } from "../errors";
-import { parseLimit } from "../pagination";
+import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
 import { getTickerPnlTimelineCached, getTickerPnlTotalsCached } from "../analytics/pnlRead";
 import { convertMinorAmount, createEnvFxRateProvider } from "../analytics/fx";
 
@@ -50,6 +50,8 @@ function formatQuantity(quantityMinor: bigint): string {
 function money(amountMinor: bigint, currency: string) {
   return { amountMinor: amountMinor.toString(), currency: normalizeCurrency(currency) };
 }
+
+type NewsCursor = { publishedAt: string; id: string };
 
 async function getUserBaseCurrency(req: FastifyRequest): Promise<string> {
   const prisma = req.server.prisma;
@@ -581,6 +583,76 @@ async function tickerTimelineHandler(req: FastifyRequest) {
   };
 }
 
+async function tickerNewsHandler(req: FastifyRequest) {
+  const prisma = req.server.prisma;
+  if (!prisma) {
+    throw new AppError({
+      code: "PRISMA_NOT_CONFIGURED",
+      message: "Database is not configured",
+      statusCode: 500,
+    });
+  }
+
+  const params = req.params as { symbol?: unknown };
+  const symbolRaw = typeof params.symbol === "string" ? params.symbol : "";
+  const symbol = symbolRaw ? normalizeSymbol(symbolRaw) : "";
+  if (!symbol) {
+    throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid symbol", statusCode: 400 });
+  }
+
+  const query = req.query as { cursor?: unknown; limit?: unknown };
+  const limit = parseLimit(query.limit, { defaultValue: 20, max: 50 });
+
+  const cursorRaw = typeof query.cursor === "string" ? query.cursor : "";
+  const cursor = cursorRaw ? decodeCursor<NewsCursor>(cursorRaw) : null;
+  if (
+    cursorRaw &&
+    (!cursor || typeof cursor.publishedAt !== "string" || typeof cursor.id !== "string")
+  ) {
+    throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid cursor", statusCode: 400 });
+  }
+
+  const publishedAtCursor = cursor ? new Date(cursor.publishedAt) : null;
+  if (cursor && !Number.isFinite(publishedAtCursor?.getTime())) {
+    throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid cursor", statusCode: 400 });
+  }
+
+  const rows = await prisma.newsItem.findMany({
+    where: {
+      symbols: { some: { symbol } },
+      ...(cursor
+        ? {
+            OR: [
+              { publishedAt: { lt: publishedAtCursor! } },
+              { publishedAt: publishedAtCursor!, id: { lt: cursor.id } },
+            ],
+          }
+        : {}),
+    },
+    include: { symbols: { select: { symbol: true } } },
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    take: limit + 1,
+  });
+
+  const page = rows.slice(0, limit);
+  const next = rows.length > limit ? page[page.length - 1] : null;
+
+  return {
+    items: page.map((item) => ({
+      id: item.id,
+      title: item.title,
+      url: item.url,
+      publisher: item.publisher ?? undefined,
+      publishedAt: item.publishedAt.toISOString(),
+      symbols: item.symbols.map((s) => s.symbol),
+      summary: item.summary ?? undefined,
+    })),
+    nextCursor: next
+      ? encodeCursor({ publishedAt: next.publishedAt.toISOString(), id: next.id })
+      : undefined,
+  };
+}
+
 export function registerTickerRoutes(app: FastifyInstance) {
   const pnlSchema = {
     type: "object",
@@ -747,6 +819,58 @@ export function registerTickerRoutes(app: FastifyInstance) {
       },
     },
     handler: tickerTimelineHandler,
+  });
+
+  app.get("/tickers/:symbol/news", {
+    preHandler: app.authenticate,
+    schema: {
+      security: [{ bearerAuth: [] }],
+      params: {
+        type: "object",
+        additionalProperties: false,
+        properties: { symbol: { type: "string" } },
+        required: ["symbol"],
+      },
+      querystring: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          cursor: { $ref: "PaginationCursor#" },
+          limit: { type: "string" },
+        },
+      },
+      response: {
+        200: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            items: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  id: { type: "string" },
+                  title: { type: "string" },
+                  url: { type: "string" },
+                  publisher: { type: "string" },
+                  publishedAt: { type: "string", format: "date-time" },
+                  symbols: { type: "array", items: { type: "string" } },
+                  summary: { type: "string" },
+                },
+                required: ["id", "title", "url", "publishedAt", "symbols"],
+              },
+            },
+            nextCursor: { $ref: "PaginationCursor#" },
+          },
+          required: ["items"],
+        },
+        400: { $ref: "ProblemDetails#" },
+        401: { $ref: "ProblemDetails#" },
+        500: { $ref: "ProblemDetails#" },
+      },
+    },
+    handler: tickerNewsHandler,
   });
 
   app.get("/tickers/:symbol/hold", {
