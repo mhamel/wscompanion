@@ -22,6 +22,7 @@ model User {
   tickerPnlTotals TickerPnlTotal[]
   tickerPnlDaily  TickerPnlDaily[]
   wheelCycles     WheelCycle[]
+  wheelAuditEvents WheelAuditEvent[]
   alertRules      AlertRule[]
   exportJobs      ExportJob[]
   brokerConnections BrokerConnection[]
@@ -288,8 +289,10 @@ model WheelCycle {
   baseCurrency String
   autoDetected Boolean  @default(true)
   notes        String?
+  tags         String[] @default([])
 
   legs WheelLeg[]
+  auditEvents WheelAuditEvent[]
 
   @@index([userId, symbol])
 }
@@ -308,6 +311,20 @@ model WheelLeg {
 
   @@index([wheelCycleId])
   @@index([transactionId])
+}
+
+model WheelAuditEvent {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @db.Uuid
+  user        User       @relation(fields: [userId], references: [id])
+  wheelCycleId String    @db.Uuid
+  wheelCycle  WheelCycle @relation(fields: [wheelCycleId], references: [id])
+  action      String
+  payload     Json?
+  createdAt   DateTime   @default(now())
+
+  @@index([userId, createdAt])
+  @@index([wheelCycleId, createdAt])
 }
 
 model NewsSource {
