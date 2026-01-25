@@ -17,6 +17,7 @@ import { registerSyncRoutes } from "./routes/sync";
 import { registerTickerRoutes } from "./routes/tickers";
 import { registerTransactionsRoutes } from "./routes/transactions";
 import { registerWheelRoutes } from "./routes/wheel";
+import type { S3ExportsClient } from "./exports/s3";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -25,6 +26,7 @@ type BuildServerOptions = {
   syncQueue?: Queue;
   analyticsQueue?: Queue;
   exportsQueue?: Queue;
+  s3Exports?: S3ExportsClient;
 };
 
 function getJwtSecret(): string {
@@ -103,6 +105,17 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     app.addHook("onClose", async () => {
       try {
         await options.exportsQueue?.close();
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  if (options.s3Exports) {
+    app.decorate("s3Exports", options.s3Exports);
+    app.addHook("onClose", async () => {
+      try {
+        options.s3Exports?.client.destroy();
       } catch {
         // ignore
       }

@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { FastifyRequest } from "fastify";
 import type { Queue } from "bullmq";
 import type { RedisClientType } from "redis";
+import type { S3ExportsClient } from "./exports/s3";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -10,6 +11,7 @@ declare module "fastify" {
     syncQueue?: Queue;
     analyticsQueue?: Queue;
     exportsQueue?: Queue;
+    s3Exports?: S3ExportsClient;
     authenticate: (request: FastifyRequest) => Promise<void>;
   }
 }

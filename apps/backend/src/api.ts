@@ -6,6 +6,7 @@ import { createClient, type RedisClientType } from "redis";
 import { buildServer } from "./server";
 import { loadConfig } from "./config";
 import { loadDevSecrets } from "./devSecrets";
+import { createS3ExportsClient } from "./exports/s3";
 
 async function main() {
   dotenv.config();
@@ -17,6 +18,7 @@ async function main() {
   const syncQueue = new Queue("sync", { connection: bullConnection });
   const analyticsQueue = new Queue("analytics", { connection: bullConnection });
   const exportsQueue = new Queue("exports", { connection: bullConnection });
+  const s3Exports = createS3ExportsClient(config);
 
   let redis: RedisClientType | undefined;
   try {
@@ -30,7 +32,7 @@ async function main() {
     redis = undefined;
   }
 
-  const app = buildServer({ prisma, redis, syncQueue, analyticsQueue, exportsQueue });
+  const app = buildServer({ prisma, redis, syncQueue, analyticsQueue, exportsQueue, s3Exports: s3Exports ?? undefined });
   app.addHook("onClose", async () => {
     try {
       await bullConnection.quit();
