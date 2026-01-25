@@ -26,6 +26,34 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
           },
   });
 
+  app.addSchema({
+    $id: "ProblemDetails",
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      code: { type: "string" },
+      message: { type: "string" },
+      details: {},
+    },
+    required: ["code", "message"],
+  });
+
+  app.addSchema({
+    $id: "Money",
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      amountMinor: { type: "string" },
+      currency: { type: "string", pattern: "^[A-Z]{3}$" },
+    },
+    required: ["amountMinor", "currency"],
+  });
+
+  app.addSchema({
+    $id: "PaginationCursor",
+    type: "string",
+  });
+
   app.register(swagger, {
     openapi: {
       info: {
@@ -59,9 +87,27 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   // Versioned API routes
   app.register(
     async (v1) => {
-      v1.get("/health", async () => {
-        return { ok: true };
-      });
+      v1.get(
+        "/health",
+        {
+          schema: {
+            response: {
+              200: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  ok: { type: "boolean" },
+                },
+                required: ["ok"],
+              },
+              default: { $ref: "ProblemDetails#" },
+            },
+          },
+        },
+        async () => {
+          return { ok: true };
+        },
+      );
     },
     { prefix: "/v1" },
   );
