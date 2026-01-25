@@ -19,6 +19,11 @@ model User {
   preferences  UserPreferences?
   accounts     Account[]
   transactions Transaction[]
+  tickerPnlTotals TickerPnlTotal[]
+  tickerPnlDaily  TickerPnlDaily[]
+  wheelCycles     WheelCycle[]
+  alertRules      AlertRule[]
+  exportJobs      ExportJob[]
 }
 
 model Session {
@@ -175,6 +180,7 @@ model Transaction {
   instrument     Instrument? @relation(fields: [instrumentId], references: [id])
   optionContractId String? @db.Uuid
   optionContract   OptionContract? @relation(fields: [optionContractId], references: [id])
+  wheelLegs        WheelLeg[]
   quantity       Decimal? @db.Decimal(20, 10)
   priceAmountMinor BigInt? @db.BigInt
   priceCurrency  String?
@@ -190,4 +196,159 @@ model Transaction {
   @@index([accountId, executedAt])
   @@index([instrumentId])
   @@index([optionContractId])
+}
+
+model TickerPnlTotal {
+  userId             String   @db.Uuid
+  user               User     @relation(fields: [userId], references: [id])
+  symbol             String
+  baseCurrency       String
+  realizedPnlMinor   BigInt   @db.BigInt
+  unrealizedPnlMinor BigInt   @db.BigInt
+  optionPremiumsMinor BigInt  @db.BigInt
+  dividendsMinor     BigInt   @db.BigInt
+  feesMinor          BigInt   @db.BigInt
+  netPnlMinor        BigInt   @db.BigInt
+  lastRecomputedAt   DateTime
+
+  @@id([userId, symbol, baseCurrency])
+  @@index([userId, symbol])
+}
+
+model TickerPnlDaily {
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id])
+  symbol       String
+  baseCurrency String
+  date         DateTime @db.Date
+  netPnlMinor        BigInt @db.BigInt
+  marketValueMinor   BigInt @db.BigInt
+  realizedPnlMinor   BigInt @db.BigInt
+  unrealizedPnlMinor BigInt @db.BigInt
+
+  @@id([userId, symbol, baseCurrency, date])
+  @@index([userId, symbol])
+}
+
+model WheelCycle {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id])
+  symbol       String
+  status       String
+  openedAt     DateTime
+  closedAt     DateTime?
+  netPnlMinor  BigInt?  @db.BigInt
+  baseCurrency String
+  autoDetected Boolean  @default(true)
+  notes        String?
+
+  legs WheelLeg[]
+
+  @@index([userId, symbol])
+}
+
+model WheelLeg {
+  id             String    @id @default(uuid()) @db.Uuid
+  wheelCycleId   String    @db.Uuid
+  wheelCycle     WheelCycle @relation(fields: [wheelCycleId], references: [id])
+  kind           String
+  transactionId  String?   @db.Uuid
+  transaction    Transaction? @relation(fields: [transactionId], references: [id])
+  linkedTransactionIds String[] @db.Uuid
+  occurredAt     DateTime
+  pnlMinor       BigInt?   @db.BigInt
+  raw            Json?
+
+  @@index([wheelCycleId])
+  @@index([transactionId])
+}
+
+model NewsSource {
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String
+  type    String
+  baseUrl String?
+  enabled Boolean @default(true)
+  weight  Int     @default(100)
+}
+
+model NewsItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  provider   String
+  externalId String?
+  url        String
+  urlHash    Bytes
+  title      String
+  publisher  String?
+  publishedAt DateTime
+  summary    String?
+  raw        Json?
+
+  symbols NewsItemSymbol[]
+
+  @@unique([urlHash])
+  @@index([publishedAt])
+}
+
+model NewsItemSymbol {
+  newsItemId String @db.Uuid
+  newsItem   NewsItem @relation(fields: [newsItemId], references: [id])
+  symbol     String
+
+  @@id([newsItemId, symbol])
+  @@index([symbol])
+}
+
+model AlertRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  symbol    String?
+  config    Json
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  events AlertEvent[]
+
+  @@index([userId, type])
+  @@index([userId, symbol])
+}
+
+model AlertEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  alertRuleId String   @db.Uuid
+  alertRule   AlertRule @relation(fields: [alertRuleId], references: [id])
+  triggeredAt DateTime
+  payload     Json
+  deliveredAt DateTime?
+
+  @@index([alertRuleId, triggeredAt])
+}
+
+model ExportJob {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id])
+  type        String
+  format      String
+  params      Json
+  status      String
+  error       String?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  file ExportFile?
+
+  @@index([userId, createdAt])
+}
+
+model ExportFile {
+  exportJobId String   @id @db.Uuid
+  exportJob   ExportJob @relation(fields: [exportJobId], references: [id])
+  storageKey  String
+  contentType String
+  sizeBytes   BigInt   @db.BigInt
+  sha256      Bytes
 }
