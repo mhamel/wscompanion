@@ -49,6 +49,26 @@ export type SyncStatusResponse = {
   items: SyncStatusItem[];
 };
 
+export type SnaptradeStartResponse = {
+  redirectUrl: string;
+  state: string;
+};
+
+export type SnaptradeCallbackBody = {
+  state: string;
+  externalUserId: string;
+  externalConnectionId: string;
+  accessToken: string;
+  refreshToken?: string;
+  scopes?: string[];
+};
+
+export type SnaptradeCallbackResponse = {
+  ok: boolean;
+  brokerConnectionId: string;
+  syncRunId: string;
+};
+
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
@@ -59,6 +79,8 @@ export type ApiClient = {
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
+  snaptradeStart(): Promise<SnaptradeStartResponse>;
+  snaptradeCallback(input: SnaptradeCallbackBody): Promise<SnaptradeCallbackResponse>;
   logout(): Promise<void>;
 };
 
@@ -195,6 +217,23 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.POST('/v1/connections/{id}/sync', {
           params: { path: { id: input.id } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    snaptradeStart: async () => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/connections/snaptrade/start', {
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    snaptradeCallback: async (body) => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/connections/snaptrade/callback', {
+          body,
           headers: { Authorization: bearer(accessToken) },
         }),
       );

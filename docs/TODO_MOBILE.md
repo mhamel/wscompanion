@@ -25,7 +25,7 @@
 
 - [x] FE-010 — Écrans login/signup OTP + erreurs + rate-limit friendly messaging. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-auth), [PRODUIT.md](../PRODUIT.md#prd-confiance).
 - [x] FE-011 — Stockage tokens + refresh flow + “logout everywhere”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
-- [ ] FE-012 — Flow “Connecter Wealthsimple (via SnapTrade)” via in-app browser + deep link callback + état “sync en cours”. Réf: [PRODUIT.md](../PRODUIT.md#prd-connexion), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
+- [x] FE-012 — Flow “Connecter Wealthsimple (via SnapTrade)” via in-app browser + deep link callback + état “sync en cours”. Réf: [PRODUIT.md](../PRODUIT.md#prd-connexion), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
 
 <a id="fe-home"></a>
 ## Home / Dashboard (time-to-wow)

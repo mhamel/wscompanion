@@ -1,5 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import {
   Alert,
   RefreshControl,
@@ -11,6 +13,7 @@ import {
 import { createApiClient, type SyncStatusItem } from '../api/client';
 import { ApiError } from '../api/http';
 import { config } from '../config';
+import type { MainTabParamList } from '../navigation/MainTabs';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -45,7 +48,7 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 
   if (run.status === 'queued') return 'Sync en file…';
   if (run.status === 'running') return 'Sync en cours…';
-  if (run.status === 'succeeded') return 'Dernière sync: OK';
+  if (run.status === 'done') return 'Dernière sync: OK';
   if (run.status === 'failed') return `Dernière sync: échec (${run.error ?? 'erreur'})`;
 
   return `Sync: ${run.status}`;
@@ -53,6 +56,7 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 
 export function HomeScreen() {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const [syncBusy, setSyncBusy] = React.useState(false);
   const [syncError, setSyncError] = React.useState<string | null>(null);
 
@@ -154,9 +158,9 @@ export function HomeScreen() {
           <View style={{ gap: tokens.spacing.sm }}>
             <Body>Aucune donnée. Tire pour synchroniser, ou connecte un broker.</Body>
             <AppButton
-              title="Connecter (bientôt)"
+              title="Connecter"
               variant="secondary"
-              onPress={() => Alert.alert('Bientôt', 'Flow SnapTrade en cours (FE-012).')}
+              onPress={() => navigation.navigate('Portfolio')}
             />
           </View>
         ) : (
