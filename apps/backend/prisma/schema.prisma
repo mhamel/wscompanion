@@ -30,7 +30,7 @@ model Session {
   id               String   @id @default(uuid()) @db.Uuid
   userId           String   @db.Uuid
   user             User     @relation(fields: [userId], references: [id])
-  refreshTokenHash String
+  refreshTokenHash String   @unique
   createdAt        DateTime @default(now())
   expiresAt        DateTime
   revokedAt        DateTime?
