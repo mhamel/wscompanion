@@ -16,7 +16,7 @@
 ## Environnements & bootstrap
 
 - [x] PL-001 — Décider mono-repo vs multi-repos (mobile/backend) + conventions versionning. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-architecture-logique).
-- [ ] PL-002 — Environnement local reproductible (docker-compose): Postgres + Redis + S3-compatible (MinIO) + mails (mailhog). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-backend).
+- [x] PL-002 — Environnement local reproductible (docker-compose): Postgres + Redis + S3-compatible (MinIO) + mails (mailhog). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-backend).
 - [ ] PL-003 — Gestion secrets/config: `.env` templates, validation, séparation dev/staging/prod. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 
 <a id="pl-ci"></a>
