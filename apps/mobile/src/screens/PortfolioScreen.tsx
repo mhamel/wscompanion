@@ -1,14 +1,12 @@
 import React from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { Screen } from '../ui/Screen';
+import { Body, Title } from '../ui/Typography';
 
 export function PortfolioScreen() {
   return (
-    <SafeAreaView>
-      <View style={{ padding: 16, gap: 8 }}>
-        <Text style={{ fontSize: 22, fontWeight: '600' }}>Portfolio</Text>
-        <Text>Tickers list + filters (placeholder)</Text>
-      </View>
-    </SafeAreaView>
+    <Screen>
+      <Title>Portfolio</Title>
+      <Body>Tickers list + filters (placeholder)</Body>
+    </Screen>
   );
 }
-

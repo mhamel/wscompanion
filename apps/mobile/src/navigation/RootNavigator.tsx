@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthScreen } from '../screens/AuthScreen';
 import { MainTabs } from './MainTabs';
@@ -21,7 +21,7 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={DarkTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthed ? (
           <Stack.Screen name="Main" component={MainTabs} />

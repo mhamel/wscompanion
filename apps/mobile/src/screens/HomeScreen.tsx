@@ -1,8 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { SafeAreaView, Text, View } from 'react-native';
 import { createApiClient } from '../api/client';
 import { config } from '../config';
+import { Screen } from '../ui/Screen';
+import { Body, Title } from '../ui/Typography';
 
 export function HomeScreen() {
   const api = createApiClient({ baseUrl: config.apiBaseUrl });
@@ -13,12 +14,12 @@ export function HomeScreen() {
   });
 
   return (
-    <SafeAreaView>
-      <View style={{ padding: 16, gap: 8 }}>
-        <Text style={{ fontSize: 22, fontWeight: '600' }}>Home</Text>
-        <Text>Top tickers + time-to-wow (placeholder)</Text>
-        <Text>API health: {healthQuery.data?.ok ? 'ok' : healthQuery.isLoading ? '...' : 'error'}</Text>
-      </View>
-    </SafeAreaView>
+    <Screen>
+      <Title>Home</Title>
+      <Body>Top tickers + time-to-wow (placeholder)</Body>
+      <Body>
+        API health: {healthQuery.data?.ok ? 'ok' : healthQuery.isLoading ? '...' : 'error'}
+      </Body>
+    </Screen>
   );
 }
