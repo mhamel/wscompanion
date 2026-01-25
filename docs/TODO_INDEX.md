@@ -43,7 +43,7 @@ Objectif: “connexion SnapTrade → sync initial → top tickers P&L visibles�
 ### M2 — Wheel tracker + Exports (valeur “power user”)
 
 - [x] M2-01 — Détection wheel (heuristiques MVP) + UI cycles + override manuel. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
-- [ ] M2-02 — Exports (CSV d’abord) via jobs + stockage S3 + download mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-exports).
+- [x] M2-02 — Exports (CSV d’abord) via jobs + stockage S3 + download mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-exports).
 
 ### M3 — News + Alerts + Paywall (rétention & monétisation)
 
