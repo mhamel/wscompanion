@@ -279,6 +279,12 @@ export type ExportDownloadResponse = {
   expiresAt: string;
 };
 
+export type ExportCreateBody = {
+  type: 'pnl_realized_by_ticker' | 'option_premiums_by_year';
+  format: 'csv';
+  params?: Record<string, unknown>;
+};
+
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
@@ -312,6 +318,7 @@ export type ApiClient = {
   snaptradeStart(): Promise<SnaptradeStartResponse>;
   snaptradeCallback(input: SnaptradeCallbackBody): Promise<SnaptradeCallbackResponse>;
   exportsList(input?: { cursor?: string; limit?: number }): Promise<ExportsListResponse>;
+  exportsCreate(input: ExportCreateBody): Promise<ExportCreateResponse>;
   exportDownload(input: { id: string }): Promise<ExportDownloadResponse>;
   logout(): Promise<void>;
 };
@@ -602,6 +609,12 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
           params: { query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
+      );
+    },
+
+    exportsCreate: async (body) => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/exports', { body, headers: { Authorization: bearer(accessToken) } }),
       );
     },
 

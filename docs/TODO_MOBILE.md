@@ -69,7 +69,7 @@
 ## Exports
 
 - [x] FE-080 — ExportsScreen: liste jobs, statut, download/share. Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-exports).
-- [ ] FE-081 — “Préparer mon année” CTA + sélection période + feedback (job en cours). Réf: [PRODUIT.md](../PRODUIT.md#prd-exports).
+- [x] FE-081 — “Préparer mon année” CTA + sélection période + feedback (job en cours). Réf: [PRODUIT.md](../PRODUIT.md#prd-exports).
 
 <a id="fe-ask"></a>
 ## Ask (option premium)

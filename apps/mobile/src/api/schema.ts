@@ -1213,7 +1213,11 @@ export interface paths {
                         type: "pnl_realized_by_ticker" | "option_premiums_by_year";
                         /** @enum {string} */
                         format: "csv";
-                        params?: Record<string, never>;
+                        params?: {
+                            year?: string;
+                        } & {
+                            [key: string]: unknown;
+                        };
                     };
                 };
             };

@@ -7,6 +7,7 @@ import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
+import { TextField } from '../ui/TextField';
 import { Body, Title } from '../ui/Typography';
 
 function formatDateTime(iso: string): string {
@@ -49,6 +50,8 @@ function ExportRow(props: { job: ExportJob; onShare: () => void; sharing: boolea
 
 export function ExportsScreen() {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const [year, setYear] = React.useState(() => String(new Date().getFullYear()));
+  const [creatingType, setCreatingType] = React.useState<string | null>(null);
   const [sharingId, setSharingId] = React.useState<string | null>(null);
   const [shareError, setShareError] = React.useState<string | null>(null);
 
@@ -58,12 +61,37 @@ export function ExportsScreen() {
       api.exportsList({
         cursor: typeof pageParam === 'string' ? pageParam : undefined,
         limit: 20,
-      }),
+    }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    refetchInterval: (query) => {
+      const items = query.state.data?.pages.flatMap((p) => p.items) ?? [];
+      const hasInflight = items.some((j) => j.status === 'queued' || j.status === 'running');
+      return hasInflight ? 2_000 : false;
+    },
   });
 
   const jobs = exportsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const hasInflight = jobs.some((j) => j.status === 'queued' || j.status === 'running');
+
+  async function createExport(type: 'pnl_realized_by_ticker' | 'option_premiums_by_year') {
+    setCreatingType(type);
+    setShareError(null);
+    try {
+      const yearValue = year.trim();
+      const params = yearValue ? { year: yearValue } : undefined;
+      await api.exportsCreate({ type, format: 'csv', params });
+      await exportsQuery.refetch();
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setShareError(e.problem?.message ?? e.message);
+      } else {
+        setShareError('Erreur reseau.');
+      }
+    } finally {
+      setCreatingType(null);
+    }
+  }
 
   async function shareExport(jobId: string) {
     setSharingId(jobId);
@@ -89,6 +117,38 @@ export function ExportsScreen() {
           <Title>Exports</Title>
           <Body>Liste des jobs + telechargement (MVP)</Body>
           {shareError ? <Body style={styles.error}>{shareError}</Body> : null}
+        </View>
+
+        <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
+          <View style={styles.card}>
+            <Body>Preparer mon annee</Body>
+            <TextField
+              placeholder="Annee (ex: 2025)"
+              value={year}
+              onChangeText={setYear}
+              keyboardType="number-pad"
+            />
+
+            <View style={{ gap: tokens.spacing.sm }}>
+              <AppButton
+                title={creatingType === 'pnl_realized_by_ticker' ? 'Creation...' : 'Realise par ticker (CSV)'}
+                disabled={Boolean(creatingType)}
+                onPress={() => void createExport('pnl_realized_by_ticker')}
+              />
+              <AppButton
+                title={
+                  creatingType === 'option_premiums_by_year'
+                    ? 'Creation...'
+                    : 'Primes options par annee (CSV)'
+                }
+                variant="secondary"
+                disabled={Boolean(creatingType)}
+                onPress={() => void createExport('option_premiums_by_year')}
+              />
+            </View>
+
+            {hasInflight ? <Body>Jobs en cours...</Body> : null}
+          </View>
         </View>
 
         <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>

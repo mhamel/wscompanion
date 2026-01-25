@@ -1543,7 +1543,13 @@
                     ]
                   },
                   "params": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": true,
+                    "properties": {
+                      "year": {
+                        "type": "string"
+                      }
+                    }
                   }
                 },
                 "required": [

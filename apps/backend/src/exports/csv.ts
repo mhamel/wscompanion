@@ -38,10 +38,22 @@ function classifyOptionDirection(typeRaw: string): "buy" | "sell" | null {
   return null;
 }
 
+function parseYearFilter(params: unknown): number | null {
+  if (!params || typeof params !== "object" || Array.isArray(params)) return null;
+  const obj = params as Record<string, unknown>;
+  const raw = obj.year;
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+  if (!Number.isFinite(n)) return null;
+  const year = Math.trunc(n);
+  if (year < 1900 || year > 2100) return null;
+  return year;
+}
+
 export async function generateExportCsv(input: {
   prisma: PrismaClient;
   userId: string;
   type: ExportType;
+  params?: unknown;
 }): Promise<{ filename: string; contentType: string; body: Buffer }> {
   const preferences = await input.prisma.userPreferences.findUnique({ where: { userId: input.userId } });
   const baseCurrency = normalizeCurrency(preferences?.baseCurrency ?? "USD");
@@ -76,6 +88,7 @@ export async function generateExportCsv(input: {
   }
 
   if (input.type === "option_premiums_by_year") {
+    const yearFilter = parseYearFilter(input.params);
     const fx = createEnvFxRateProvider();
     const txs = await input.prisma.transaction.findMany({
       where: { userId: input.userId },
@@ -90,6 +103,9 @@ export async function generateExportCsv(input: {
     const byYear = new Map<number, { netPremiumMinor: bigint; count: number; fxMissing: number }>();
 
     for (const tx of txs) {
+      const year = tx.executedAt.getUTCFullYear();
+      if (yearFilter && year !== yearFilter) continue;
+
       if (!tx.optionContractId && !tx.type.toLowerCase().includes("option") && !tx.type.toLowerCase().includes("call") && !tx.type.toLowerCase().includes("put")) {
         continue;
       }
@@ -99,7 +115,6 @@ export async function generateExportCsv(input: {
 
       if (tx.grossAmountMinor === null) continue;
 
-      const year = tx.executedAt.getUTCFullYear();
       const acc = byYear.get(year) ?? { netPremiumMinor: 0n, count: 0, fxMissing: 0 };
       byYear.set(year, acc);
 
@@ -145,7 +160,7 @@ export async function generateExportCsv(input: {
 
     const body = Buffer.from(lines.join("\n") + "\n", "utf8");
     return {
-      filename: `option_premiums_by_year_${today}.csv`,
+      filename: yearFilter ? `option_premiums_${yearFilter}.csv` : `option_premiums_by_year_${today}.csv`,
       contentType: "text/csv; charset=utf-8",
       body,
     };
@@ -154,4 +169,3 @@ export async function generateExportCsv(input: {
   const exhaustive: never = input.type;
   throw new Error(`Unsupported export type: ${exhaustive}`);
 }
-

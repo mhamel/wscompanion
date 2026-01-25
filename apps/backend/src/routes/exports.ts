@@ -255,7 +255,13 @@ export function registerExportsRoutes(app: FastifyInstance) {
         properties: {
           type: { type: "string", enum: [...EXPORT_TYPES] },
           format: { type: "string", enum: ["csv"] },
-          params: { type: "object" },
+          params: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              year: { type: "string" },
+            },
+          },
         },
         required: ["type", "format"],
       },

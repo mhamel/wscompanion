@@ -662,6 +662,7 @@ async function handleExportRunJob(
     prisma,
     userId: exportJob.userId,
     type: exportJob.type,
+    params: exportJob.params,
   });
 
   const storageKey = `exports/${exportJob.userId}/${exportJob.id}/${generated.filename}`;
