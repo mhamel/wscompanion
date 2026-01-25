@@ -1,7 +1,16 @@
+<a id="arch-top"></a>
 # Architecture — Companion Wealthsimple (via SnapTrade)
 
 Ce document décrit l’architecture cible (mobile + backend + données) pour livrer une app “power user” (P&L 360°, wheel tracker, exports, news) avec une UX très conviviale, inspirée des meilleurs produits “search-first” (style Perplexity): une barre de recherche centrale, des réponses claires, des “sources” cliquables, et des actions rapides.
 
+<a id="arch-backlog"></a>
+## Backlog & exécution
+
+- Vision produit: [PRODUIT.md](PRODUIT.md#prd-top)
+- Backlog global: [docs/TODO_INDEX.md](docs/TODO_INDEX.md)
+- TODOs par domaine: [backend](docs/TODO_BACKEND.md#todo-backend-top), [mobile](docs/TODO_MOBILE.md#todo-mobile-top), [données](docs/TODO_DATA_ANALYTICS.md#todo-data-top), [platform](docs/TODO_PLATFORM_DEVOPS.md#todo-platform-top), [sec/qa/obs](docs/TODO_SECURITY_QA_OBS.md#todo-secqaobs-top)
+
+<a id="arch-objectifs-produit"></a>
 ## Objectifs produit (architecture-driven)
 
 - **Time-to-wow < 2 min**: connexion SnapTrade → sync initial → top tickers P&L visibles.
@@ -10,14 +19,17 @@ Ce document décrit l’architecture cible (mobile + backend + données) pour li
 - **Sécurité & confiance**: lecture seule par défaut, chiffrement, audit, désinscription/déconnexion facile.
 - **Monétisation**: gating clair (free vs pro), instrumentation (funnel), paywall non intrusif.
 
+<a id="arch-perimetre-principes"></a>
 ## Périmètre & principes
 
 - App compagnon (pas un plugin Wealthsimple).
 - Pas de conseil financier: **on explique des faits**, on donne du contexte, on affiche des sources.
 - Pas de scraping fragile: **connexion via SnapTrade** + providers “news”/“market data” compatibles.
 
+<a id="arch-stack-technique"></a>
 ## Stack technique
 
+<a id="arch-stack-mobile"></a>
 ### Mobile
 
 - **React Native + TypeScript** (recommandé: **Expo** pour vitesse de delivery + OTA).
@@ -28,6 +40,7 @@ Ce document décrit l’architecture cible (mobile + backend + données) pour li
 - Auth: magic link/OTP + token JWT (stockage sécurisé: Keychain/Keystore).
 - Push: Expo Push ou APNS/FCM direct (selon besoin).
 
+<a id="arch-stack-backend"></a>
 ### Backend
 
 - **Node.js + Fastify + TypeScript**.
@@ -38,6 +51,7 @@ Ce document décrit l’architecture cible (mobile + backend + données) pour li
 - Stockage fichiers: **S3-compatible** (AWS S3, R2, etc) + URLs signées.
 - Observabilité: logs structurés (pino), traces (OpenTelemetry), erreurs (Sentry).
 
+<a id="arch-stack-integrations"></a>
 ### Intégrations
 
 - **SnapTrade**: authentification broker + lecture comptes/transactions/positions.
@@ -45,6 +59,7 @@ Ce document décrit l’architecture cible (mobile + backend + données) pour li
 - Email/SMS: SendGrid/Postmark/Twilio (pour OTP et notifications).
 - Abonnements: **RevenueCat** (recommandé mobile) ou IAP natif; Stripe si web plus tard.
 
+<a id="arch-architecture-logique"></a>
 ## Architecture logique (monolithe modulaire)
 
 On démarre en **monolithe modulaire** (un repo backend, un repo mobile) pour itérer vite, avec des frontières nettes par domaine:
@@ -61,8 +76,10 @@ On démarre en **monolithe modulaire** (un repo backend, un repo mobile) pour it
 
 Les jobs lourds (sync, calculs, exports, ingestion news) tournent dans un **worker** séparé, mais déployé depuis le même codebase.
 
+<a id="arch-flux-principaux"></a>
 ## Flux principaux
 
+<a id="arch-flux-onboarding"></a>
 ### 1) Onboarding → connexion SnapTrade
 
 1. L’utilisateur crée un compte (OTP).
@@ -71,6 +88,7 @@ Les jobs lourds (sync, calculs, exports, ingestion news) tournent dans un **work
 4. Backend crée/associe la `broker_connection` et planifie un **sync initial**.
 5. Dès la fin du sync initial: dashboard prêt (top tickers + P&L 360).
 
+<a id="arch-flux-sync"></a>
 ### 2) Sync incrémental
 
 - Déclencheurs:
@@ -82,6 +100,7 @@ Les jobs lourds (sync, calculs, exports, ingestion news) tournent dans un **work
   - recalcul ciblé des agrégats affectés (par compte/ticker),
   - mise à jour des `position_snapshot` / `ticker_pnl_daily`.
 
+<a id="arch-flux-news"></a>
 ### 3) News par action
 
 - Ingestion périodique (worker):
@@ -93,10 +112,12 @@ Les jobs lourds (sync, calculs, exports, ingestion news) tournent dans un **work
   - `/tickers/:symbol/news` paginé,
   - tri “pertinence” (récence + source + matching).
 
+<a id="arch-flux-exports"></a>
 ### 4) Exports
 
 - L’utilisateur demande un export (CSV/PDF) → création `export_job` → worker génère → upload S3 → URL signée.
 
+<a id="arch-flux-ask"></a>
 ### 5) “Ask” (UX à la Perplexity)
 
 Un écran central “Ask”:
@@ -106,6 +127,7 @@ Un écran central “Ask”:
   - sources internes (transactions, lots, calculs),
   - sources externes (articles news).
 
+<a id="arch-data-model"></a>
 ## Modèle de données (PostgreSQL)
 
 Principes:
@@ -116,6 +138,7 @@ Principes:
 - Raw ingest: colonnes `raw jsonb` pour audit/debug.
 - Dédup: `external_id` + `provider` + unique indexes.
 
+<a id="arch-data-core"></a>
 ### Tables (noyau)
 
 #### `users`
@@ -159,6 +182,7 @@ Principes:
 - `created_at timestamptz`
 - `updated_at timestamptz`
 
+<a id="arch-data-snaptrade"></a>
 ### SnapTrade / connexions
 
 #### `broker_connections`
@@ -216,6 +240,8 @@ Indexes:
 Unique:
 - `(broker_connection_id, external_account_id)`
 
+<a id="arch-data-portfolio"></a>
+<a id="arch-data-instruments"></a>
 ### Instruments & marché
 
 #### `instruments`
@@ -254,6 +280,7 @@ Unique (provider-friendly):
 - `quote_currency char(3)` (ex: USD)
 - `rate numeric(20,10)`
 
+<a id="arch-data-positions"></a>
 ### Positions & snapshots
 
 #### `position_snapshots`
@@ -275,6 +302,7 @@ Snapshot “dernier état” par compte/instrument (pour lecture rapide).
 PK:
 - `(account_id, instrument_id)`
 
+<a id="arch-data-transactions"></a>
 ### Transactions (source de vérité)
 
 #### `transactions`
@@ -311,6 +339,7 @@ Indexes:
 - `idx_transactions_user_time (user_id, executed_at desc)`
 - `idx_transactions_account_time (account_id, executed_at desc)`
 
+<a id="arch-data-pnl360"></a>
 ### P&L 360 (agrégats)
 
 On stocke des agrégats pour rendre l’UI “instantanée”.
@@ -345,6 +374,7 @@ PK:
 PK:
 - `(user_id, symbol, base_currency, date)`
 
+<a id="arch-data-wheel"></a>
 ### Wheel / Covered Calls
 
 #### `wheel_cycles`
@@ -376,6 +406,7 @@ Une jambe = référence vers une ou plusieurs transactions (option/stock) + type
 - `pnl_minor bigint null`
 - `raw jsonb`
 
+<a id="arch-data-news"></a>
 ### News
 
 #### `news_sources`
@@ -417,6 +448,7 @@ PK:
 Indexes:
 - `idx_news_symbols_symbol (symbol)`
 
+<a id="arch-data-alerts"></a>
 ### Alertes
 
 #### `alert_rules`
@@ -437,6 +469,7 @@ Indexes:
 - `payload jsonb`
 - `delivered_at timestamptz null`
 
+<a id="arch-data-exports"></a>
 ### Exports
 
 #### `export_jobs`
@@ -459,6 +492,7 @@ Indexes:
 - `size_bytes bigint`
 - `sha256 bytea`
 
+<a id="arch-api-backend"></a>
 ## Backend (Fastify) — services API
 
 Convention:
@@ -494,6 +528,7 @@ Convention:
 - `items: T[]`
 - `nextCursor?: string`
 
+<a id="arch-api-auth"></a>
 ### Auth
 
 - `POST /v1/auth/start` — envoie OTP/magic link
@@ -502,11 +537,13 @@ Convention:
 - `POST /v1/auth/logout`
 - `GET /v1/me`
 
+<a id="arch-api-devices"></a>
 ### Devices / Push
 
 - `POST /v1/devices/register` — `{pushToken, platform}`
 - `DELETE /v1/devices/:id`
 
+<a id="arch-api-snaptrade"></a>
 ### SnapTrade / Connexions
 
 - `POST /v1/connections/snaptrade/start` — retourne `{redirectUrl, state}` (portail SnapTrade)
@@ -516,6 +553,7 @@ Convention:
 - `POST /v1/connections/:id/sync` — déclenche sync (async)
 - `GET /v1/sync/status` — statut dernier sync (par connexion) + derniers `sync_runs`
 
+<a id="arch-api-portfolio"></a>
 ### Portfolio
 
 - `GET /v1/accounts`
@@ -526,6 +564,7 @@ Convention:
 - `GET /v1/tickers/:symbol/pnl` — breakdown (réalisé, non-réalisé, primes, dividendes, frais)
 - `GET /v1/tickers/:symbol/timeline` — séries daily
 
+<a id="arch-api-wheel"></a>
 ### Wheel
 
 - `GET /v1/wheel/cycles?symbol=...`
@@ -535,12 +574,14 @@ Convention:
 - `POST /v1/wheel/cycles/:id/close`
 - `POST /v1/wheel/detect` — lance détection auto (async)
 
+<a id="arch-api-news"></a>
 ### News
 
 - `GET /v1/tickers/:symbol/news?cursor=&limit=`
 - `GET /v1/news/search?q=...`
 - `GET /v1/news/sources`
 
+<a id="arch-api-alerts"></a>
 ### Alerts
 
 - `GET /v1/alerts`
@@ -549,6 +590,7 @@ Convention:
 - `DELETE /v1/alerts/:id`
 - `GET /v1/alerts/events?cursor=&limit=`
 
+<a id="arch-api-exports"></a>
 ### Exports
 
 - `POST /v1/exports`
@@ -556,17 +598,20 @@ Convention:
 - `GET /v1/exports/:id`
 - `GET /v1/exports/:id/download` — URL signée (si `done`)
 
+<a id="arch-api-billing"></a>
 ### Billing / Entitlements
 
 - `GET /v1/billing/entitlement`
 - `POST /v1/billing/webhook/revenuecat` — update entitlements (server-to-server)
 
+<a id="arch-api-assistant"></a>
 ### Assistant (option premium)
 
 - `POST /v1/assistant/query` — réponse + sources (option streaming SSE)
 - `GET /v1/assistant/conversations`
 - `GET /v1/assistant/conversations/:id`
 
+<a id="arch-mobile-ecrans"></a>
 ## Mobile (React Native) — écrans, navigation, menus
 
 Objectif UI: **tout doit commencer par une recherche** (ticker, question, ou action), puis afficher une réponse riche et actionnable avec des sources et des chemins rapides vers les vues (transactions, cycles, news).
@@ -588,6 +633,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 
 ### Écrans (détaillés)
 
+<a id="arch-mobile-onboarding"></a>
 #### Onboarding
 
 - `WelcomeScreen` — valeur + disclaimer
@@ -595,6 +641,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 - `ConnectBrokerScreen` — “Connecter Wealthsimple (via SnapTrade)”
 - `SyncProgressScreen` — barre de progression + “time-to-wow”
 
+<a id="arch-mobile-home"></a>
 #### Home
 
 - `HomeScreen`
@@ -602,6 +649,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
   - cards: P&L global, top movers, prochains événements (earnings/expirations)
   - CTA “Voir mes tickers”
 
+<a id="arch-mobile-ask"></a>
 #### Ask (style Perplexity)
 
 - `AskScreen`
@@ -612,21 +660,23 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
     - **Sources** (transactions, calculs, articles)
   - actions rapides: “Ouvrir ticker”, “Créer alerte”, “Exporter”
 
+<a id="arch-mobile-portfolio"></a>
 #### Portfolio
 
 - `PortfolioScreen`
   - liste tickers (search + filtres)
   - each row: net P&L, position, exposure, tag (pro/free)
-- `TickerScreen` (le cœur)
+- <a id="arch-mobile-ticker"></a> `TickerScreen` (le cœur)
   - Header: symbol, net P&L, position
   - Tabs:
     - **Overview** (résumé + graphiques)
     - **P&L** (breakdown + comparatif “hold” si activé)
     - **Wheel** (cycles ouverts/fermés)
     - **Trades** (transactions filtrées)
-    - **News** (headlines + événements)
+    - <a id="arch-mobile-news"></a> **News** (headlines + événements)
     - **Insights** (premium: synthèse + Q&A contextuelle)
 
+<a id="arch-mobile-wheel"></a>
 #### Wheel
 
 - `WheelScreen`
@@ -637,6 +687,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
   - net premiums, net stock P&L, fees
   - bouton “Corriger” (override manuel)
 
+<a id="arch-mobile-alerts"></a>
 #### Alerts
 
 - `AlertsScreen`
@@ -645,6 +696,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 - `CreateAlertScreen`
   - templates: earnings, expiry, price move, news spike
 
+<a id="arch-mobile-exports"></a>
 #### Exports & Settings
 
 - `ExportsScreen` — jobs, statut, téléchargement
@@ -652,6 +704,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 - `PaywallScreen` — bénéfices Pro + preuve de valeur (preview)
 - `SettingsScreen` — devise, confidentialité, support, suppression compte
 
+<a id="arch-mobile-patterns"></a>
 ### Menus & patterns UX
 
 - **Search-first**: une seule recherche unifiée (ticker + questions).
@@ -659,6 +712,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 - **Empty states utiles**: si pas de data, proposer “connecter” ou “sync”.
 - **Paywall intelligent**: pas de blocage brutal; teaser + “unlock”.
 
+<a id="arch-mobile-designsystem"></a>
 ### Design system (objectif “premium”)
 
 - Typo lisible, contrastes forts, **dark mode** par défaut.
@@ -687,6 +741,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
   - `AlertsStack(Alerts, CreateAlert)`
   - `ModalStack(Paywall, Connections, Settings, Exports)`
 
+<a id="arch-securite"></a>
 ## Sécurité, conformité, et fiabilité
 
 - Chiffrement au repos: Postgres + chiffrement applicatif des tokens (`*_enc`).
@@ -706,6 +761,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
   - jobs idempotents (sync/news/exports), retries contrôlés, DLQ (dead-letter)
   - migrations DB versionnées + rollback plan
 
+<a id="arch-performance"></a>
 ## Performance & scalabilité
 
 - Caching:
@@ -719,6 +775,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
   - indexes alignés sur queries (`user_id`, `symbol`, `executed_at`, `published_at`)
   - vues matérialisées possibles pour “top tickers” à grand volume
 
+<a id="arch-observabilite"></a>
 ## Observabilité & analytics (croissance)
 
 - Logs structurés (pino) + corrélation `request_id`.
@@ -727,6 +784,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 - Produit: tracking events (PostHog/Segment) pour funnel:
   - signup, connect start/complete, first sync, first “wow”, paywall shown, upgrade
 
+<a id="arch-deploiement"></a>
 ## Déploiement (cible MVP)
 
 - Environnements: `dev` / `staging` / `prod` (providers séparés).
@@ -738,6 +796,7 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 - CI: lint + typecheck + tests unitaires (calcul P&L, wheel detection) + migrations check.
 - CD: migrations en “expand/contract” quand nécessaire (zéro downtime).
 
+<a id="arch-monetisation"></a>
 ## Monétisation (architecture)
 
 Free:

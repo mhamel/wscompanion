@@ -1,17 +1,28 @@
+<a id="prd-top"></a>
 # Produit — Companion Wealthsimple (via SnapTrade)
 
+<a id="prd-backlog"></a>
+## Backlog & exécution
+
+- Architecture cible: [ARCHITECTURE.md](ARCHITECTURE.md#arch-top)
+- Backlog global: [docs/TODO_INDEX.md](docs/TODO_INDEX.md)
+- TODOs par domaine: [backend](docs/TODO_BACKEND.md#todo-backend-top), [mobile](docs/TODO_MOBILE.md#todo-mobile-top), [données](docs/TODO_DATA_ANALYTICS.md#todo-data-top), [platform](docs/TODO_PLATFORM_DEVOPS.md#todo-platform-top), [sec/qa/obs](docs/TODO_SECURITY_QA_OBS.md#todo-secqaobs-top)
+
+<a id="prd-objectif"></a>
 ## Ce qu’on veut faire
 
 Créer une application compagnon (mobile) qui se connecte à Wealthsimple **via SnapTrade** pour offrir aux investisseurs actifs 2–3 fonctionnalités “power user” qui ne sont pas (ou pas bien) disponibles dans Wealthsimple aujourd’hui.
 
 Objectif: que l’utilisateur se dise “wow, c’est exactement ce qui me manque”, et que Wealthsimple voie une valeur évidente (rétention, engagement, satisfaction) — au point de vouloir s’associer… ou acheter.
 
+<a id="prd-non-goals"></a>
 ## Ce que ce produit n’est pas
 
 - Pas un plugin “dans” Wealthsimple: c’est une app compagnon indépendante.
 - Pas un outil de conseils financiers: on affiche des données et des analyses; on ne dit pas quoi acheter/vendre.
 - Pas un scraper: la connexion passe par **SnapTrade** (portail sécurisé, contrôle utilisateur, possibilité de déconnecter).
 
+<a id="prd-connexion"></a>
 ## Connexion Wealthsimple (expérience utilisateur)
 
 - Bouton unique: **“Connecter Wealthsimple (via SnapTrade)”**
@@ -19,8 +30,10 @@ Objectif: que l’utilisateur se dise “wow, c’est exactement ce qui me manqu
 - Message clair: “Lecture seule par défaut” + “Tu peux déconnecter à tout moment”.
 - On lance ensuite: “On analyse ton historique et on reconstruit ton P&L réel”.
 
+<a id="prd-features"></a>
 ## Les 3 fonctionnalités qui nous démarquent
 
+<a id="prd-pnl360"></a>
 ### 1) P&L 360° par ticker (le “wow” principal)
 
 Pour chaque symbole, répondre à une question simple:
@@ -33,6 +46,7 @@ Ce qu’on montre, par ticker:
 - Une vue “en cash” et une vue “en rendement”
 - Comparatif “si j’avais juste hold” (optionnel, mais très convaincant)
 
+<a id="prd-wheel"></a>
 ### 2) Wheel / Covered Calls tracker (organisation + clarté)
 
 Une vue “cycle” par ticker pour suivre:
@@ -42,6 +56,7 @@ Une vue “cycle” par ticker pour suivre:
 
 Le but: arrêter de tout gérer dans des notes/Excel et réduire les erreurs.
 
+<a id="prd-exports"></a>
 ### 3) Exports propres (comptable-friendly), sans promettre “les taxes”
 
 Wealthsimple fournit déjà des documents fiscaux, mais:
@@ -55,6 +70,7 @@ Ce qu’on offre:
 
 Note: on valide précisément ce que Wealthsimple calcule déjà pour ses utilisateurs, et on se positionne comme **complément** (pas substitut).
 
+<a id="prd-parcours"></a>
 ## Parcours utilisateur (simple et addictif)
 
 1. Connecter Wealthsimple via SnapTrade
@@ -63,6 +79,7 @@ Note: on valide précisément ce que Wealthsimple calcule déjà pour ses utilis
 4. Alertes: expirations proches, earnings/news, situations “à surveiller”
 5. Exports: un bouton “préparer mon année” (sans jargon fiscal)
 
+<a id="prd-news"></a>
 ## Actualités & événements par action (contexte)
 
 Sur chaque page ticker, ajouter un onglet **“News”** pour donner du contexte (sans jamais faire du conseil).
@@ -77,6 +94,7 @@ Approche data (MVP → scalable):
 - Freemium (API key): providers type Alpha Vantage / Finnhub (quotas limités)
 - Plus tard: provider payant si on veut couverture + fiabilité + conformité long terme
 
+<a id="prd-monetisation"></a>
 ## Modèle payant (clair)
 
 - Gratuit: connexion + aperçu limité (ex: 1–2 tickers, quelques graphiques)
@@ -84,12 +102,14 @@ Approche data (MVP → scalable):
 
 Le pricing final dépendra des coûts de données/connexion liés à SnapTrade en production (on veut garder une marge saine).
 
+<a id="prd-wow"></a>
 ## Ce qui fera dire “wow” (nos critères de succès)
 
 - “Time to wow” < 2 minutes après connexion SnapTrade (P&L 360° visible immédiatement)
 - Rétention: l’utilisateur revient chaque semaine (expirations/alertes + suivi de performance)
 - Recommandations organiques: “tu trades des options? prends ça”
 
+<a id="prd-confiance"></a>
 ## Transparence et confiance
 
 - “Non affilié à Wealthsimple” (branding clair)
