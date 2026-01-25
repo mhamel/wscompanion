@@ -6,6 +6,9 @@ import { loadConfig } from "./config";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
+import { generateExportCsv } from "./exports/csv";
+import { createS3ExportsClient, uploadExportObject, type S3ExportsClient } from "./exports/s3";
+import { isExportType } from "./exports/types";
 import { loadDevSecrets } from "./devSecrets";
 import { getNewsScheduleEverySeconds, loadNewsRssFeeds } from "./news/config";
 import { ingestNewsRssFeed } from "./news/ingest";
@@ -621,24 +624,76 @@ async function handleAlertsEvaluateJob(prisma: PrismaClient) {
   return { ok: true, rules: rules.length, evaluated, triggered, skipped };
 }
 
-async function handleExportRunJob(prisma: PrismaClient, job: Job<ExportsJob>) {
-  const exportJob = await prisma.exportJob.findUnique({ where: { id: job.data.exportJobId } });
+async function handleExportRunJob(
+  prisma: PrismaClient,
+  job: Job<ExportsJob>,
+  s3: S3ExportsClient | null,
+) {
+  const exportJob = await prisma.exportJob.findUnique({
+    where: { id: job.data.exportJobId },
+    include: { file: true },
+  });
   if (!exportJob) {
     throw new Error("ExportJob not found");
   }
 
-  if (exportJob.status === "succeeded") {
+  if (exportJob.status === "succeeded" && exportJob.file) {
     return { ok: true, skipped: true };
   }
 
   await prisma.exportJob.update({
     where: { id: exportJob.id },
-    data: { status: "running", error: null },
+    data: { status: "running", error: null, completedAt: null },
   });
 
-  await prisma.exportJob.update({
-    where: { id: exportJob.id },
-    data: { status: "succeeded", completedAt: new Date(), error: null },
+  if (!isExportType(exportJob.type)) {
+    throw new Error(`Unsupported export type: ${exportJob.type}`);
+  }
+
+  if (exportJob.format !== "csv") {
+    throw new Error(`Unsupported export format: ${exportJob.format}`);
+  }
+
+  if (!s3) {
+    throw new Error("S3 exports not configured");
+  }
+
+  const generated = await generateExportCsv({
+    prisma,
+    userId: exportJob.userId,
+    type: exportJob.type,
+  });
+
+  const storageKey = `exports/${exportJob.userId}/${exportJob.id}/${generated.filename}`;
+  const uploaded = await uploadExportObject({
+    s3,
+    key: storageKey,
+    body: generated.body,
+    contentType: generated.contentType,
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.exportFile.upsert({
+      where: { exportJobId: exportJob.id },
+      create: {
+        exportJobId: exportJob.id,
+        storageKey: uploaded.storageKey,
+        contentType: generated.contentType,
+        sizeBytes: uploaded.sizeBytes,
+        sha256: uploaded.sha256,
+      },
+      update: {
+        storageKey: uploaded.storageKey,
+        contentType: generated.contentType,
+        sizeBytes: uploaded.sizeBytes,
+        sha256: uploaded.sha256,
+      },
+    });
+
+    await tx.exportJob.update({
+      where: { id: exportJob.id },
+      data: { status: "succeeded", completedAt: new Date(), error: null },
+    });
   });
 
   return { ok: true, exportJobId: exportJob.id, type: exportJob.type };
@@ -648,6 +703,7 @@ async function main() {
   dotenv.config();
   loadDevSecrets();
   const config = loadConfig();
+  const s3 = createS3ExportsClient(config);
 
   const prisma = new PrismaClient();
   const connection = new IORedis(config.REDIS_URL, { maxRetriesPerRequest: null });
@@ -813,7 +869,7 @@ async function main() {
     async (job) => {
       try {
         if (job.name === "export-run") {
-          return await handleExportRunJob(prisma, job as Job<ExportsJob>);
+          return await handleExportRunJob(prisma, job as Job<ExportsJob>, s3);
         }
 
         throw new Error(`Unknown job: ${job.name}`);

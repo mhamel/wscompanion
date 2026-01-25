@@ -1,13 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { Prisma } from "@prisma/client";
 import { AppError } from "../errors";
-
-const EXPORT_TYPES = ["pnl_realized_by_ticker", "option_premiums_by_year"] as const;
-type ExportType = (typeof EXPORT_TYPES)[number];
-
-function isExportType(input: string): input is ExportType {
-  return (EXPORT_TYPES as readonly string[]).includes(input);
-}
+import { EXPORT_TYPES, isExportType } from "../exports/types";
 
 async function exportCreateHandler(req: FastifyRequest) {
   const prisma = req.server.prisma;
@@ -116,4 +110,3 @@ export function registerExportsRoutes(app: FastifyInstance) {
     handler: exportCreateHandler,
   });
 }
-
