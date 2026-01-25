@@ -157,6 +157,46 @@ export type WheelCycleDetail = {
   legs: WheelLeg[];
 };
 
+export type AlertTemplate = {
+  type: string;
+  title: string;
+  description: string;
+  requiresSymbol: boolean;
+  defaultConfig: Record<string, unknown>;
+};
+
+export type AlertRule = {
+  id: string;
+  type: string;
+  symbol?: string;
+  config: Record<string, unknown>;
+  enabled: boolean;
+  createdAt: string;
+};
+
+export type AlertEvent = {
+  id: string;
+  alertRuleId: string;
+  type: string;
+  symbol?: string;
+  triggeredAt: string;
+  deliveredAt?: string;
+  payload: Record<string, unknown>;
+};
+
+export type AlertRulesResponse = {
+  items: AlertRule[];
+};
+
+export type AlertTemplatesResponse = {
+  items: AlertTemplate[];
+};
+
+export type AlertEventsResponse = {
+  items: AlertEvent[];
+  nextCursor?: string;
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -226,6 +266,9 @@ export type ApiClient = {
   wheelCycles(input?: { symbol?: string; status?: 'open' | 'closed'; limit?: number }): Promise<WheelCyclesResponse>;
   wheelCycle(input: { id: string }): Promise<WheelCycleDetail>;
   wheelCyclePatch(input: { id: string; notes?: string; tags?: string[] }): Promise<{ ok: boolean }>;
+  alertTemplates(): Promise<AlertTemplatesResponse>;
+  alerts(input?: { limit?: number }): Promise<AlertRulesResponse>;
+  alertEvents(input?: { cursor?: string; limit?: number }): Promise<AlertEventsResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -439,6 +482,34 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
         client.PATCH('/v1/wheel/cycles/{id}', {
           params: { path: { id: input.id } },
           body: { notes: input.notes, tags: input.tags },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    alertTemplates: async () => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/alerts/templates', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    alerts: async (input) => {
+      const limit = input?.limit ? String(input.limit) : undefined;
+      return withAuth((accessToken) =>
+        client.GET('/v1/alerts', {
+          params: { query: { limit } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    alertEvents: async (input) => {
+      const limit = input?.limit ? String(input.limit) : undefined;
+      const cursor = input?.cursor ? input.cursor : undefined;
+
+      return withAuth((accessToken) =>
+        client.GET('/v1/alerts/events', {
+          params: { query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );

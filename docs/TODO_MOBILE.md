@@ -61,7 +61,7 @@
 <a id="fe-alerts"></a>
 ## Alerts
 
-- [ ] FE-070 — AlertsScreen: règles + events récents + CTA “Créer une alerte”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-alerts).
+- [x] FE-070 — AlertsScreen: règles + events récents + CTA “Créer une alerte”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-alerts).
 - [ ] FE-071 — CreateAlertScreen: templates (earnings/expiry/price/news) + validation. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
 - [ ] FE-072 — Push opt-in flow + settings notifications. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
 
