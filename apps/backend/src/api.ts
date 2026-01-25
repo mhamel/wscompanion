@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
+import { Queue } from "bullmq";
+import IORedis from "ioredis";
 import { createClient, type RedisClientType } from "redis";
 import { buildServer } from "./server";
 import { loadConfig } from "./config";
@@ -8,6 +10,9 @@ async function main() {
   dotenv.config();
   const config = loadConfig();
   const prisma = new PrismaClient();
+
+  const bullConnection = new IORedis(config.REDIS_URL, { maxRetriesPerRequest: null });
+  const syncQueue = new Queue("sync", { connection: bullConnection });
 
   let redis: RedisClientType | undefined;
   try {
@@ -21,7 +26,14 @@ async function main() {
     redis = undefined;
   }
 
-  const app = buildServer({ prisma, redis });
+  const app = buildServer({ prisma, redis, syncQueue });
+  app.addHook("onClose", async () => {
+    try {
+      await bullConnection.quit();
+    } catch {
+      // ignore
+    }
+  });
 
   await app.listen({ port: config.PORT, host: "0.0.0.0" });
 }

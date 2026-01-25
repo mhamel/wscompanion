@@ -1,11 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
 import type { FastifyRequest } from "fastify";
+import type { Queue } from "bullmq";
 import type { RedisClientType } from "redis";
 
 declare module "fastify" {
   interface FastifyInstance {
     prisma?: PrismaClient;
     redis?: RedisClientType;
+    syncQueue?: Queue;
     authenticate: (request: FastifyRequest) => Promise<void>;
   }
 }

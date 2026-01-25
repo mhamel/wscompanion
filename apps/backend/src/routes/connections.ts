@@ -136,6 +136,37 @@ async function snaptradeCallbackHandler(req: FastifyRequest) {
     },
   });
 
+  const syncQueue = req.server.syncQueue;
+  if (!syncQueue) {
+    await prisma.syncRun.update({
+      where: { id: syncRun.id },
+      data: { status: "failed", error: "SYNC_QUEUE_NOT_CONFIGURED" },
+    });
+    throw new AppError({
+      code: "QUEUE_NOT_CONFIGURED",
+      message: "Sync queue is not configured",
+      statusCode: 500,
+    });
+  }
+
+  try {
+    await syncQueue.add(
+      "sync-initial",
+      { syncRunId: syncRun.id, brokerConnectionId: brokerConnection.id, userId: req.user.sub },
+      { jobId: syncRun.id, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },
+    );
+  } catch {
+    await prisma.syncRun.update({
+      where: { id: syncRun.id },
+      data: { status: "failed", error: "ENQUEUE_FAILED" },
+    });
+    throw new AppError({
+      code: "ENQUEUE_FAILED",
+      message: "Failed to enqueue sync job",
+      statusCode: 500,
+    });
+  }
+
   return { ok: true, brokerConnectionId: brokerConnection.id, syncRunId: syncRun.id };
 }
 

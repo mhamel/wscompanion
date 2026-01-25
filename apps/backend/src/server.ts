@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import jwt from "@fastify/jwt";
+import type { Queue } from "bullmq";
 import { AppError } from "./errors";
 import type { PrismaClient } from "@prisma/client";
 import type { RedisClientType } from "redis";
@@ -14,6 +15,7 @@ type BuildServerOptions = {
   logger?: boolean;
   prisma?: PrismaClient;
   redis?: RedisClientType;
+  syncQueue?: Queue;
 };
 
 function getJwtSecret(): string {
@@ -59,6 +61,17 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     app.addHook("onClose", async () => {
       try {
         await options.redis?.quit();
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  if (options.syncQueue) {
+    app.decorate("syncQueue", options.syncQueue);
+    app.addHook("onClose", async () => {
+      try {
+        await options.syncQueue?.close();
       } catch {
         // ignore
       }
