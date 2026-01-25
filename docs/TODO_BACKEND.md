@@ -18,7 +18,7 @@
 
 - [x] BE-001 — Bootstrap backend (Fastify + TS) + lint/format/test + structure “monolithe modulaire”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-backend), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-architecture-logique).
   - Livrables: serveur Fastify, config TS, ESLint/Prettier, tests (Vitest/Jest), scripts `dev/test/build`.
-- [ ] BE-002 — Gestion de configuration (env) validée (zod) + secrets management (12-factor). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
+- [x] BE-002 — Gestion de configuration (env) validée (zod) + secrets management (12-factor). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [ ] BE-003 — Logging structuré (pino) + `request_id` + redaction des champs sensibles. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [ ] BE-004 — Error handling unifié (codes, messages, mapping) + format d’erreur stable. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
 
