@@ -49,7 +49,7 @@
 <a id="fe-wheel"></a>
 ## Wheel / Covered Calls
 
-- [ ] FE-050 — WheelScreen: liste cycles par ticker (open/closed) + prochaine expiration + net cycle. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-wheel).
+- [x] FE-050 — WheelScreen: liste cycles par ticker (open/closed) + prochaine expiration + net cycle. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-wheel).
 - [ ] FE-051 — WheelCycleDetailScreen: timeline legs + bouton “Corriger” (override) + confirmation. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-wheel).
 
 <a id="fe-news"></a>

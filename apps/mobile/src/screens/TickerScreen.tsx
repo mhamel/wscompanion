@@ -114,6 +114,9 @@ export function TickerScreen({ route, navigation }: Props) {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
   const symbol = route.params.symbol;
   const [tab, setTab] = React.useState<Tab>('Trades');
+  const [wheelStatus, setWheelStatus] = React.useState<'open' | 'closed'>('open');
+  const [wheelBusy, setWheelBusy] = React.useState(false);
+  const [wheelError, setWheelError] = React.useState<string | null>(null);
 
   const summaryQuery = useQuery({
     queryKey: ['tickerSummary', symbol],
@@ -139,6 +142,31 @@ export function TickerScreen({ route, navigation }: Props) {
 
   const timelineItems = timelineQuery.data?.items ?? [];
   const timelineRecent = timelineItems.slice(-30).reverse();
+
+  const wheelQuery = useQuery({
+    queryKey: ['wheelCycles', symbol, wheelStatus],
+    queryFn: () => api.wheelCycles({ symbol, status: wheelStatus, limit: 20 }),
+    enabled: tab === 'Wheel',
+  });
+
+  const wheelCycles = wheelQuery.data?.items ?? [];
+
+  async function detectWheel() {
+    setWheelBusy(true);
+    setWheelError(null);
+    try {
+      await api.wheelDetect({ symbol });
+      await wheelQuery.refetch();
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setWheelError(e.problem?.message ?? e.message);
+      } else {
+        setWheelError('Erreur réseau.');
+      }
+    } finally {
+      setWheelBusy(false);
+    }
+  }
 
   return (
     <Screen style={{ paddingHorizontal: 0, paddingVertical: 0 }}>
@@ -229,8 +257,85 @@ export function TickerScreen({ route, navigation }: Props) {
               )}
             </View>
           ) : tab === 'Wheel' ? (
-            <View style={styles.card}>
-              <Body>Wheel (à venir: FE-050)</Body>
+            <View style={{ gap: tokens.spacing.sm }}>
+              <View style={styles.card}>
+                <Body>Cycles wheel ({wheelStatus})</Body>
+                {wheelError ? <Body style={styles.error}>{wheelError}</Body> : null}
+
+                <View style={styles.segmentRow}>
+                  <AppButton
+                    title="Open"
+                    variant={wheelStatus === 'open' ? 'primary' : 'secondary'}
+                    style={{ flex: 1 }}
+                    onPress={() => setWheelStatus('open')}
+                  />
+                  <AppButton
+                    title="Closed"
+                    variant={wheelStatus === 'closed' ? 'primary' : 'secondary'}
+                    style={{ flex: 1 }}
+                    onPress={() => setWheelStatus('closed')}
+                  />
+                </View>
+
+                <AppButton
+                  title={wheelBusy ? 'Détection…' : 'Détecter cycles'}
+                  variant="secondary"
+                  disabled={wheelBusy}
+                  onPress={() => void detectWheel()}
+                />
+              </View>
+
+              {wheelQuery.isLoading ? (
+                <View style={styles.card}>
+                  <Body>Chargement…</Body>
+                </View>
+              ) : wheelQuery.isError ? (
+                <View style={{ gap: tokens.spacing.sm }}>
+                  <Body style={styles.error}>
+                    {wheelQuery.error instanceof ApiError
+                      ? wheelQuery.error.problem?.message ?? wheelQuery.error.message
+                      : 'Erreur réseau.'}
+                  </Body>
+                  <AppButton
+                    title="Réessayer"
+                    variant="secondary"
+                    onPress={() => void wheelQuery.refetch()}
+                  />
+                </View>
+              ) : wheelCycles.length === 0 ? (
+                <View style={styles.card}>
+                  <Body>Aucun cycle.</Body>
+                </View>
+              ) : (
+                <View style={{ gap: tokens.spacing.sm }}>
+                  {wheelCycles.map((c) => (
+                    <View key={c.id} style={styles.card}>
+                      <View style={styles.row}>
+                        <Text style={styles.symbol}>{c.symbol}</Text>
+                        {c.netPnl ? (
+                          <Text
+                            style={[
+                              styles.netSmall,
+                              {
+                                color: moneyIsNegative(c.netPnl.amountMinor)
+                                  ? tokens.colors.negative
+                                  : tokens.colors.positive,
+                              },
+                            ]}
+                          >
+                            {formatMoney(c.netPnl)}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Body>
+                        {formatDateTime(c.openedAt)}
+                        {c.closedAt ? ` → ${formatDateTime(c.closedAt)}` : ''}
+                      </Body>
+                      <Body>Legs: {c.legCount} • Tags: {c.tags.join(', ') || '—'}</Body>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           ) : (
             <View style={{ gap: tokens.spacing.sm }}>
@@ -324,6 +429,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   day: { color: tokens.colors.text, fontSize: 16, fontWeight: '600' },
+  symbol: { color: tokens.colors.text, fontSize: 16, fontWeight: '600' },
   tabsRow: {
     flexDirection: 'row',
     gap: tokens.spacing.sm,
@@ -349,4 +455,5 @@ const styles = StyleSheet.create({
   tabTextActive: { color: tokens.colors.background },
   tabTextInactive: { color: tokens.colors.text },
   newsTitle: { color: tokens.colors.text, fontSize: 15, fontWeight: '600' },
+  segmentRow: { flexDirection: 'row', gap: tokens.spacing.sm },
 });

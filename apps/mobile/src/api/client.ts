@@ -106,6 +106,28 @@ export type TransactionsResponse = {
   nextCursor?: string;
 };
 
+export type WheelDetectResponse = {
+  ok: boolean;
+  jobId: string;
+};
+
+export type WheelCycleSummary = {
+  id: string;
+  symbol: string;
+  status: string;
+  openedAt: string;
+  closedAt?: string;
+  baseCurrency: string;
+  netPnl?: Money;
+  autoDetected: boolean;
+  tags: string[];
+  legCount: number;
+};
+
+export type WheelCyclesResponse = {
+  items: WheelCycleSummary[];
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -171,6 +193,8 @@ export type ApiClient = {
     cursor?: string;
     limit?: number;
   }): Promise<TransactionsResponse>;
+  wheelDetect(input?: { symbol?: string }): Promise<WheelDetectResponse>;
+  wheelCycles(input?: { symbol?: string; status?: 'open' | 'closed'; limit?: number }): Promise<WheelCyclesResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -345,6 +369,26 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
               limit: input.limit,
             },
           },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    wheelDetect: async (input) => {
+      const body = input?.symbol ? { symbol: input.symbol } : undefined;
+      return withAuth((accessToken) =>
+        client.POST('/v1/wheel/detect', {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    wheelCycles: async (input) => {
+      const limit = input?.limit ? String(input.limit) : undefined;
+      return withAuth((accessToken) =>
+        client.GET('/v1/wheel/cycles', {
+          params: { query: { symbol: input?.symbol, status: input?.status, limit } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );
