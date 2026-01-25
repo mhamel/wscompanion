@@ -46,5 +46,5 @@
 ## ADRs (décisions à consigner)
 
 - [x] PL-040 — ADR-001 ORM (Prisma vs Drizzle) + raisons + impacts. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-backend).
-- [ ] PL-041 — ADR-002 Provider news (RSS vs API) + ToS/quotas + roadmap. Réf: [PRODUIT.md](../PRODUIT.md#prd-news).
+- [x] PL-041 — ADR-002 Provider news (RSS vs API) + ToS/quotas + roadmap. Réf: [PRODUIT.md](../PRODUIT.md#prd-news).
 - [ ] PL-042 — ADR-003 Billing (RevenueCat vs autre) + modèle d’entitlements. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
