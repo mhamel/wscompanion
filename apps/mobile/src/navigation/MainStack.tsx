@@ -9,7 +9,7 @@ import { CreateAlertScreen } from '../screens/CreateAlertScreen';
 
 export type MainStackParamList = {
   Tabs: undefined;
-  Ticker: { symbol: string };
+  Ticker: { symbol: string; tab?: 'Trades' | 'News' | 'Wheel' | 'Insights' };
   Transactions: { symbol?: string; type?: string; from?: string; to?: string };
   WheelCycle: { id: string };
   NewsDetail: { item: import('../api/client').NewsItem };

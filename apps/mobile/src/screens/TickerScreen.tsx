@@ -113,10 +113,19 @@ function NewsRow(props: { item: NewsItem; onPress: () => void }) {
 export function TickerScreen({ route, navigation }: Props) {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
   const symbol = route.params.symbol;
-  const [tab, setTab] = React.useState<Tab>('Trades');
+  const [tab, setTab] = React.useState<Tab>(route.params.tab ?? 'Trades');
   const [wheelStatus, setWheelStatus] = React.useState<'open' | 'closed'>('open');
   const [wheelBusy, setWheelBusy] = React.useState(false);
   const [wheelError, setWheelError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setTab(route.params.tab ?? 'Trades');
+  }, [symbol, route.params.tab]);
+
+  function selectTab(next: Tab) {
+    setTab(next);
+    navigation.setParams({ tab: next });
+  }
 
   const summaryQuery = useQuery({
     queryKey: ['tickerSummary', symbol],
@@ -200,10 +209,10 @@ export function TickerScreen({ route, navigation }: Props) {
         )}
 
         <View style={styles.tabsRow}>
-          <TabButton label="Trades" active={tab === 'Trades'} onPress={() => setTab('Trades')} />
-          <TabButton label="News" active={tab === 'News'} onPress={() => setTab('News')} />
-          <TabButton label="Wheel" active={tab === 'Wheel'} onPress={() => setTab('Wheel')} />
-          <TabButton label="Insights" active={tab === 'Insights'} onPress={() => setTab('Insights')} />
+          <TabButton label="Trades" active={tab === 'Trades'} onPress={() => selectTab('Trades')} />
+          <TabButton label="News" active={tab === 'News'} onPress={() => selectTab('News')} />
+          <TabButton label="Wheel" active={tab === 'Wheel'} onPress={() => selectTab('Wheel')} />
+          <TabButton label="Insights" active={tab === 'Insights'} onPress={() => selectTab('Insights')} />
         </View>
 
         <View style={{ marginHorizontal: tokens.spacing.md }}>

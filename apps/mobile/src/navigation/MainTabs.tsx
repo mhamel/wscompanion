@@ -7,7 +7,7 @@ import { PortfolioScreen } from '../screens/PortfolioScreen';
 
 export type MainTabParamList = {
   Home: undefined;
-  Ask: undefined;
+  Ask: { q?: string } | undefined;
   Portfolio: undefined;
   Alerts: undefined;
 };
@@ -24,4 +24,3 @@ export function MainTabs() {
     </Tab.Navigator>
   );
 }
-

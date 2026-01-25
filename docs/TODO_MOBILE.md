@@ -37,7 +37,7 @@
 ## Search-first (unifiée)
 
 - [x] FE-030 — SearchBar centrale + suggestions (tickers) + historique local + “Ask” shortcut. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
-- [ ] FE-031 — Résultats: tickers + questions (si assistant activé) + navigation rapide. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask).
+- [x] FE-031 — Résultats: tickers + questions (si assistant activé) + navigation rapide. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask).
 
 <a id="fe-ticker"></a>
 ## Ticker (P&L 360° + sources)

@@ -22,6 +22,8 @@ import { Screen } from '../ui/Screen';
 import { TextField } from '../ui/TextField';
 import { Body, Title } from '../ui/Typography';
 
+const QUICK_TABS = ['Trades', 'News', 'Wheel', 'Insights'] as const;
+
 function formatMoney(input: { amountMinor: string; currency: string }): string {
   try {
     const minor = BigInt(input.amountMinor);
@@ -108,11 +110,12 @@ export function HomeScreen() {
   }, [topTickers]);
 
   const queryNorm = query.trim().toUpperCase();
+  const exactTicker = queryNorm ? tickers.find((t) => t.symbol === queryNorm) : undefined;
   const suggestions = queryNorm
-    ? tickers.filter((t) => t.symbol.includes(queryNorm)).slice(0, 10)
+    ? tickers.filter((t) => t.symbol !== queryNorm && t.symbol.includes(queryNorm)).slice(0, 10)
     : [];
 
-  async function openTicker(symbol: string) {
+  async function openTicker(symbol: string, tab?: (typeof QUICK_TABS)[number]) {
     const next = pushSearchHistory(history, symbol);
     setHistory(next);
     try {
@@ -122,7 +125,7 @@ export function HomeScreen() {
     }
 
     setQuery('');
-    (navigation.getParent() as any)?.navigate('Ticker', { symbol });
+    (navigation.getParent() as any)?.navigate('Ticker', { symbol, tab });
   }
 
   async function syncNow() {
@@ -182,33 +185,85 @@ export function HomeScreen() {
           </View>
 
           {queryNorm ? (
-            suggestions.length === 0 ? (
-              <Body>Aucun resultat.</Body>
-            ) : (
-              <View style={{ gap: tokens.spacing.xs }}>
-                {suggestions.map((t) => (
+            <View style={{ gap: tokens.spacing.sm }}>
+              {exactTicker ? (
+                <View style={{ gap: tokens.spacing.sm }}>
                   <Pressable
-                    key={t.symbol}
-                    onPress={() => void openTicker(t.symbol)}
+                    onPress={() => void openTicker(exactTicker.symbol)}
                     style={({ pressed }) => [styles.suggestionRow, pressed ? styles.pressed : null]}
                   >
-                    <Text style={styles.symbol}>{t.symbol}</Text>
+                    <Text style={styles.symbol}>{exactTicker.symbol}</Text>
                     <Text
                       style={[
                         styles.net,
                         {
-                          color: moneyIsNegative(t.pnl.net.amountMinor)
+                          color: moneyIsNegative(exactTicker.pnl.net.amountMinor)
                             ? tokens.colors.negative
                             : tokens.colors.positive,
                         },
                       ]}
                     >
-                      {formatMoney(t.pnl.net)}
+                      {formatMoney(exactTicker.pnl.net)}
                     </Text>
                   </Pressable>
-                ))}
-              </View>
-            )
+
+                  <View style={styles.chipsRow}>
+                    {QUICK_TABS.map((tab) => (
+                      <Pressable
+                        key={tab}
+                        onPress={() => void openTicker(exactTicker.symbol, tab)}
+                        style={({ pressed }) => [styles.chip, pressed ? styles.pressed : null]}
+                      >
+                        <Text style={styles.chipText}>{tab}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {!exactTicker && suggestions.length === 0 ? (
+                <Body>Aucun resultat.</Body>
+              ) : suggestions.length ? (
+                <View style={{ gap: tokens.spacing.xs }}>
+                  {suggestions.map((t) => (
+                    <Pressable
+                      key={t.symbol}
+                      onPress={() => void openTicker(t.symbol)}
+                      style={({ pressed }) => [styles.suggestionRow, pressed ? styles.pressed : null]}
+                    >
+                      <Text style={styles.symbol}>{t.symbol}</Text>
+                      <Text
+                        style={[
+                          styles.net,
+                          {
+                            color: moneyIsNegative(t.pnl.net.amountMinor)
+                              ? tokens.colors.negative
+                              : tokens.colors.positive,
+                          },
+                        ]}
+                      >
+                        {formatMoney(t.pnl.net)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+
+              <Pressable
+                onPress={() => {
+                  const q = query.trim();
+                  if (!q) return;
+                  setQuery('');
+                  navigation.navigate('Ask', { q });
+                }}
+                style={({ pressed }) => [styles.suggestionRow, pressed ? styles.pressed : null]}
+              >
+                <Text style={styles.symbol}>Ask</Text>
+                <Text style={styles.net} numberOfLines={1}>
+                  {query.trim()}
+                </Text>
+              </Pressable>
+            </View>
           ) : history.length ? (
             <View style={{ gap: tokens.spacing.sm }}>
               <Body>Historique</Body>
