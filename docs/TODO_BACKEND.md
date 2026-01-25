@@ -53,7 +53,7 @@
 - [x] BE-041 — Chiffrement applicatif des tokens (`*_enc`) + rotation des clés + redaction logs. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [x] BE-042 — Worker BullMQ: orchestrer sync initial (jobs idempotents, retries, DLQ). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync).
 - [x] BE-043 — Ingestion “append-only” des transactions + dédup (idempotency keys) + journal `raw` (payload). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-transactions).
-- [ ] BE-044 — Sync incrémental (schedule + manuel + webhook si dispo) + stratégie de recalcul ciblé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync).
+- [x] BE-044 — Sync incrémental (schedule + manuel + webhook si dispo) + stratégie de recalcul ciblé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync).
 
 <a id="be-portfolio"></a>
 ## API Portfolio (accounts, positions, transactions)
