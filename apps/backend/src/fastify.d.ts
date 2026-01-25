@@ -9,6 +9,7 @@ declare module "fastify" {
     redis?: RedisClientType;
     syncQueue?: Queue;
     analyticsQueue?: Queue;
+    exportsQueue?: Queue;
     authenticate: (request: FastifyRequest) => Promise<void>;
   }
 }

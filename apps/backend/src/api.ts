@@ -16,6 +16,7 @@ async function main() {
   const bullConnection = new IORedis(config.REDIS_URL, { maxRetriesPerRequest: null });
   const syncQueue = new Queue("sync", { connection: bullConnection });
   const analyticsQueue = new Queue("analytics", { connection: bullConnection });
+  const exportsQueue = new Queue("exports", { connection: bullConnection });
 
   let redis: RedisClientType | undefined;
   try {
@@ -29,7 +30,7 @@ async function main() {
     redis = undefined;
   }
 
-  const app = buildServer({ prisma, redis, syncQueue, analyticsQueue });
+  const app = buildServer({ prisma, redis, syncQueue, analyticsQueue, exportsQueue });
   app.addHook("onClose", async () => {
     try {
       await bullConnection.quit();

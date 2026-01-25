@@ -11,6 +11,7 @@ import { registerAlertsRoutes } from "./routes/alerts";
 import { registerBillingRoutes } from "./routes/billing";
 import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
+import { registerExportsRoutes } from "./routes/exports";
 import { registerPortfolioRoutes } from "./routes/portfolio";
 import { registerSyncRoutes } from "./routes/sync";
 import { registerTickerRoutes } from "./routes/tickers";
@@ -23,6 +24,7 @@ type BuildServerOptions = {
   redis?: RedisClientType;
   syncQueue?: Queue;
   analyticsQueue?: Queue;
+  exportsQueue?: Queue;
 };
 
 function getJwtSecret(): string {
@@ -90,6 +92,17 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     app.addHook("onClose", async () => {
       try {
         await options.analyticsQueue?.close();
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  if (options.exportsQueue) {
+    app.decorate("exportsQueue", options.exportsQueue);
+    app.addHook("onClose", async () => {
+      try {
+        await options.exportsQueue?.close();
       } catch {
         // ignore
       }
@@ -239,6 +252,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       registerBillingRoutes(v1);
       registerConnectionRoutes(v1);
       registerDeviceRoutes(v1);
+      registerExportsRoutes(v1);
       registerPortfolioRoutes(v1);
       registerSyncRoutes(v1);
       registerTickerRoutes(v1);

@@ -23,6 +23,7 @@ type AnalyticsJob = {
 
 type NewsJob = Record<string, never>;
 type AlertsJob = Record<string, never>;
+type ExportsJob = { exportJobId: string; error?: string };
 
 type MockTransaction = {
   externalId: string;
@@ -620,6 +621,29 @@ async function handleAlertsEvaluateJob(prisma: PrismaClient) {
   return { ok: true, rules: rules.length, evaluated, triggered, skipped };
 }
 
+async function handleExportRunJob(prisma: PrismaClient, job: Job<ExportsJob>) {
+  const exportJob = await prisma.exportJob.findUnique({ where: { id: job.data.exportJobId } });
+  if (!exportJob) {
+    throw new Error("ExportJob not found");
+  }
+
+  if (exportJob.status === "succeeded") {
+    return { ok: true, skipped: true };
+  }
+
+  await prisma.exportJob.update({
+    where: { id: exportJob.id },
+    data: { status: "running", error: null },
+  });
+
+  await prisma.exportJob.update({
+    where: { id: exportJob.id },
+    data: { status: "succeeded", completedAt: new Date(), error: null },
+  });
+
+  return { ok: true, exportJobId: exportJob.id, type: exportJob.type };
+}
+
 async function main() {
   dotenv.config();
   loadDevSecrets();
@@ -635,6 +659,8 @@ async function main() {
   const newsDlq = new Queue("news-dlq", { connection });
   const alertsQueue = new Queue<AlertsJob>("alerts", { connection });
   const alertsDlq = new Queue("alerts-dlq", { connection });
+  const exportsQueue = new Queue<ExportsJob>("exports", { connection });
+  const exportsDlq = new Queue("exports-dlq", { connection });
 
   const scheduleEverySeconds = Number(process.env.SYNC_SCHEDULE_EVERY_SECONDS ?? "3600");
   if (Number.isFinite(scheduleEverySeconds) && scheduleEverySeconds > 0) {
@@ -782,7 +808,48 @@ async function main() {
     { connection },
   );
 
+  const exportsWorker = new Worker(
+    "exports",
+    async (job) => {
+      try {
+        if (job.name === "export-run") {
+          return await handleExportRunJob(prisma, job as Job<ExportsJob>);
+        }
+
+        throw new Error(`Unknown job: ${job.name}`);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+
+        if (job.name === "export-run") {
+          const exportJobId = (job.data as ExportsJob).exportJobId;
+          await prisma.exportJob
+            .update({
+              where: { id: exportJobId },
+              data: { status: "failed", completedAt: new Date(), error: errorMessage },
+            })
+            .catch(() => {
+              // ignore
+            });
+
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+          if (isFinalAttempt) {
+            await exportsDlq.add(
+              job.name,
+              { ...(job.data as ExportsJob), error: errorMessage },
+              { jobId: `dlq:${job.id ?? exportJobId}` },
+            );
+          }
+        }
+
+        throw err;
+      }
+    },
+    { connection },
+  );
+
   const shutdown = async () => {
+    await exportsWorker.close();
     await alertsWorker.close();
     await newsWorker.close();
     await analyticsWorker.close();
@@ -795,6 +862,8 @@ async function main() {
     await newsDlq.close();
     await alertsQueue.close();
     await alertsDlq.close();
+    await exportsQueue.close();
+    await exportsDlq.close();
     await connection.quit();
     await prisma.$disconnect();
   };

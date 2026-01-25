@@ -94,7 +94,7 @@
 <a id="be-exports"></a>
 ## Exports (jobs)
 
-- [ ] BE-100 — Créer `export_job` + pipeline BullMQ (CSV d’abord) + états (queued/running/succeeded/failed). Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-exports).
+- [x] BE-100 — Créer `export_job` + pipeline BullMQ (CSV d’abord) + états (queued/running/succeeded/failed). Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-exports).
 - [ ] BE-101 — Génération CSV “réalisé par ticker” + “primes options par année” (MVP) + stockage S3 + URLs signées. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-exports).
 - [ ] BE-102 — Endpoint listing jobs + téléchargement + droits (user-only). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-exports).
 
