@@ -17,7 +17,7 @@
 
 - [x] FE-001 — Bootstrap app Expo + TS + React Navigation (tabs + stacks) + structure feature-first. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-mobile).
 - [x] FE-002 — Data fetching/cache: TanStack Query + client OpenAPI typé + retry/backoff. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-mobile), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
-- [ ] FE-003 — Gestion d’état UI: Zustand (auth/session/entitlements) + persistance sécurisée (Keychain/Keystore). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
+- [x] FE-003 — Gestion d’état UI: Zustand (auth/session/entitlements) + persistance sécurisée (Keychain/Keystore). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [ ] FE-004 — Design system MVP (tokens couleurs/typo) + dark mode par défaut. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-designsystem).
 
 <a id="fe-auth"></a>

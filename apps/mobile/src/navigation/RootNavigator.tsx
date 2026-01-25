@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthScreen } from '../screens/AuthScreen';
 import { MainTabs } from './MainTabs';
+import { useAuthStore } from '../auth/authStore';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -12,7 +13,12 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
-  const [isAuthed] = useState(false);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const isAuthed = useAuthStore((s) => Boolean(s.accessToken));
+
+  if (!hydrated) {
+    return null;
+  }
 
   return (
     <NavigationContainer>
@@ -26,4 +32,3 @@ export function RootNavigator() {
     </NavigationContainer>
   );
 }
-
