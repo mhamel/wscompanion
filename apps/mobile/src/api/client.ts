@@ -37,6 +37,21 @@ export type TickerSummaryResponse = {
   lastUpdatedAt: string;
 };
 
+export type NewsItem = {
+  id: string;
+  title: string;
+  url: string;
+  publisher?: string;
+  publishedAt: string;
+  symbols: string[];
+  summary?: string;
+};
+
+export type TickerNewsResponse = {
+  items: NewsItem[];
+  nextCursor?: string;
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -91,6 +106,7 @@ export type ApiClient = {
   me(): Promise<{ id: string; email: string }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
   tickerSummary(input: { symbol: string }): Promise<TickerSummaryResponse>;
+  tickerNews(input: { symbol: string; cursor?: string; limit?: number }): Promise<TickerNewsResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -225,6 +241,18 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.GET('/v1/tickers/{symbol}/summary', {
           params: { path: { symbol: input.symbol } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    tickerNews: async (input) => {
+      const limit = input.limit ? String(input.limit) : undefined;
+      const cursor = input.cursor ? input.cursor : undefined;
+
+      return withAuth((accessToken) =>
+        client.GET('/v1/tickers/{symbol}/news', {
+          params: { path: { symbol: input.symbol }, query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );

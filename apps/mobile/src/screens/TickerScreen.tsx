@@ -1,7 +1,7 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { createApiClient, type Money, type TickerSummaryResponse } from '../api/client';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { createApiClient, type Money, type NewsItem, type TickerSummaryResponse } from '../api/client';
 import { ApiError } from '../api/http';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
@@ -34,6 +34,12 @@ function formatMoney(input: Money): string {
   } catch {
     return `${input.amountMinor} ${input.currency}`;
   }
+}
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return iso;
+  return d.toLocaleString();
 }
 
 function TabButton(props: { label: Tab; active: boolean; onPress: () => void }) {
@@ -87,6 +93,23 @@ function SummaryCard(props: { summary: TickerSummaryResponse }) {
   );
 }
 
+function NewsRow(props: { item: NewsItem }) {
+  const meta = [props.item.publisher, formatDateTime(props.item.publishedAt)]
+    .filter(Boolean)
+    .join(' • ');
+
+  return (
+    <Pressable
+      onPress={() => void Linking.openURL(props.item.url)}
+      style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
+    >
+      <Text style={styles.newsTitle}>{props.item.title}</Text>
+      {meta ? <Body>{meta}</Body> : null}
+      {props.item.summary ? <Body>{props.item.summary}</Body> : null}
+    </Pressable>
+  );
+}
+
 export function TickerScreen({ route }: Props) {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
   const symbol = route.params.symbol;
@@ -96,6 +119,17 @@ export function TickerScreen({ route }: Props) {
     queryKey: ['tickerSummary', symbol],
     queryFn: () => api.tickerSummary({ symbol }),
   });
+
+  const newsQuery = useInfiniteQuery({
+    queryKey: ['tickerNews', symbol],
+    queryFn: ({ pageParam }) =>
+      api.tickerNews({ symbol, cursor: typeof pageParam === 'string' ? pageParam : undefined, limit: 20 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: tab === 'News',
+  });
+
+  const newsItems = newsQuery.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
     <Screen style={{ paddingHorizontal: 0, paddingVertical: 0 }}>
@@ -141,8 +175,44 @@ export function TickerScreen({ route }: Props) {
               <Body>Trades (à venir: FE-042)</Body>
             </View>
           ) : tab === 'News' ? (
-            <View style={styles.card}>
-              <Body>News (à venir: FE-060)</Body>
+            <View style={{ gap: tokens.spacing.sm }}>
+              {newsQuery.isLoading ? (
+                <View style={styles.card}>
+                  <Body>Chargement…</Body>
+                </View>
+              ) : newsQuery.isError ? (
+                <View style={{ gap: tokens.spacing.sm }}>
+                  <Body style={styles.error}>
+                    {newsQuery.error instanceof ApiError
+                      ? newsQuery.error.problem?.message ?? newsQuery.error.message
+                      : 'Erreur réseau.'}
+                  </Body>
+                  <AppButton
+                    title="Réessayer"
+                    variant="secondary"
+                    onPress={() => void newsQuery.refetch()}
+                  />
+                </View>
+              ) : newsItems.length === 0 ? (
+                <View style={styles.card}>
+                  <Body>Aucune news pour ce ticker.</Body>
+                </View>
+              ) : (
+                <View style={{ gap: tokens.spacing.sm }}>
+                  {newsItems.map((item) => (
+                    <NewsRow key={item.id} item={item} />
+                  ))}
+
+                  {newsQuery.hasNextPage ? (
+                    <AppButton
+                      title={newsQuery.isFetchingNextPage ? 'Chargement…' : 'Charger plus'}
+                      variant="secondary"
+                      disabled={newsQuery.isFetchingNextPage}
+                      onPress={() => void newsQuery.fetchNextPage()}
+                    />
+                  ) : null}
+                </View>
+              )}
             </View>
           ) : tab === 'Wheel' ? (
             <View style={styles.card}>
@@ -174,6 +244,7 @@ const styles = StyleSheet.create({
   },
   net: { fontSize: 28, fontWeight: '700', color: tokens.colors.text },
   error: { color: tokens.colors.negative },
+  pressed: { opacity: 0.85 },
   tabsRow: {
     flexDirection: 'row',
     gap: tokens.spacing.sm,
@@ -198,4 +269,5 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 13, fontWeight: '600' },
   tabTextActive: { color: tokens.colors.background },
   tabTextInactive: { color: tokens.colors.text },
+  newsTitle: { color: tokens.colors.text, fontSize: 15, fontWeight: '600' },
 });

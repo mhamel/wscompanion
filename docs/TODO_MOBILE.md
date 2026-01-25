@@ -55,7 +55,7 @@
 <a id="fe-news"></a>
 ## News
 
-- [ ] FE-060 — Onglet News sur Ticker: liste paginée, sources cliquables (web) + états empty/loading. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-news).
+- [x] FE-060 — Onglet News sur Ticker: liste paginée, sources cliquables (web) + états empty/loading. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-news).
 - [ ] FE-061 — NewsDetail (si nécessaire): contenu, meta, “related tickers”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
 
 <a id="fe-alerts"></a>
