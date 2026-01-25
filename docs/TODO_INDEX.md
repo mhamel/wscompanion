@@ -35,19 +35,19 @@ Ce dépôt ne contient pour l’instant que la vision **Produit** et l’**Archi
 
 Objectif: “connexion SnapTrade → sync initial → top tickers P&L visibles” (≤ 2 min). Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
 
-- [ ] M1-01 — Flow SnapTrade end-to-end (callback backend + état de sync + écran mobile). Réf: [PRODUIT.md](../PRODUIT.md#prd-connexion), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
-- [ ] M1-02 — Ingestion transactions/positions + normalisation + idempotence (worker). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync), [TODO_BACKEND.md](./TODO_BACKEND.md#be-snaptrade).
-- [ ] M1-03 — Calcul P&L 360° (version MVP) + endpoints “top tickers”. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360).
-- [ ] M1-04 — Home + Ticker (mobile) avec “sources” cliquables vers transactions. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-ecrans).
+- [x] M1-01 — Flow SnapTrade end-to-end (callback backend + état de sync + écran mobile). Réf: [PRODUIT.md](../PRODUIT.md#prd-connexion), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
+- [x] M1-02 — Ingestion transactions/positions + normalisation + idempotence (worker). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync), [TODO_BACKEND.md](./TODO_BACKEND.md#be-snaptrade).
+- [x] M1-03 — Calcul P&L 360° (version MVP) + endpoints “top tickers”. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360).
+- [x] M1-04 — Home + Ticker (mobile) avec “sources” cliquables vers transactions. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-ecrans).
 
 ### M2 — Wheel tracker + Exports (valeur “power user”)
 
-- [ ] M2-01 — Détection wheel (heuristiques MVP) + UI cycles + override manuel. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
+- [x] M2-01 — Détection wheel (heuristiques MVP) + UI cycles + override manuel. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
 - [ ] M2-02 — Exports (CSV d’abord) via jobs + stockage S3 + download mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-exports).
 
 ### M3 — News + Alerts + Paywall (rétention & monétisation)
 
-- [ ] M3-01 — News par ticker (RSS/Atom) + dédup + endpoints + onglet mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
+- [x] M3-01 — News par ticker (RSS/Atom) + dédup + endpoints + onglet mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
 - [ ] M3-02 — Alertes (règles + évaluations worker + push) + écrans. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
 - [ ] M3-03 — Entitlements (RevenueCat) + paywall “non intrusif” + gating clair. Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
 
