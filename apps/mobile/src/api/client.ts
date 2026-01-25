@@ -37,6 +37,20 @@ export type TickerSummaryResponse = {
   lastUpdatedAt: string;
 };
 
+export type TickerTimelineItem = {
+  date: string;
+  net: Money;
+  realized: Money;
+  unrealized: Money;
+  marketValue: Money;
+};
+
+export type TickerTimelineResponse = {
+  symbol: string;
+  baseCurrency: string;
+  items: TickerTimelineItem[];
+};
+
 export type NewsItem = {
   id: string;
   title: string;
@@ -147,6 +161,7 @@ export type ApiClient = {
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
   tickerSummary(input: { symbol: string }): Promise<TickerSummaryResponse>;
   tickerNews(input: { symbol: string; cursor?: string; limit?: number }): Promise<TickerNewsResponse>;
+  tickerTimeline(input: { symbol: string }): Promise<TickerTimelineResponse>;
   transactions(input: {
     accountId?: string;
     symbol?: string;
@@ -302,6 +317,15 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
       return withAuth((accessToken) =>
         client.GET('/v1/tickers/{symbol}/news', {
           params: { path: { symbol: input.symbol }, query: { limit, cursor } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    tickerTimeline: async (input) => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/tickers/{symbol}/timeline', {
+          params: { path: { symbol: input.symbol } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );

@@ -131,6 +131,15 @@ export function TickerScreen({ route, navigation }: Props) {
 
   const newsItems = newsQuery.data?.pages.flatMap((p) => p.items) ?? [];
 
+  const timelineQuery = useQuery({
+    queryKey: ['tickerTimeline', symbol],
+    queryFn: () => api.tickerTimeline({ symbol }),
+    enabled: tab === 'Insights',
+  });
+
+  const timelineItems = timelineQuery.data?.items ?? [];
+  const timelineRecent = timelineItems.slice(-30).reverse();
+
   return (
     <Screen style={{ paddingHorizontal: 0, paddingVertical: 0 }}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -224,8 +233,70 @@ export function TickerScreen({ route, navigation }: Props) {
               <Body>Wheel (à venir: FE-050)</Body>
             </View>
           ) : (
-            <View style={styles.card}>
-              <Body>Insights (à venir)</Body>
+            <View style={{ gap: tokens.spacing.sm }}>
+              {timelineQuery.isLoading ? (
+                <View style={styles.card}>
+                  <Body>Chargement…</Body>
+                </View>
+              ) : timelineQuery.isError ? (
+                <View style={{ gap: tokens.spacing.sm }}>
+                  <Body style={styles.error}>
+                    {timelineQuery.error instanceof ApiError
+                      ? timelineQuery.error.problem?.message ?? timelineQuery.error.message
+                      : 'Erreur réseau.'}
+                  </Body>
+                  <AppButton
+                    title="Réessayer"
+                    variant="secondary"
+                    onPress={() => void timelineQuery.refetch()}
+                  />
+                </View>
+              ) : timelineRecent.length === 0 ? (
+                <View style={styles.card}>
+                  <Body>Aucune donnée de timeline.</Body>
+                </View>
+              ) : (
+                <View style={{ gap: tokens.spacing.sm }}>
+                  <View style={styles.card}>
+                    <Body>Timeline P&amp;L (30 derniers jours)</Body>
+                    <AppButton
+                      title="Voir toutes les transactions"
+                      variant="secondary"
+                      onPress={() => navigation.navigate('Transactions', { symbol })}
+                    />
+                  </View>
+
+                  {timelineRecent.map((row) => {
+                    const net = row.net;
+                    const neg = moneyIsNegative(net.amountMinor);
+                    const from = `${row.date}T00:00:00.000Z`;
+                    const to = `${row.date}T23:59:59.999Z`;
+
+                    return (
+                      <Pressable
+                        key={row.date}
+                        onPress={() => navigation.navigate('Transactions', { symbol, from, to })}
+                        style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
+                      >
+                        <View style={styles.row}>
+                          <Text style={styles.day}>{row.date}</Text>
+                          <Text
+                            style={[
+                              styles.netSmall,
+                              { color: neg ? tokens.colors.negative : tokens.colors.positive },
+                            ]}
+                          >
+                            {formatMoney(net)}
+                          </Text>
+                        </View>
+                        <Body>
+                          Réalisé {formatMoney(row.realized)} • Non-réalisé {formatMoney(row.unrealized)}
+                        </Body>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -248,8 +319,11 @@ const styles = StyleSheet.create({
     gap: tokens.spacing.xs,
   },
   net: { fontSize: 28, fontWeight: '700', color: tokens.colors.text },
+  netSmall: { fontSize: 16, fontWeight: '700', color: tokens.colors.text },
   error: { color: tokens.colors.negative },
   pressed: { opacity: 0.85 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  day: { color: tokens.colors.text, fontSize: 16, fontWeight: '600' },
   tabsRow: {
     flexDirection: 'row',
     gap: tokens.spacing.sm,

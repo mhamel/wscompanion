@@ -7,7 +7,7 @@ import { TransactionsFilterScreen } from '../screens/TransactionsFilterScreen';
 export type MainStackParamList = {
   Tabs: undefined;
   Ticker: { symbol: string };
-  Transactions: { symbol?: string };
+  Transactions: { symbol?: string; type?: string; from?: string; to?: string };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();

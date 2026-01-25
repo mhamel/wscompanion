@@ -72,15 +72,20 @@ function TxRow(props: { tx: TransactionItem }) {
 export function TransactionsFilterScreen({ route }: Props) {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
 
-  const [draftSymbol, setDraftSymbol] = React.useState(route.params.symbol ?? '');
-  const [draftType, setDraftType] = React.useState('');
-  const [draftFrom, setDraftFrom] = React.useState('');
-  const [draftTo, setDraftTo] = React.useState('');
+  const initialSymbol = route.params.symbol ?? '';
+  const initialType = route.params.type ?? '';
+  const initialFrom = route.params.from ?? '';
+  const initialTo = route.params.to ?? '';
 
-  const [symbol, setSymbol] = React.useState(route.params.symbol ?? '');
-  const [type, setType] = React.useState('');
-  const [from, setFrom] = React.useState('');
-  const [to, setTo] = React.useState('');
+  const [draftSymbol, setDraftSymbol] = React.useState(initialSymbol);
+  const [draftType, setDraftType] = React.useState(initialType);
+  const [draftFrom, setDraftFrom] = React.useState(initialFrom);
+  const [draftTo, setDraftTo] = React.useState(initialTo);
+
+  const [symbol, setSymbol] = React.useState(initialSymbol);
+  const [type, setType] = React.useState(initialType);
+  const [from, setFrom] = React.useState(initialFrom);
+  const [to, setTo] = React.useState(initialTo);
 
   const txQuery = useInfiniteQuery({
     queryKey: ['transactions', symbol, type, from, to],
@@ -144,14 +149,14 @@ export function TransactionsFilterScreen({ route }: Props) {
               variant="secondary"
               style={{ flex: 1 }}
               onPress={() => {
-                setDraftSymbol(route.params.symbol ?? '');
-                setDraftType('');
-                setDraftFrom('');
-                setDraftTo('');
-                setSymbol(route.params.symbol ?? '');
-                setType('');
-                setFrom('');
-                setTo('');
+                setDraftSymbol(initialSymbol);
+                setDraftType(initialType);
+                setDraftFrom(initialFrom);
+                setDraftTo(initialTo);
+                setSymbol(initialSymbol);
+                setType(initialType);
+                setFrom(initialFrom);
+                setTo(initialTo);
               }}
             />
           </View>
@@ -217,4 +222,3 @@ const styles = StyleSheet.create({
   error: { color: tokens.colors.negative },
   buttonsRow: { flexDirection: 'row', gap: tokens.spacing.sm },
 });
-
