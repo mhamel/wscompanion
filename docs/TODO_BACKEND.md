@@ -50,7 +50,7 @@
 ## SnapTrade: connexion + sync (worker)
 
 - [x] BE-040 — Flow connexion SnapTrade: endpoints start/callback + création `broker_connection` + stockage tokens chiffrés. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding), [PRODUIT.md](../PRODUIT.md#prd-connexion).
-- [ ] BE-041 — Chiffrement applicatif des tokens (`*_enc`) + rotation des clés + redaction logs. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
+- [x] BE-041 — Chiffrement applicatif des tokens (`*_enc`) + rotation des clés + redaction logs. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [ ] BE-042 — Worker BullMQ: orchestrer sync initial (jobs idempotents, retries, DLQ). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync).
 - [ ] BE-043 — Ingestion “append-only” des transactions + dédup (idempotency keys) + journal `raw` (payload). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-transactions).
 - [ ] BE-044 — Sync incrémental (schedule + manuel + webhook si dispo) + stratégie de recalcul ciblé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync).
