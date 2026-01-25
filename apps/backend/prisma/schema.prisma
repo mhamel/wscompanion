@@ -24,6 +24,8 @@ model User {
   wheelCycles     WheelCycle[]
   alertRules      AlertRule[]
   exportJobs      ExportJob[]
+  brokerConnections BrokerConnection[]
+  syncRuns         SyncRun[]
 }
 
 model Session {
@@ -93,6 +95,7 @@ model Account {
   userId            String   @db.Uuid
   user              User     @relation(fields: [userId], references: [id])
   brokerConnectionId String? @db.Uuid
+  brokerConnection  BrokerConnection? @relation(fields: [brokerConnectionId], references: [id])
   externalAccountId String?
   name              String
   type              String
@@ -107,6 +110,49 @@ model Account {
 
   @@index([userId])
   @@unique([brokerConnectionId, externalAccountId])
+}
+
+model BrokerConnection {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @db.Uuid
+  user               User     @relation(fields: [userId], references: [id])
+  provider           String
+  status             String
+  externalUserId     String
+  externalConnectionId String
+  accessTokenEnc     Bytes?
+  refreshTokenEnc    Bytes?
+  scopes             String[]
+  connectedAt        DateTime
+  disconnectedAt     DateTime?
+  lastSyncAt         DateTime?
+  raw                Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  accounts Account[]
+  syncRuns SyncRun[]
+
+  @@index([userId])
+  @@unique([provider, externalConnectionId])
+}
+
+model SyncRun {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  user             User     @relation(fields: [userId], references: [id])
+  brokerConnectionId String @db.Uuid
+  brokerConnection  BrokerConnection @relation(fields: [brokerConnectionId], references: [id])
+  status           String
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  error            String?
+  stats            Json?
+  cursor           String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([brokerConnectionId, createdAt])
 }
 
 model Instrument {

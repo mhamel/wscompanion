@@ -7,6 +7,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { RedisClientType } from "redis";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerBillingRoutes } from "./routes/billing";
+import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
 
 type BuildServerOptions = {
@@ -38,6 +39,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
                 "req.headers.cookie",
                 "req.body.password",
                 "req.body.code",
+                "req.body.accessToken",
                 "req.body.refreshToken",
               ],
               remove: true,
@@ -203,6 +205,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
 
       registerAuthRoutes(v1);
       registerBillingRoutes(v1);
+      registerConnectionRoutes(v1);
       registerDeviceRoutes(v1);
     },
     { prefix: "/v1" },
