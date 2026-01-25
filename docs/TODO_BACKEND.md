@@ -20,7 +20,7 @@
   - Livrables: serveur Fastify, config TS, ESLint/Prettier, tests (Vitest/Jest), scripts `dev/test/build`.
 - [x] BE-002 — Gestion de configuration (env) validée (zod) + secrets management (12-factor). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [x] BE-003 — Logging structuré (pino) + `request_id` + redaction des champs sensibles. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
-- [ ] BE-004 — Error handling unifié (codes, messages, mapping) + format d’erreur stable. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
+- [x] BE-004 — Error handling unifié (codes, messages, mapping) + format d’erreur stable. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
 
 <a id="be-api"></a>
 ## Contrat API (OpenAPI-first)

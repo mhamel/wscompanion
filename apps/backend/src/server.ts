@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import { AppError } from "./errors";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -36,6 +37,18 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
 
   app.register(swaggerUi, {
     routePrefix: "/docs",
+  });
+
+  app.setNotFoundHandler(async (_req, reply) => {
+    return reply.status(404).send({ code: "NOT_FOUND", message: "Not found" });
+  });
+
+  app.setErrorHandler(async (err, _req, reply) => {
+    if (err instanceof AppError) {
+      return reply.status(err.statusCode).send(err.toProblemDetails());
+    }
+
+    return reply.status(500).send({ code: "INTERNAL_ERROR", message: "Internal error" });
   });
 
   app.get("/health", async () => {

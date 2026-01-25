@@ -10,4 +10,13 @@ describe("health", () => {
     expect(res.json()).toEqual({ ok: true });
     await app.close();
   });
+
+  it("returns a stable 404 error format", async () => {
+    const app = buildServer({ logger: false });
+    await app.ready();
+    const res = await app.inject({ method: "GET", url: "/nope" });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ code: "NOT_FOUND", message: "Not found" });
+    await app.close();
+  });
 });
