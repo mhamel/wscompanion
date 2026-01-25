@@ -11,5 +11,57 @@ model User {
   id        String   @id @default(uuid()) @db.Uuid
   email     String   @unique
   createdAt DateTime @default(now())
+
+  deletedAt    DateTime?
+  sessions     Session[]
+  devices      Device[]
+  entitlements Entitlement[]
+  preferences  UserPreferences?
 }
 
+model Session {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @db.Uuid
+  user             User     @relation(fields: [userId], references: [id])
+  refreshTokenHash String
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+
+  @@index([userId])
+}
+
+model Device {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id])
+  platform   String
+  pushToken  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastSeenAt DateTime?
+
+  @@unique([userId, pushToken])
+}
+
+model Entitlement {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  status    String
+  startedAt DateTime @default(now())
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+model UserPreferences {
+  userId       String   @id @db.Uuid
+  user         User     @relation(fields: [userId], references: [id])
+  baseCurrency String   @default("USD")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
