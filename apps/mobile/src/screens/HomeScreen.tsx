@@ -15,9 +15,11 @@ import { createApiClient, type SyncStatusItem } from '../api/client';
 import { ApiError } from '../api/http';
 import { config } from '../config';
 import type { MainTabParamList } from '../navigation/MainTabs';
+import { loadSearchHistory, pushSearchHistory, saveSearchHistory } from '../search/history';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
+import { TextField } from '../ui/TextField';
 import { Body, Title } from '../ui/Typography';
 
 function formatMoney(input: { amountMinor: string; currency: string }): string {
@@ -60,10 +62,23 @@ export function HomeScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const [syncBusy, setSyncBusy] = React.useState(false);
   const [syncError, setSyncError] = React.useState<string | null>(null);
+  const [query, setQuery] = React.useState('');
+  const [history, setHistory] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const loaded = await loadSearchHistory();
+      if (alive) setHistory(loaded);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const tickersQuery = useQuery({
-    queryKey: ['tickers', 10],
-    queryFn: () => api.tickers({ limit: 10 }),
+    queryKey: ['tickers', 100],
+    queryFn: () => api.tickers({ limit: 100 }),
   });
 
   const syncStatusQuery = useQuery({
@@ -71,25 +86,44 @@ export function HomeScreen() {
     queryFn: () => api.syncStatus(),
   });
 
-  const items = tickersQuery.data?.items ?? [];
+  const tickers = tickersQuery.data?.items ?? [];
+  const topTickers = tickers.slice(0, 10);
   const firstConnection = syncStatusQuery.data?.items?.[0];
 
   const totalNet = React.useMemo(() => {
-    if (items.length === 0) return null;
+    if (topTickers.length === 0) return null;
 
-    const currency = items[0].pnl.net.currency;
-    if (!items.every((i) => i.pnl.net.currency === currency)) return null;
+    const currency = topTickers[0].pnl.net.currency;
+    if (!topTickers.every((i) => i.pnl.net.currency === currency)) return null;
 
     try {
       let total = 0n;
-      for (const item of items) {
+      for (const item of topTickers) {
         total += BigInt(item.pnl.net.amountMinor);
       }
       return { amountMinor: total.toString(), currency };
     } catch {
       return null;
     }
-  }, [items]);
+  }, [topTickers]);
+
+  const queryNorm = query.trim().toUpperCase();
+  const suggestions = queryNorm
+    ? tickers.filter((t) => t.symbol.includes(queryNorm)).slice(0, 10)
+    : [];
+
+  async function openTicker(symbol: string) {
+    const next = pushSearchHistory(history, symbol);
+    setHistory(next);
+    try {
+      await saveSearchHistory(next);
+    } catch {
+      // ignore persistence errors
+    }
+
+    setQuery('');
+    (navigation.getParent() as any)?.navigate('Ticker', { symbol });
+  }
 
   async function syncNow() {
     setSyncBusy(true);
@@ -127,7 +161,81 @@ export function HomeScreen() {
         }
       >
         <Title>Home</Title>
-        <Body>Top tickers P&amp;L</Body>
+        <Body>Search-first + top tickers</Body>
+
+        <View style={styles.card}>
+          <View style={styles.searchRow}>
+            <View style={{ flex: 1 }}>
+              <TextField
+                placeholder="Rechercher un ticker (ex: TSLA)"
+                autoCapitalize="characters"
+                value={query}
+                onChangeText={setQuery}
+              />
+            </View>
+            <AppButton
+              title="Ask"
+              variant="secondary"
+              style={{ width: 80 }}
+              onPress={() => navigation.navigate('Ask')}
+            />
+          </View>
+
+          {queryNorm ? (
+            suggestions.length === 0 ? (
+              <Body>Aucun resultat.</Body>
+            ) : (
+              <View style={{ gap: tokens.spacing.xs }}>
+                {suggestions.map((t) => (
+                  <Pressable
+                    key={t.symbol}
+                    onPress={() => void openTicker(t.symbol)}
+                    style={({ pressed }) => [styles.suggestionRow, pressed ? styles.pressed : null]}
+                  >
+                    <Text style={styles.symbol}>{t.symbol}</Text>
+                    <Text
+                      style={[
+                        styles.net,
+                        {
+                          color: moneyIsNegative(t.pnl.net.amountMinor)
+                            ? tokens.colors.negative
+                            : tokens.colors.positive,
+                        },
+                      ]}
+                    >
+                      {formatMoney(t.pnl.net)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )
+          ) : history.length ? (
+            <View style={{ gap: tokens.spacing.sm }}>
+              <Body>Historique</Body>
+              <View style={styles.chipsRow}>
+                {history.map((symbol) => (
+                  <Pressable
+                    key={symbol}
+                    onPress={() => void openTicker(symbol)}
+                    style={({ pressed }) => [styles.chip, pressed ? styles.pressed : null]}
+                  >
+                    <Text style={styles.chipText}>{symbol}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <AppButton
+                title="Effacer l'historique"
+                variant="secondary"
+                onPress={() => {
+                  setHistory([]);
+                  void saveSearchHistory([]);
+                }}
+              />
+            </View>
+          ) : (
+            <Body>Commence par taper un symbole.</Body>
+          )}
+        </View>
 
         <View style={styles.card}>
           <Body>{formatSyncLabel(firstConnection)}</Body>
@@ -155,7 +263,7 @@ export function HomeScreen() {
             </Body>
             <AppButton title="Réessayer" variant="secondary" onPress={() => void tickersQuery.refetch()} />
           </View>
-        ) : items.length === 0 ? (
+        ) : topTickers.length === 0 ? (
           <View style={{ gap: tokens.spacing.sm }}>
             <Body>Aucune donnée. Tire pour synchroniser, ou connecte un broker.</Body>
             <AppButton
@@ -168,7 +276,7 @@ export function HomeScreen() {
           <View style={{ gap: tokens.spacing.sm }}>
             {totalNet ? (
               <View style={styles.card}>
-                <Body>Total net (top {items.length})</Body>
+                <Body>Total net (top {topTickers.length})</Body>
                 <Text
                   style={[
                     styles.total,
@@ -184,16 +292,14 @@ export function HomeScreen() {
               </View>
             ) : null}
 
-            {items.map((item) => {
+            {topTickers.map((item) => {
               const net = item.pnl.net;
               const neg = moneyIsNegative(net.amountMinor);
 
               return (
                 <Pressable
                   key={item.symbol}
-                  onPress={() =>
-                    (navigation.getParent() as any)?.navigate('Ticker', { symbol: item.symbol })
-                  }
+                  onPress={() => void openTicker(item.symbol)}
                   style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
                 >
                   <View style={styles.row}>
@@ -229,6 +335,27 @@ const styles = StyleSheet.create({
     padding: tokens.spacing.md,
     gap: tokens.spacing.xs,
   },
+  searchRow: { flexDirection: 'row', gap: tokens.spacing.sm, alignItems: 'center' },
+  suggestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+  },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm },
+  chip: {
+    paddingHorizontal: tokens.spacing.md,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    backgroundColor: 'transparent',
+  },
+  chipText: { color: tokens.colors.text, fontSize: 13, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   symbol: { color: tokens.colors.text, fontSize: 18, fontWeight: '600' },
   net: { fontSize: 16, fontWeight: '600' },
