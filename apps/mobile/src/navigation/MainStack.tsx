@@ -4,12 +4,14 @@ import { MainTabs } from './MainTabs';
 import { TickerScreen } from '../screens/TickerScreen';
 import { TransactionsFilterScreen } from '../screens/TransactionsFilterScreen';
 import { WheelCycleDetailScreen } from '../screens/WheelCycleDetailScreen';
+import { NewsDetailScreen } from '../screens/NewsDetailScreen';
 
 export type MainStackParamList = {
   Tabs: undefined;
   Ticker: { symbol: string };
   Transactions: { symbol?: string; type?: string; from?: string; to?: string };
   WheelCycle: { id: string };
+  NewsDetail: { item: import('../api/client').NewsItem };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -25,6 +27,7 @@ export function MainStack() {
       />
       <Stack.Screen name="Transactions" component={TransactionsFilterScreen} options={{ title: 'Transactions' }} />
       <Stack.Screen name="WheelCycle" component={WheelCycleDetailScreen} options={{ title: 'Wheel' }} />
+      <Stack.Screen name="NewsDetail" component={NewsDetailScreen} options={{ title: 'News' }} />
     </Stack.Navigator>
   );
 }

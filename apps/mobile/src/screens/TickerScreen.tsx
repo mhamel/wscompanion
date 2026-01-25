@@ -1,6 +1,6 @@
 import React from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { createApiClient, type Money, type NewsItem, type TickerSummaryResponse } from '../api/client';
 import { ApiError } from '../api/http';
 import { config } from '../config';
@@ -93,14 +93,14 @@ function SummaryCard(props: { summary: TickerSummaryResponse }) {
   );
 }
 
-function NewsRow(props: { item: NewsItem }) {
+function NewsRow(props: { item: NewsItem; onPress: () => void }) {
   const meta = [props.item.publisher, formatDateTime(props.item.publishedAt)]
     .filter(Boolean)
     .join(' • ');
 
   return (
     <Pressable
-      onPress={() => void Linking.openURL(props.item.url)}
+      onPress={props.onPress}
       style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
     >
       <Text style={styles.newsTitle}>{props.item.title}</Text>
@@ -242,7 +242,11 @@ export function TickerScreen({ route, navigation }: Props) {
               ) : (
                 <View style={{ gap: tokens.spacing.sm }}>
                   {newsItems.map((item) => (
-                    <NewsRow key={item.id} item={item} />
+                    <NewsRow
+                      key={item.id}
+                      item={item}
+                      onPress={() => navigation.navigate('NewsDetail', { item })}
+                    />
                   ))}
 
                   {newsQuery.hasNextPage ? (
