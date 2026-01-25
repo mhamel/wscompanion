@@ -4,12 +4,15 @@ import swaggerUi from "@fastify/swagger-ui";
 import jwt from "@fastify/jwt";
 import { AppError } from "./errors";
 import type { PrismaClient } from "@prisma/client";
+import type { RedisClientType } from "redis";
 import { registerAuthRoutes } from "./routes/auth";
+import { registerBillingRoutes } from "./routes/billing";
 import { registerDeviceRoutes } from "./routes/devices";
 
 type BuildServerOptions = {
   logger?: boolean;
   prisma?: PrismaClient;
+  redis?: RedisClientType;
 };
 
 function getJwtSecret(): string {
@@ -46,6 +49,17 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     app.decorate("prisma", options.prisma);
     app.addHook("onClose", async () => {
       await options.prisma?.$disconnect();
+    });
+  }
+
+  if (options.redis) {
+    app.decorate("redis", options.redis);
+    app.addHook("onClose", async () => {
+      try {
+        await options.redis?.quit();
+      } catch {
+        // ignore
+      }
     });
   }
 
@@ -188,6 +202,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       );
 
       registerAuthRoutes(v1);
+      registerBillingRoutes(v1);
       registerDeviceRoutes(v1);
     },
     { prefix: "/v1" },
