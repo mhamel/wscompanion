@@ -25,7 +25,7 @@
 <a id="be-api"></a>
 ## Contrat API (OpenAPI-first)
 
-- [ ] BE-010 — Exposer OpenAPI `/v1` (swagger) + versionnement + conventions de pagination (cursor). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
+- [x] BE-010 — Exposer OpenAPI `/v1` (swagger) + versionnement + conventions de pagination (cursor). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-backend).
 - [ ] BE-011 — Définir schémas `ProblemDetails` + `PaginationCursor` + `Money` (multi-devises) partagés. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
 - [ ] BE-012 — Générer un client typé (pour mobile) à partir d’OpenAPI + CI qui bloque si contrat cassé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
 

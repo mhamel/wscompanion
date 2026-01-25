@@ -51,9 +51,20 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     return reply.status(500).send({ code: "INTERNAL_ERROR", message: "Internal error" });
   });
 
+  // Liveness endpoint (infra)
   app.get("/health", async () => {
     return { ok: true };
   });
+
+  // Versioned API routes
+  app.register(
+    async (v1) => {
+      v1.get("/health", async () => {
+        return { ok: true };
+      });
+    },
+    { prefix: "/v1" },
+  );
 
   return app;
 }
