@@ -1,6 +1,7 @@
 import React from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { createApiClient, type AlertEvent, type AlertRule } from '../api/client';
 import { ApiError } from '../api/http';
 import { config } from '../config';
@@ -11,6 +12,7 @@ import { Body, Title } from '../ui/Typography';
 
 export function AlertsScreen() {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const navigation = useNavigation<any>();
 
   const rulesQuery = useQuery({
     queryKey: ['alerts', 50],
@@ -65,7 +67,7 @@ export function AlertsScreen() {
           <Title>Alerts</Title>
           <AppButton
             title="Créer une alerte"
-            onPress={() => Alert.alert('À venir', 'Écran de création: FE-071.')}
+            onPress={() => navigation.getParent()?.navigate('CreateAlert')}
           />
         </View>
 

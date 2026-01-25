@@ -197,6 +197,11 @@ export type AlertEventsResponse = {
   nextCursor?: string;
 };
 
+export type AlertCreateResponse = {
+  ok: boolean;
+  id: string;
+};
+
 export type TickersResponse = {
   items: TickerListItem[];
 };
@@ -269,6 +274,7 @@ export type ApiClient = {
   alertTemplates(): Promise<AlertTemplatesResponse>;
   alerts(input?: { limit?: number }): Promise<AlertRulesResponse>;
   alertEvents(input?: { cursor?: string; limit?: number }): Promise<AlertEventsResponse>;
+  alertCreate(input: { type: string; symbol?: string; config: Record<string, unknown>; enabled?: boolean }): Promise<AlertCreateResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
@@ -512,6 +518,12 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
           params: { query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
+      );
+    },
+
+    alertCreate: async (body) => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/alerts', { body, headers: { Authorization: bearer(accessToken) } }),
       );
     },
 
