@@ -292,6 +292,8 @@ export type ApiClient = {
   authRefresh(input: { refreshToken: string }): Promise<AuthTokens>;
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
+  deviceRegister(input: { pushToken: string; platform: 'ios' | 'android' }): Promise<{ id: string }>;
+  deviceDelete(input: { id: string }): Promise<{ ok: boolean }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
   tickerSummary(input: { symbol: string }): Promise<TickerSummaryResponse>;
   tickerNews(input: { symbol: string; cursor?: string; limit?: number }): Promise<TickerNewsResponse>;
@@ -432,6 +434,24 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
     me: async () => {
       return withAuth((accessToken) =>
         client.GET('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    deviceRegister: async (body) => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/devices/register', {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    deviceDelete: async (input) => {
+      return withAuth((accessToken) =>
+        client.DELETE('/v1/devices/{id}', {
+          params: { path: { id: input.id } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 

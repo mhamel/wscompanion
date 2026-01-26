@@ -1,6 +1,6 @@
 # Plan de travail (TODO) — Companion Wealthsimple (via SnapTrade)
 
-Ce dépôt ne contient pour l’instant que la vision **Produit** et l’**Architecture**. Ce document (et ceux liés) découpent le travail en lots actionnables, conçus pour être parallélisés entre plusieurs agents IA.
+Ce dépôt contient désormais une implémentation (monorepo): backend (API + worker) et app mobile. Ce document (et ceux liés) restent la source de vérité du backlog et découpent le travail en lots actionnables, conçus pour être parallélisés entre plusieurs agents IA.
 
 ## Références (sources de vérité)
 
@@ -48,7 +48,7 @@ Objectif: “connexion SnapTrade → sync initial → top tickers P&L visibles�
 ### M3 — News + Alerts + Paywall (rétention & monétisation)
 
 - [x] M3-01 — News par ticker (RSS/Atom) + dédup + endpoints + onglet mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
-- [ ] M3-02 — Alertes (règles + évaluations worker + push) + écrans. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
+- [x] M3-02 — Alertes (règles + évaluations worker + push) + écrans. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
 - [ ] M3-03 — Entitlements (RevenueCat) + paywall “non intrusif” + gating clair. Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
 
 ### M4 — Assistant premium (optionnel / différenciant)

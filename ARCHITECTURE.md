@@ -131,6 +131,7 @@ Un écran central “Ask”:
 ## Modèle de données (PostgreSQL)
 
 Principes:
+- Source de vérité (implémentation): `apps/backend/prisma/schema.prisma` (noms exacts, contraintes, indexes). Les schémas ci-dessous sont une vue conceptuelle.
 - IDs: `uuid` partout.
 - Multi-tenant strict: toutes les tables user-scopées ont `user_id`.
 - Argent: `amount_minor bigint` + `currency char(3)` (évite floats).
@@ -161,8 +162,10 @@ Principes:
 - `id uuid pk`
 - `user_id uuid fk`
 - `platform text` (ios, android)
-- `push_token text unique`
+- `push_token text` (unique par user: `unique(user_id, push_token)`)
+- `last_seen_at timestamptz null`
 - `created_at timestamptz`
+- `updated_at timestamptz`
 
 #### `entitlements`
 

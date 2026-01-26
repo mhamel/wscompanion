@@ -88,8 +88,9 @@
 ## Alerts
 
 - [x] BE-090 — Modèle règles + templates (earnings/expiry/price move/news spike). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
-- [x] BE-091 — Worker d’évaluation (planifié) + dédup événements (MVP: création `AlertEvent`; notifications push/email à venir). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
+- [x] BE-091 — Worker d’évaluation (planifié) + dédup événements (MVP: création `AlertEvent`). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
 - [x] BE-092 — Endpoints CRUD règles + liste événements récents (paginé). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
+- [x] BE-093 — Worker de livraison push (Expo) + invalidation tokens + `AlertEvent.deliveredAt`. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
 
 <a id="be-exports"></a>
 ## Exports (jobs)

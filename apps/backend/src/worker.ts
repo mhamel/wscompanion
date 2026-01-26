@@ -12,6 +12,7 @@ import { isExportType } from "./exports/types";
 import { loadDevSecrets } from "./devSecrets";
 import { getNewsScheduleEverySeconds, loadNewsRssFeeds } from "./news/config";
 import { ingestNewsRssFeed } from "./news/ingest";
+import { sendExpoPushMessages, type ExpoPushMessage } from "./notifications/expoPush";
 
 type SyncJob = {
   syncRunId: string;
@@ -624,6 +625,143 @@ async function handleAlertsEvaluateJob(prisma: PrismaClient) {
   return { ok: true, rules: rules.length, evaluated, triggered, skipped };
 }
 
+function parseAlertsDeliveryMaxAgeHours(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.ALERTS_DELIVERY_MAX_AGE_HOURS?.trim();
+  if (!raw) return 48;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) return 48;
+  return Math.min(Math.trunc(value), 24 * 14);
+}
+
+function buildAlertPushContent(event: {
+  id: string;
+  alertRuleId: string;
+  type: string;
+  symbol: string | null;
+  payload: unknown;
+}): { title: string; body: string; data: Record<string, unknown> } {
+  const symbol = event.symbol?.trim().toUpperCase() || undefined;
+  const baseData = { eventId: event.id, alertRuleId: event.alertRuleId, type: event.type, symbol };
+
+  if (event.type === "news_spike") {
+    const payload = event.payload && typeof event.payload === "object" && !Array.isArray(event.payload) ? (event.payload as Record<string, unknown>) : {};
+    const count = typeof payload.count === "number" && Number.isFinite(payload.count) ? Math.trunc(payload.count) : undefined;
+    const lookbackHours =
+      typeof payload.lookbackHours === "number" && Number.isFinite(payload.lookbackHours)
+        ? Math.trunc(payload.lookbackHours)
+        : undefined;
+
+    return {
+      title: symbol ? `News: ${symbol}` : "Alerte news",
+      body:
+        symbol && count && lookbackHours
+          ? `${count} articles en ${lookbackHours}h`
+          : "Nouvelle alerte news.",
+      data: baseData,
+    };
+  }
+
+  return { title: "Alerte", body: "Nouvelle alerte.", data: baseData };
+}
+
+async function handleAlertsDeliverJob(prisma: PrismaClient) {
+  const now = new Date();
+  const maxAgeHours = parseAlertsDeliveryMaxAgeHours(process.env);
+  const windowStart = new Date(now.getTime() - maxAgeHours * 60 * 60 * 1000);
+
+  const events = await prisma.alertEvent.findMany({
+    where: {
+      deliveredAt: null,
+      triggeredAt: { gte: windowStart },
+      alertRule: { enabled: true },
+    },
+    include: {
+      alertRule: { select: { id: true, userId: true, type: true, symbol: true } },
+    },
+    take: 100,
+    orderBy: { triggeredAt: "asc" },
+  });
+
+  let attempted = 0;
+  let delivered = 0;
+  let skippedNoDevices = 0;
+  let invalidDevicesDeleted = 0;
+  const errors: Array<{ eventId: string; error: string }> = [];
+
+  for (const event of events) {
+    const devices = await prisma.device.findMany({
+      where: {
+        userId: event.alertRule.userId,
+        createdAt: { lte: event.triggeredAt },
+      },
+      select: { pushToken: true },
+    });
+
+    const tokens = devices.map((d) => d.pushToken).filter(Boolean);
+    if (tokens.length === 0) {
+      skippedNoDevices += 1;
+      continue;
+    }
+
+    const content = buildAlertPushContent({
+      id: event.id,
+      alertRuleId: event.alertRule.id,
+      type: event.alertRule.type,
+      symbol: event.alertRule.symbol,
+      payload: event.payload as unknown,
+    });
+
+    const messages = tokens.map(
+      (to) =>
+        ({
+          to,
+          title: content.title,
+          body: content.body,
+          data: content.data,
+          sound: "default",
+        }) satisfies ExpoPushMessage,
+    );
+
+    try {
+      const res = await sendExpoPushMessages({
+        messages,
+        accessToken: process.env.EXPO_PUSH_ACCESS_TOKEN?.trim() || undefined,
+      });
+
+      attempted += 1;
+
+      if (res.invalidTokens.length > 0) {
+        const deleted = await prisma.device.deleteMany({
+          where: { userId: event.alertRule.userId, pushToken: { in: res.invalidTokens } },
+        });
+        invalidDevicesDeleted += deleted.count;
+      }
+
+      const hasOkTicket = res.tickets.some((t) => t.status === "ok");
+      if (hasOkTicket) {
+        await prisma.alertEvent.update({ where: { id: event.id }, data: { deliveredAt: new Date() } });
+        delivered += 1;
+      }
+    } catch (err) {
+      errors.push({ eventId: event.id, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn("alerts: delivery errors", { count: errors.length, errors: errors.slice(0, 3) });
+  }
+
+  return {
+    ok: true,
+    events: events.length,
+    attempted,
+    delivered,
+    skippedNoDevices,
+    invalidDevicesDeleted,
+    errors: errors.length,
+  };
+}
+
 async function handleExportRunJob(
   prisma: PrismaClient,
   job: Job<ExportsJob>,
@@ -742,6 +880,15 @@ async function main() {
     );
   }
 
+  const alertsDeliveryEverySeconds = Number(process.env.ALERTS_DELIVERY_SCHEDULE_EVERY_SECONDS ?? "60");
+  if (Number.isFinite(alertsDeliveryEverySeconds) && alertsDeliveryEverySeconds > 0) {
+    await alertsQueue.add(
+      "alerts-deliver",
+      {},
+      { repeat: { every: alertsDeliveryEverySeconds * 1000 }, jobId: "alerts-deliver" },
+    );
+  }
+
   const worker = new Worker(
     "sync",
     async (job) => {
@@ -847,6 +994,10 @@ async function main() {
       try {
         if (job.name === "alerts-evaluate") {
           return await handleAlertsEvaluateJob(prisma);
+        }
+
+        if (job.name === "alerts-deliver") {
+          return await handleAlertsDeliverJob(prisma);
         }
 
         throw new Error(`Unknown job: ${job.name}`);
