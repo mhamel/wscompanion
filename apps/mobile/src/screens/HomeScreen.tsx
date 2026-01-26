@@ -90,7 +90,8 @@ export function HomeScreen() {
 
   const tickers = tickersQuery.data?.items ?? [];
   const topTickers = tickers.slice(0, 10);
-  const firstConnection = syncStatusQuery.data?.items?.[0];
+  const activeConnection = syncStatusQuery.data?.items?.find((item) => item.status === 'connected');
+  const displayConnection = activeConnection ?? syncStatusQuery.data?.items?.[0];
 
   const totalNet = React.useMemo(() => {
     if (topTickers.length === 0) return null;
@@ -134,9 +135,16 @@ export function HomeScreen() {
 
     try {
       const status = syncStatusQuery.data ?? (await syncStatusQuery.refetch()).data;
-      const connectionId = status?.items?.[0]?.brokerConnectionId;
+      const connectionId = status?.items?.find((item) => item.status === 'connected')?.brokerConnectionId;
       if (!connectionId) {
-        Alert.alert('Connexion requise', 'Aucune connexion broker trouvée.');
+        Alert.alert(
+          'Connexion requise',
+          'Aucune connexion active. Connecte SnapTrade pour pouvoir synchroniser.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { text: 'Connexions', onPress: () => (navigation.getParent() as any)?.navigate('Connections') },
+          ],
+        );
         return;
       }
 
@@ -293,14 +301,23 @@ export function HomeScreen() {
         </View>
 
         <View style={styles.card}>
-          <Body>{formatSyncLabel(firstConnection)}</Body>
+          <Body>{formatSyncLabel(displayConnection)}</Body>
           {syncError ? <Body style={styles.error}>{syncError}</Body> : null}
-          <AppButton
-            title={syncBusy ? 'Sync…' : 'Sync maintenant'}
-            variant="secondary"
-            disabled={syncBusy || syncStatusQuery.isLoading}
-            onPress={() => void syncNow()}
-          />
+          {activeConnection ? (
+            <AppButton
+              title={syncBusy ? 'Sync…' : 'Sync maintenant'}
+              variant="secondary"
+              disabled={syncBusy || syncStatusQuery.isLoading}
+              onPress={() => void syncNow()}
+            />
+          ) : (
+            <AppButton
+              title="Connexions"
+              variant="secondary"
+              disabled={syncBusy || syncStatusQuery.isLoading}
+              onPress={() => (navigation.getParent() as any)?.navigate('Connections')}
+            />
+          )}
         </View>
 
         {tickersQuery.isLoading ? (
@@ -324,7 +341,7 @@ export function HomeScreen() {
             <AppButton
               title="Connecter"
               variant="secondary"
-              onPress={() => navigation.navigate('Portfolio')}
+              onPress={() => (navigation.getParent() as any)?.navigate('Connections')}
             />
           </View>
         ) : (

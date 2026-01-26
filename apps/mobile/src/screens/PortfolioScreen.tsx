@@ -1,70 +1,14 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 import { StyleSheet, View } from 'react-native';
-import { createApiClient, type SnaptradeCallbackBody, type SyncStatusItem } from '../api/client';
+import { createApiClient, type SyncStatusItem } from '../api/client';
 import { ApiError } from '../api/http';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
 import { Body, Title } from '../ui/Typography';
-
-function parseScopes(raw: string): string[] {
-  const trimmed = raw.trim();
-  if (!trimmed) return [];
-
-  if (trimmed.startsWith('[')) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed) && parsed.every((s) => typeof s === 'string')) {
-        return parsed;
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  return trimmed
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function parseSnaptradeCallbackUrl(url: string, fallbackState: string): SnaptradeCallbackBody | null {
-  try {
-    const parsed = new URL(url);
-    const params = parsed.searchParams;
-
-    const state = (params.get('state') ?? fallbackState).trim();
-    const externalUserId = (params.get('externalUserId') ?? params.get('external_user_id') ?? '').trim();
-    const externalConnectionId = (
-      params.get('externalConnectionId') ??
-      params.get('external_connection_id') ??
-      ''
-    ).trim();
-    const accessToken = (params.get('accessToken') ?? params.get('access_token') ?? '').trim();
-    const refreshToken = (params.get('refreshToken') ?? params.get('refresh_token') ?? '').trim();
-
-    const scopesRaw = (params.get('scopes') ?? '').trim();
-    const scopes = scopesRaw ? parseScopes(scopesRaw) : undefined;
-
-    if (!state || !externalUserId || !externalConnectionId || !accessToken) return null;
-
-    return {
-      state,
-      externalUserId,
-      externalConnectionId,
-      accessToken,
-      refreshToken: refreshToken || undefined,
-      scopes,
-    };
-  } catch {
-    return null;
-  }
-}
 
 function formatSyncLabel(item: SyncStatusItem | undefined): string {
   if (!item) return 'Aucune connexion.';
@@ -82,8 +26,6 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 export function PortfolioScreen() {
   const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
   const navigation = useNavigation<any>();
-  const [connectBusy, setConnectBusy] = React.useState(false);
-  const [connectError, setConnectError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -91,66 +33,15 @@ export function PortfolioScreen() {
     queryKey: ['syncStatus'],
     queryFn: () => api.syncStatus(),
     refetchInterval: (query) => {
-      const status = query.state.data?.items?.[0]?.lastRun?.status;
+      const active = query.state.data?.items?.find((i) => i.status === 'connected');
+      const status = active?.lastRun?.status ?? query.state.data?.items?.[0]?.lastRun?.status;
       if (status === 'queued' || status === 'running') return 2_000;
       return false;
     },
   });
 
-  const firstConnection = syncStatusQuery.data?.items?.[0];
-
-  async function connectSnaptrade() {
-    setConnectBusy(true);
-    setConnectError(null);
-
-    try {
-      const start = await api.snaptradeStart();
-      const returnUrl = Linking.createURL('snaptrade-callback');
-
-      const result = await WebBrowser.openAuthSessionAsync(start.redirectUrl, returnUrl);
-      if (result.type !== 'success' || !result.url) {
-        setConnectError('Connexion annulée.');
-        return;
-      }
-
-      const callbackBody = parseSnaptradeCallbackUrl(result.url, start.state);
-      if (!callbackBody) {
-        setConnectError('Callback invalide (données manquantes).');
-        return;
-      }
-
-      await api.snaptradeCallback(callbackBody);
-      await syncStatusQuery.refetch();
-    } catch (e) {
-      if (e instanceof ApiError) {
-        setConnectError(e.problem?.message ?? e.message);
-      } else {
-        setConnectError('Erreur réseau.');
-      }
-    } finally {
-      setConnectBusy(false);
-    }
-  }
-
-  async function syncNow() {
-    setConnectBusy(true);
-    setConnectError(null);
-
-    try {
-      const id = firstConnection?.brokerConnectionId;
-      if (!id) return;
-      await api.syncConnection({ id });
-      await syncStatusQuery.refetch();
-    } catch (e) {
-      if (e instanceof ApiError) {
-        setConnectError(e.problem?.message ?? e.message);
-      } else {
-        setConnectError('Erreur réseau.');
-      }
-    } finally {
-      setConnectBusy(false);
-    }
-  }
+  const activeConnection = syncStatusQuery.data?.items?.find((item) => item.status === 'connected');
+  const displayConnection = activeConnection ?? syncStatusQuery.data?.items?.[0];
 
   async function logout() {
     setBusy(true);
@@ -176,23 +67,12 @@ export function PortfolioScreen() {
 
       <View style={styles.card}>
         <Title style={{ fontSize: 18 }}>Connexion broker</Title>
-        <Body>{formatSyncLabel(firstConnection)}</Body>
-        {connectError ? <Body style={styles.error}>{connectError}</Body> : null}
-
-        {firstConnection ? (
-          <AppButton
-            title={connectBusy ? 'Sync…' : 'Sync maintenant'}
-            variant="secondary"
-            disabled={connectBusy}
-            onPress={() => void syncNow()}
-          />
-        ) : (
-          <AppButton
-            title={connectBusy ? 'Connexion…' : 'Connecter SnapTrade'}
-            disabled={connectBusy}
-            onPress={() => void connectSnaptrade()}
-          />
-        )}
+        <Body>{formatSyncLabel(displayConnection)}</Body>
+        <AppButton
+          title="Gérer la connexion"
+          variant="secondary"
+          onPress={() => navigation.getParent()?.navigate('Connections')}
+        />
 
         <AppButton
           title="Exports"

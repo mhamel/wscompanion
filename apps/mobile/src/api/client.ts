@@ -317,6 +317,7 @@ export type ApiClient = {
   alertCreate(input: { type: string; symbol?: string; config: Record<string, unknown>; enabled?: boolean }): Promise<AlertCreateResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
   syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
+  connectionDisconnect(input: { id: string }): Promise<{ ok: boolean }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
   snaptradeCallback(input: SnaptradeCallbackBody): Promise<SnaptradeCallbackResponse>;
   exportsList(input?: { cursor?: string; limit?: number }): Promise<ExportsListResponse>;
@@ -597,6 +598,15 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
     syncConnection: async (input) => {
       return withAuth((accessToken) =>
         client.POST('/v1/connections/{id}/sync', {
+          params: { path: { id: input.id } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    connectionDisconnect: async (input) => {
+      return withAuth((accessToken) =>
+        client.DELETE('/v1/connections/{id}', {
           params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),

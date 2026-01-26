@@ -104,6 +104,10 @@ async function handleSyncJob(
     throw new Error("BrokerConnection not found");
   }
 
+  if (brokerConnection.status !== "connected") {
+    throw new Error("BrokerConnection is not connected");
+  }
+
   const account = await prisma.account.upsert({
     where: {
       brokerConnectionId_externalAccountId: {

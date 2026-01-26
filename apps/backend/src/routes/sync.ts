@@ -38,6 +38,14 @@ async function connectionSyncHandler(req: FastifyRequest) {
     throw new AppError({ code: "NOT_FOUND", message: "Not found", statusCode: 404 });
   }
 
+  if (brokerConnection.status !== "connected") {
+    throw new AppError({
+      code: "CONNECTION_NOT_CONNECTED",
+      message: "Connection is not connected",
+      statusCode: 409,
+    });
+  }
+
   const inflight = await prisma.syncRun.findFirst({
     where: {
       brokerConnectionId: brokerConnection.id,
@@ -147,6 +155,7 @@ export function registerSyncRoutes(app: FastifyInstance) {
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
+        409: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },

@@ -86,6 +86,6 @@
 <a id="fe-settings"></a>
 ## Settings, confiance, privacy
 
-- [ ] FE-110 — ConnectionsScreen: statut SnapTrade, “sync now”, disconnect. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
+- [x] FE-110 — ConnectionsScreen: statut SnapTrade, “sync now”, disconnect. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
 - [ ] FE-111 — SettingsScreen: devise, confidentialité, support, suppression compte. Réf: [PRODUIT.md](../PRODUIT.md#prd-confiance), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [ ] FE-112 — États d’erreur robustes (offline, timeouts) + observabilité mobile (Sentry). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
