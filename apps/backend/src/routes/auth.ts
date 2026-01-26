@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { AppError } from "../errors";
 import nodemailer from "nodemailer";
+import { deleteExportObject } from "../exports/s3";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -66,6 +67,11 @@ function getSessionConfig(): SessionConfig {
 
 function generateRefreshToken(): string {
   return crypto.randomBytes(32).toString("base64url");
+}
+
+function deletedEmailForUser(userId: string): string {
+  const rand = crypto.randomBytes(6).toString("hex");
+  return `deleted+${userId}+${rand}@deleted.invalid`;
 }
 
 type SmtpConfig = {
@@ -427,6 +433,84 @@ async function meHandler(req: FastifyRequest) {
   return { id: user.id, email: user.email };
 }
 
+async function meDeleteHandler(req: FastifyRequest) {
+  const prisma = req.server.prisma;
+  if (!prisma) {
+    throw new AppError({
+      code: "PRISMA_NOT_CONFIGURED",
+      message: "Database is not configured",
+      statusCode: 500,
+    });
+  }
+
+  const userId = req.user.sub;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError({ code: "UNAUTHORIZED", message: "Unauthorized", statusCode: 401 });
+  }
+
+  if (user.deletedAt) {
+    return { ok: true };
+  }
+
+  const s3 = req.server.s3Exports;
+  if (s3) {
+    const files = await prisma.exportFile.findMany({
+      where: { exportJob: { userId } },
+      select: { storageKey: true },
+      take: 10_000,
+    });
+
+    for (const file of files) {
+      try {
+        await deleteExportObject({ s3, key: file.storageKey });
+      } catch (err) {
+        req.log.warn({ err, key: file.storageKey }, "failed to delete export object");
+      }
+    }
+  }
+
+  const deletedAt = new Date();
+  const deletedEmail = deletedEmailForUser(userId);
+  const originalEmail = user.email;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.wheelAuditEvent.deleteMany({ where: { userId } });
+    await tx.wheelLeg.deleteMany({ where: { wheelCycle: { userId } } });
+    await tx.wheelCycle.deleteMany({ where: { userId } });
+
+    await tx.alertEvent.deleteMany({ where: { alertRule: { userId } } });
+    await tx.alertRule.deleteMany({ where: { userId } });
+
+    await tx.exportFile.deleteMany({ where: { exportJob: { userId } } });
+    await tx.exportJob.deleteMany({ where: { userId } });
+
+    await tx.tickerPnlDaily.deleteMany({ where: { userId } });
+    await tx.tickerPnlTotal.deleteMany({ where: { userId } });
+
+    await tx.transaction.deleteMany({ where: { userId } });
+    await tx.positionSnapshot.deleteMany({ where: { account: { userId } } });
+    await tx.account.deleteMany({ where: { userId } });
+
+    await tx.syncRun.deleteMany({ where: { userId } });
+    await tx.brokerConnection.deleteMany({ where: { userId } });
+
+    await tx.entitlement.deleteMany({ where: { userId } });
+    await tx.device.deleteMany({ where: { userId } });
+    await tx.session.deleteMany({ where: { userId } });
+    await tx.userPreferences.deleteMany({ where: { userId } });
+
+    await tx.authOtp.deleteMany({ where: { email: originalEmail } });
+
+    await tx.user.update({
+      where: { id: userId },
+      data: { deletedAt, email: deletedEmail },
+    });
+  });
+
+  return { ok: true };
+}
+
 export function registerAuthRoutes(app: FastifyInstance) {
   app.post("/auth/start", {
     schema: {
@@ -529,5 +613,23 @@ export function registerAuthRoutes(app: FastifyInstance) {
       },
     },
     handler: meHandler,
+  });
+
+  app.delete("/me", {
+    preHandler: app.authenticate,
+    schema: {
+      security: [{ bearerAuth: [] }],
+      response: {
+        200: {
+          type: "object",
+          additionalProperties: false,
+          properties: { ok: { type: "boolean" } },
+          required: ["ok"],
+        },
+        401: { $ref: "ProblemDetails#" },
+        500: { $ref: "ProblemDetails#" },
+      },
+    },
+    handler: meDeleteHandler,
   });
 }

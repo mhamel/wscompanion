@@ -13,6 +13,7 @@ import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
 import { registerExportsRoutes } from "./routes/exports";
 import { registerPortfolioRoutes } from "./routes/portfolio";
+import { registerPreferencesRoutes } from "./routes/preferences";
 import { registerSyncRoutes } from "./routes/sync";
 import { registerTickerRoutes } from "./routes/tickers";
 import { registerTransactionsRoutes } from "./routes/transactions";
@@ -216,6 +217,14 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     ) {
       throw new AppError({ code: "UNAUTHORIZED", message: "Unauthorized", statusCode: 401 });
     }
+
+    const user = await prisma.user.findUnique({
+      where: { id: request.user.sub },
+      select: { deletedAt: true },
+    });
+    if (!user || user.deletedAt) {
+      throw new AppError({ code: "ACCOUNT_DELETED", message: "Unauthorized", statusCode: 401 });
+    }
   });
 
   app.setNotFoundHandler(async (_req, reply) => {
@@ -267,6 +276,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       registerDeviceRoutes(v1);
       registerExportsRoutes(v1);
       registerPortfolioRoutes(v1);
+      registerPreferencesRoutes(v1);
       registerSyncRoutes(v1);
       registerTickerRoutes(v1);
       registerTransactionsRoutes(v1);

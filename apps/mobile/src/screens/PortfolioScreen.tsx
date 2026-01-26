@@ -79,6 +79,12 @@ export function PortfolioScreen() {
           variant="secondary"
           onPress={() => navigation.getParent()?.navigate('Exports')}
         />
+
+        <AppButton
+          title="Paramètres"
+          variant="secondary"
+          onPress={() => navigation.getParent()?.navigate('Settings')}
+        />
       </View>
 
       <View style={{ flex: 1 }} />

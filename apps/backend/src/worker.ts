@@ -7,8 +7,9 @@ import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
 import { generateExportCsv } from "./exports/csv";
+import { generateExportJson } from "./exports/json";
 import { createS3ExportsClient, uploadExportObject, type S3ExportsClient } from "./exports/s3";
-import { isExportType } from "./exports/types";
+import { isExportFormat, isExportType } from "./exports/types";
 import { loadDevSecrets } from "./devSecrets";
 import { getNewsScheduleEverySeconds, loadNewsRssFeeds } from "./news/config";
 import { ingestNewsRssFeed } from "./news/ingest";
@@ -792,7 +793,7 @@ async function handleExportRunJob(
     throw new Error(`Unsupported export type: ${exportJob.type}`);
   }
 
-  if (exportJob.format !== "csv") {
+  if (!isExportFormat(exportJob.format)) {
     throw new Error(`Unsupported export format: ${exportJob.format}`);
   }
 
@@ -800,12 +801,20 @@ async function handleExportRunJob(
     throw new Error("S3 exports not configured");
   }
 
-  const generated = await generateExportCsv({
-    prisma,
-    userId: exportJob.userId,
-    type: exportJob.type,
-    params: exportJob.params,
-  });
+  const generated =
+    exportJob.format === "csv"
+      ? await generateExportCsv({
+          prisma,
+          userId: exportJob.userId,
+          type: exportJob.type,
+          params: exportJob.params,
+        })
+      : await generateExportJson({
+          prisma,
+          userId: exportJob.userId,
+          type: exportJob.type,
+          params: exportJob.params,
+        });
 
   const storageKey = `exports/${exportJob.userId}/${exportJob.id}/${generated.filename}`;
   const uploaded = await uploadExportObject({
@@ -914,10 +923,14 @@ async function main() {
         const errorMessage = err instanceof Error ? err.message : String(err);
 
         if (job.name === "sync-initial" || job.name === "sync-incremental") {
-          await prisma.syncRun.update({
-            where: { id: (job.data as SyncJob).syncRunId },
-            data: { status: "failed", finishedAt: new Date(), error: errorMessage },
-          });
+          await prisma.syncRun
+            .update({
+              where: { id: (job.data as SyncJob).syncRunId },
+              data: { status: "failed", finishedAt: new Date(), error: errorMessage },
+            })
+            .catch(() => {
+              // ignore (e.g. user purged)
+            });
 
           const attempts = job.opts.attempts ?? 1;
           const isFinalAttempt = job.attemptsMade + 1 >= attempts;

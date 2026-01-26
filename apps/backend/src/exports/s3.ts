@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { AppConfig } from "../config";
 
@@ -64,4 +64,8 @@ export async function signExportDownloadUrl(input: {
     new GetObjectCommand({ Bucket: input.s3.bucket, Key: input.key }),
     { expiresIn: input.expiresInSeconds },
   );
+}
+
+export async function deleteExportObject(input: { s3: S3ExportsClient; key: string }): Promise<void> {
+  await input.s3.client.send(new DeleteObjectCommand({ Bucket: input.s3.bucket, Key: input.key }));
 }

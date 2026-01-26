@@ -8,6 +8,7 @@ import { NewsDetailScreen } from '../screens/NewsDetailScreen';
 import { CreateAlertScreen } from '../screens/CreateAlertScreen';
 import { ExportsScreen } from '../screens/ExportsScreen';
 import { ConnectionsScreen } from '../screens/ConnectionsScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 
 export type MainStackParamList = {
   Tabs: undefined;
@@ -18,6 +19,7 @@ export type MainStackParamList = {
   CreateAlert: undefined;
   Exports: undefined;
   Connections: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -36,6 +38,7 @@ export function MainStack() {
       <Stack.Screen name="NewsDetail" component={NewsDetailScreen} options={{ title: 'News' }} />
       <Stack.Screen name="Exports" component={ExportsScreen} options={{ title: 'Exports' }} />
       <Stack.Screen name="Connections" component={ConnectionsScreen} options={{ title: 'Connexions' }} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Paramètres' }} />
       <Stack.Screen name="CreateAlert" component={CreateAlertScreen} options={{ title: 'Créer une alerte' }} />
     </Stack.Navigator>
   );

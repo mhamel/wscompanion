@@ -4,7 +4,7 @@ import { ALERT_TEMPLATES, getAlertTemplate } from "../alerts/templates";
 import { AppError } from "../errors";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
 
-async function alertTemplatesHandler(_req: FastifyRequest) {
+async function alertTemplatesHandler() {
   return { items: ALERT_TEMPLATES };
 }
 

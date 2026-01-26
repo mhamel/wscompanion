@@ -554,6 +554,12 @@ Convention:
 - `POST /v1/auth/refresh`
 - `POST /v1/auth/logout`
 - `GET /v1/me`
+- `DELETE /v1/me` — suppression compte (soft-delete + purge)
+
+### Preferences
+
+- `GET /v1/preferences` — récupérer `baseCurrency`
+- `PUT /v1/preferences` — mettre à jour `baseCurrency`
 
 <a id="arch-api-devices"></a>
 ### Devices / Push

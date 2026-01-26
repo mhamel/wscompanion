@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { Prisma } from "@prisma/client";
 import { AppError } from "../errors";
-import { EXPORT_TYPES, isExportType } from "../exports/types";
+import { EXPORT_FORMATS, EXPORT_TYPES, isExportFormat, isExportType } from "../exports/types";
 import { signExportDownloadUrl } from "../exports/s3";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
 
@@ -99,8 +99,24 @@ async function exportCreateHandler(req: FastifyRequest) {
   }
 
   const format = typeof body.format === "string" ? body.format.trim() : "";
-  if (!format || format !== "csv") {
+  if (!format || !isExportFormat(format)) {
     throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid export format", statusCode: 400 });
+  }
+
+  if (format === "csv" && typeRaw === "user_data") {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid export type for csv format",
+      statusCode: 400,
+    });
+  }
+
+  if (format === "json" && typeRaw !== "user_data") {
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid export type for json format",
+      statusCode: 400,
+    });
   }
 
   const params =
@@ -254,7 +270,7 @@ export function registerExportsRoutes(app: FastifyInstance) {
         additionalProperties: false,
         properties: {
           type: { type: "string", enum: [...EXPORT_TYPES] },
-          format: { type: "string", enum: ["csv"] },
+          format: { type: "string", enum: [...EXPORT_FORMATS] },
           params: {
             type: "object",
             additionalProperties: true,

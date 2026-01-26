@@ -26,7 +26,7 @@
 ## Privacy (données minimales, contrôle utilisateur)
 
 - [x] SEC-010 — Politique “Disconnect SnapTrade”: purge tokens + stop sync + message UX. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite), [PRODUIT.md](../PRODUIT.md#prd-confiance).
-- [ ] SEC-011 — Suppression compte: soft-delete + purge données selon politique + export “mes données”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite), [PRODUIT.md](../PRODUIT.md#prd-confiance).
+- [x] SEC-011 — Suppression compte: soft-delete + purge données selon politique + export “mes données”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite), [PRODUIT.md](../PRODUIT.md#prd-confiance).
 - [ ] SEC-012 — Classification données (PII, secrets, finance) + règles de logging/monitoring. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 
 <a id="qa-top"></a>

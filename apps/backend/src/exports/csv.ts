@@ -59,6 +59,10 @@ export async function generateExportCsv(input: {
   const baseCurrency = normalizeCurrency(preferences?.baseCurrency ?? "USD");
   const today = new Date().toISOString().slice(0, 10);
 
+  if (input.type === "user_data") {
+    throw new Error("Unsupported export type for CSV: user_data");
+  }
+
   if (input.type === "pnl_realized_by_ticker") {
     const rows = await input.prisma.tickerPnlTotal.findMany({
       where: { userId: input.userId, baseCurrency },

@@ -280,9 +280,13 @@ export type ExportDownloadResponse = {
 };
 
 export type ExportCreateBody = {
-  type: 'pnl_realized_by_ticker' | 'option_premiums_by_year';
-  format: 'csv';
+  type: 'pnl_realized_by_ticker' | 'option_premiums_by_year' | 'user_data';
+  format: 'csv' | 'json';
   params?: Record<string, unknown>;
+};
+
+export type UserPreferences = {
+  baseCurrency: string;
 };
 
 export type ApiClient = {
@@ -292,6 +296,9 @@ export type ApiClient = {
   authRefresh(input: { refreshToken: string }): Promise<AuthTokens>;
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
+  meDelete(): Promise<{ ok: boolean }>;
+  preferencesGet(): Promise<UserPreferences>;
+  preferencesPut(input: UserPreferences): Promise<UserPreferences>;
   deviceRegister(input: { pushToken: string; platform: 'ios' | 'android' }): Promise<{ id: string }>;
   deviceDelete(input: { id: string }): Promise<{ ok: boolean }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
@@ -435,6 +442,24 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
     me: async () => {
       return withAuth((accessToken) =>
         client.GET('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    meDelete: async () => {
+      return withAuth((accessToken) =>
+        client.DELETE('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    preferencesGet: async () => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/preferences', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    preferencesPut: async (body) => {
+      return withAuth((accessToken) =>
+        client.PUT('/v1/preferences', { body, headers: { Authorization: bearer(accessToken) } }),
       );
     },
 
