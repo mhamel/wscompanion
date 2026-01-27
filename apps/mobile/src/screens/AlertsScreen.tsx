@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { createApiClient, type AlertEvent, type AlertRule } from '../api/client';
 import { ApiError } from '../api/http';
+import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { config } from '../config';
 import { useNotificationsStore } from '../notifications/notificationsStore';
 import {
@@ -23,6 +24,8 @@ export function AlertsScreen() {
     [],
   );
   const navigation = useNavigation<any>();
+  const entitlementQuery = useBillingEntitlementQuery();
+  const isPro = entitlementQuery.data?.plan === 'pro';
   const registration = useNotificationsStore((s) => s.registration);
   const setRegistration = useNotificationsStore((s) => s.setRegistration);
 
@@ -177,9 +180,20 @@ export function AlertsScreen() {
           <Title>Alerts</Title>
           <AppButton
             title="Créer une alerte"
-            onPress={() => navigation.getParent()?.navigate('CreateAlert')}
+            onPress={() =>
+              isPro ? navigation.getParent()?.navigate('CreateAlert') : navigation.navigate('Paywall')
+            }
           />
         </View>
+
+        {!isPro ? (
+          <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
+            <View style={styles.card}>
+              <Body>Pro requis: alertes + notifications.</Body>
+              <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+            </View>
+          </View>
+        ) : null}
 
         <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
           <Title style={{ fontSize: 18 }}>Notifications</Title>

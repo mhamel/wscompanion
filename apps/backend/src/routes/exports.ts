@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { Prisma } from "@prisma/client";
 import { AppError } from "../errors";
+import { getEntitlement, requirePro } from "../entitlements";
 import { EXPORT_FORMATS, EXPORT_TYPES, isExportFormat, isExportType } from "../exports/types";
 import { signExportDownloadUrl } from "../exports/s3";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
@@ -20,6 +21,9 @@ async function exportsListHandler(req: FastifyRequest) {
   const query = req.query as { cursor?: unknown; limit?: unknown };
   const limit = parseLimit(query.limit, { defaultValue: 20, max: 50 });
 
+  const entitlement = await getEntitlement(req);
+  const isPro = entitlement.plan === "pro";
+
   const cursorRaw = typeof query.cursor === "string" ? query.cursor : "";
   const cursor = cursorRaw ? decodeCursor<ExportJobsCursor>(cursorRaw) : null;
   if (
@@ -37,6 +41,7 @@ async function exportsListHandler(req: FastifyRequest) {
   const rows = await prisma.exportJob.findMany({
     where: {
       userId: req.user.sub,
+      ...(isPro ? {} : { type: "user_data" }),
       ...(cursor
         ? {
             OR: [
@@ -105,6 +110,10 @@ async function exportCreateHandler(req: FastifyRequest) {
       message: "Invalid export type",
       statusCode: 400,
     });
+  }
+
+  if (typeRaw !== "user_data") {
+    await requirePro(req);
   }
 
   const format = typeof body.format === "string" ? body.format.trim() : "";
@@ -208,6 +217,10 @@ async function exportDownloadHandler(req: FastifyRequest) {
     throw new AppError({ code: "NOT_FOUND", message: "Not found", statusCode: 404 });
   }
 
+  if (job.type !== "user_data") {
+    await requirePro(req);
+  }
+
   if (job.status !== "succeeded" || !job.file) {
     throw new AppError({ code: "EXPORT_NOT_READY", message: "Export not ready", statusCode: 409 });
   }
@@ -306,6 +319,7 @@ export function registerExportsRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },
@@ -334,6 +348,7 @@ export function registerExportsRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         409: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },

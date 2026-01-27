@@ -13,6 +13,7 @@ declare module "fastify" {
     exportsQueue?: Queue;
     s3Exports?: S3ExportsClient;
     authenticate: (request: FastifyRequest) => Promise<void>;
+    requirePro: (request: FastifyRequest) => Promise<void>;
   }
 }
 

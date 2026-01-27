@@ -4,6 +4,7 @@ import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createApiClient } from '../api/client';
 import { ApiError } from '../api/http';
+import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { config } from '../config';
 import { useAuthStore } from '../auth/authStore';
 import { tokens } from '../theme/tokens';
@@ -23,6 +24,7 @@ export function SettingsScreen() {
   );
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
+  const entitlementQuery = useBillingEntitlementQuery();
 
   const [baseCurrency, setBaseCurrency] = React.useState('USD');
   const [busy, setBusy] = React.useState<string | null>(null);
@@ -108,6 +110,24 @@ export function SettingsScreen() {
     <Screen>
       <Title>Paramètres</Title>
       {error ? <Body style={styles.error}>{error}</Body> : null}
+
+      <View style={styles.card}>
+        <Title style={styles.sectionTitle}>Abonnement</Title>
+        <Body>
+          Statut:{' '}
+          {entitlementQuery.data?.plan === 'pro'
+            ? 'Pro'
+            : entitlementQuery.data
+              ? 'Gratuit'
+              : '...'}
+        </Body>
+        <AppButton
+          title={entitlementQuery.data?.plan === 'pro' ? 'Gérer Pro' : 'Passer Pro'}
+          variant="secondary"
+          disabled={busy !== null}
+          onPress={() => navigation.navigate('Paywall')}
+        />
+      </View>
 
       <View style={styles.card}>
         <Title style={styles.sectionTitle}>Devise</Title>

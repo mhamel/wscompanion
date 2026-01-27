@@ -4,6 +4,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createApiClient, type AlertTemplate } from '../api/client';
 import { ApiError } from '../api/http';
+import { useBillingEntitlementQuery } from '../billing/entitlements';
+import { isPaywallError } from '../billing/paywall';
 import { config } from '../config';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { tokens } from '../theme/tokens';
@@ -30,6 +32,8 @@ export function CreateAlertScreen({ navigation }: Props) {
     [],
   );
   const queryClient = useQueryClient();
+  const entitlementQuery = useBillingEntitlementQuery();
+  const isPro = entitlementQuery.data?.plan === 'pro';
 
   const [selected, setSelected] = React.useState<AlertTemplate | null>(null);
   const [symbol, setSymbol] = React.useState('');
@@ -88,6 +92,11 @@ export function CreateAlertScreen({ navigation }: Props) {
       Alert.alert('OK', 'Alerte créée.');
       navigation.goBack();
     } catch (e) {
+      if (isPaywallError(e)) {
+        navigation.navigate('Paywall');
+        return;
+      }
+
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
       } else {
@@ -96,6 +105,16 @@ export function CreateAlertScreen({ navigation }: Props) {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (entitlementQuery.data && !isPro) {
+    return (
+      <Screen>
+        <Title>Pro requis</Title>
+        <Body>La création d’alertes est une fonctionnalité Pro.</Body>
+        <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+      </Screen>
+    );
   }
 
   return (

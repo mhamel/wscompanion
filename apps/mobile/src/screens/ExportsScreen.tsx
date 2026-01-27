@@ -1,8 +1,11 @@
 import React from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import { Share, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { createApiClient, type ExportJob } from '../api/client';
 import { ApiError } from '../api/http';
+import { useBillingEntitlementQuery } from '../billing/entitlements';
+import { isPaywallError } from '../billing/paywall';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -53,6 +56,9 @@ export function ExportsScreen() {
     () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
     [],
   );
+  const navigation = useNavigation<any>();
+  const entitlementQuery = useBillingEntitlementQuery();
+  const isPro = entitlementQuery.data?.plan === 'pro';
   const [year, setYear] = React.useState(() => String(new Date().getFullYear()));
   const [creatingType, setCreatingType] = React.useState<string | null>(null);
   const [sharingId, setSharingId] = React.useState<string | null>(null);
@@ -78,6 +84,11 @@ export function ExportsScreen() {
   const hasInflight = jobs.some((j) => j.status === 'queued' || j.status === 'running');
 
   async function createExport(type: 'pnl_realized_by_ticker' | 'option_premiums_by_year') {
+    if (!isPro) {
+      navigation.navigate('Paywall');
+      return;
+    }
+
     setCreatingType(type);
     setShareError(null);
     try {
@@ -86,6 +97,11 @@ export function ExportsScreen() {
       await api.exportsCreate({ type, format: 'csv', params });
       await exportsQuery.refetch();
     } catch (e) {
+      if (isPaywallError(e)) {
+        navigation.navigate('Paywall');
+        return;
+      }
+
       if (e instanceof ApiError) {
         setShareError(e.problem?.message ?? e.message);
       } else {
@@ -103,6 +119,11 @@ export function ExportsScreen() {
       const res = await api.exportDownload({ id: jobId });
       await Share.share({ message: res.url });
     } catch (e) {
+      if (isPaywallError(e)) {
+        navigation.navigate('Paywall');
+        return;
+      }
+
       if (e instanceof ApiError) {
         setShareError(e.problem?.message ?? e.message);
       } else {
@@ -121,6 +142,15 @@ export function ExportsScreen() {
           <Body>Liste des jobs + telechargement (MVP)</Body>
           {shareError ? <Body style={styles.error}>{shareError}</Body> : null}
         </View>
+
+        {!isPro ? (
+          <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
+            <View style={styles.card}>
+              <Body>Pro requis: exports CSV.</Body>
+              <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+            </View>
+          </View>
+        ) : null}
 
         <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
           <View style={styles.card}>

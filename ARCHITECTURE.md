@@ -169,21 +169,25 @@ Principes:
 
 #### `entitlements`
 
-- `user_id uuid pk fk`
-- `plan text` (free, pro)
-- `source text` (revenuecat, admin, promo)
-- `valid_until timestamptz null`
+- `id uuid pk`
+- `user_id uuid fk users(id)`
+- `type text` (ex: pro)
+- `status text` (ex: active)
+- `started_at timestamptz`
+- `expires_at timestamptz null`
+- `created_at timestamptz`
 - `updated_at timestamptz`
+
+Note: l’implémentation conserve un historique (plusieurs lignes possibles). Le plan courant est dérivé du dernier entitlement `type=pro` `status=active` non expiré.
 
 #### `user_preferences`
 
 - `user_id uuid pk fk`
 - `base_currency char(3)` (ex: CAD)
-- `timezone text` (ex: America/Toronto)
-- `locale text` (ex: fr-CA)
-- `risk_disclaimer_accepted_at timestamptz null`
 - `created_at timestamptz`
 - `updated_at timestamptz`
+
+TODO (plus tard): `timezone`, `locale`, `risk_disclaimer_accepted_at`.
 
 <a id="arch-data-snaptrade"></a>
 ### SnapTrade / connexions
@@ -831,3 +835,10 @@ Pro:
 - P&L 360 illimité, wheel complet, exports illimités, alertes avancées, assistant + résumés news
 
 La logique d’accès passe par `entitlements` (cache + middleware), alimentée par RevenueCat (mobile) + overrides admin.
+
+Implémentation (MVP):
+- Mobile: SDK RevenueCat (`react-native-purchases`) + paywall in-app.
+- Backend: `POST /v1/billing/webhook/revenuecat` met à jour la table `entitlements` et invalide le cache Redis.
+  - Sécurité webhook: `REVENUECAT_WEBHOOK_AUTH_TOKEN`
+  - Mapping Pro: `REVENUECAT_PRO_ENTITLEMENT_ID` (défaut: `pro`)
+- Source de vérité côté app: `GET /v1/billing/entitlement`.

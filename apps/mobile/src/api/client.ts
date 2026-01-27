@@ -154,6 +154,11 @@ export type NewsItem = {
   summary?: string;
 };
 
+export type BillingEntitlement = {
+  plan: 'free' | 'pro';
+  expiresAt?: string;
+};
+
 export type TickerNewsResponse = {
   items: NewsItem[];
   nextCursor?: string;
@@ -392,6 +397,7 @@ export type ApiClient = {
   meDelete(): Promise<{ ok: boolean }>;
   preferencesGet(): Promise<UserPreferences>;
   preferencesPut(input: UserPreferences): Promise<UserPreferences>;
+  billingEntitlement(): Promise<BillingEntitlement>;
   deviceRegister(input: { pushToken: string; platform: 'ios' | 'android' }): Promise<{ id: string }>;
   deviceDelete(input: { id: string }): Promise<{ ok: boolean }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
@@ -564,6 +570,12 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
     preferencesPut: async (body) => {
       return withAuth((accessToken) =>
         client.PUT('/v1/preferences', { body, headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    billingEntitlement: async (): Promise<BillingEntitlement> => {
+      return withAuth((accessToken) =>
+        client.GET('/v1/billing/entitlement', { headers: { Authorization: bearer(accessToken) } }),
       );
     },
 

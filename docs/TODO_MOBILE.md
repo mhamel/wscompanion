@@ -80,8 +80,8 @@
 <a id="fe-paywall"></a>
 ## Paywall / Entitlements
 
-- [ ] FE-100 — Intégration RevenueCat SDK + état entitlements + gates UI (teaser). Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
-- [ ] FE-101 — PaywallScreen: bénéfices Pro + previews + parcours upgrade non intrusif. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
+- [x] FE-100 — Intégration RevenueCat SDK + état entitlements + gates UI (teaser). Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
+- [x] FE-101 — PaywallScreen: bénéfices Pro + previews + parcours upgrade non intrusif. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="fe-settings"></a>
 ## Settings, confiance, privacy

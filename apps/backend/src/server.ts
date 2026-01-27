@@ -20,6 +20,7 @@ import { registerTransactionsRoutes } from "./routes/transactions";
 import { registerWheelRoutes } from "./routes/wheel";
 import type { S3ExportsClient } from "./exports/s3";
 import { captureException } from "./observability/sentry";
+import { requirePro } from "./entitlements";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -226,6 +227,10 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     if (!user || user.deletedAt) {
       throw new AppError({ code: "ACCOUNT_DELETED", message: "Unauthorized", statusCode: 401 });
     }
+  });
+
+  app.decorate("requirePro", async (request: FastifyRequest) => {
+    await requirePro(request);
   });
 
   app.setNotFoundHandler(async (_req, reply) => {

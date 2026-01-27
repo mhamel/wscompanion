@@ -3,6 +3,8 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { createApiClient, type Money, type NewsItem, type TickerSummaryResponse } from '../api/client';
 import { ApiError } from '../api/http';
+import { useBillingEntitlementQuery } from '../billing/entitlements';
+import { isPaywallError } from '../billing/paywall';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -120,6 +122,8 @@ export function TickerScreen({ route, navigation }: Props) {
   const [wheelStatus, setWheelStatus] = React.useState<'open' | 'closed'>('open');
   const [wheelBusy, setWheelBusy] = React.useState(false);
   const [wheelError, setWheelError] = React.useState<string | null>(null);
+  const entitlementQuery = useBillingEntitlementQuery();
+  const isPro = entitlementQuery.data?.plan === 'pro';
 
   React.useEffect(() => {
     setTab(route.params.tab ?? 'Trades');
@@ -158,18 +162,28 @@ export function TickerScreen({ route, navigation }: Props) {
   const wheelQuery = useQuery({
     queryKey: ['wheelCycles', symbol, wheelStatus],
     queryFn: () => api.wheelCycles({ symbol, status: wheelStatus, limit: 20 }),
-    enabled: tab === 'Wheel',
+    enabled: tab === 'Wheel' && isPro,
   });
 
   const wheelCycles = wheelQuery.data?.items ?? [];
 
   async function detectWheel() {
+    if (!isPro) {
+      navigation.navigate('Paywall');
+      return;
+    }
+
     setWheelBusy(true);
     setWheelError(null);
     try {
       await api.wheelDetect({ symbol });
       await wheelQuery.refetch();
     } catch (e) {
+      if (isPaywallError(e)) {
+        navigation.navigate('Paywall');
+        return;
+      }
+
       if (e instanceof ApiError) {
         setWheelError(e.problem?.message ?? e.message);
       } else {
@@ -274,7 +288,14 @@ export function TickerScreen({ route, navigation }: Props) {
             </View>
           ) : tab === 'Wheel' ? (
             <View style={{ gap: tokens.spacing.sm }}>
-              <View style={styles.card}>
+              {!isPro ? (
+                <View style={styles.card}>
+                  <Body>Pro requis: Wheel tracker.</Body>
+                  <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+                </View>
+              ) : (
+                <>
+                  <View style={styles.card}>
                 <Body>Cycles wheel ({wheelStatus})</Body>
                 {wheelError ? <Body style={styles.error}>{wheelError}</Body> : null}
 
@@ -355,6 +376,8 @@ export function TickerScreen({ route, navigation }: Props) {
                     </Pressable>
                   ))}
                 </View>
+              )}
+                </>
               )}
             </View>
           ) : (

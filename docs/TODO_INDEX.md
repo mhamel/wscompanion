@@ -49,7 +49,7 @@ Objectif: “connexion SnapTrade → sync initial → top tickers P&L visibles�
 
 - [x] M3-01 — News par ticker (RSS/Atom) + dédup + endpoints + onglet mobile. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
 - [x] M3-02 — Alertes (règles + évaluations worker + push) + écrans. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-alerts).
-- [ ] M3-03 — Entitlements (RevenueCat) + paywall “non intrusif” + gating clair. Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
+- [x] M3-03 — Entitlements (RevenueCat) + paywall “non intrusif” + gating clair. Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
 
 ### M4 — Assistant premium (optionnel / différenciant)
 

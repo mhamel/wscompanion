@@ -102,8 +102,8 @@
 <a id="be-entitlements"></a>
 ## Billing / Entitlements
 
-- [ ] BE-110 — Intégration RevenueCat (webhooks ou polling) → table `entitlements` + cache. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation), [PRODUIT.md](../PRODUIT.md#prd-monetisation).
-- [ ] BE-111 — Feature gates côté API (middleware) + réponses “teaser” (pas de blocage brutal). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
+- [x] BE-110 — Intégration RevenueCat (webhooks ou polling) → table `entitlements` + cache. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation), [PRODUIT.md](../PRODUIT.md#prd-monetisation).
+- [x] BE-111 — Feature gates côté API (middleware) + réponses “teaser” (pas de blocage brutal). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="be-assistant"></a>
 ## Assistant (premium, optionnel)

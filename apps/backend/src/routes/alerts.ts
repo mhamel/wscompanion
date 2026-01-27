@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Prisma } from "@prisma/client";
 import { ALERT_TEMPLATES, getAlertTemplate } from "../alerts/templates";
 import { AppError } from "../errors";
+import { getEntitlement } from "../entitlements";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
 
 async function alertTemplatesHandler() {
@@ -20,6 +21,11 @@ async function alertRulesListHandler(req: FastifyRequest) {
       message: "Database is not configured",
       statusCode: 500,
     });
+  }
+
+  const entitlement = await getEntitlement(req);
+  if (entitlement.plan !== "pro") {
+    return { items: [] };
   }
 
   const query = req.query as { limit?: unknown };
@@ -224,6 +230,11 @@ async function alertEventsListHandler(req: FastifyRequest) {
     });
   }
 
+  const entitlement = await getEntitlement(req);
+  if (entitlement.plan !== "pro") {
+    return { items: [] };
+  }
+
   const query = req.query as { cursor?: unknown; limit?: unknown };
   const limit = parseLimit(query.limit, { defaultValue: 20, max: 50 });
 
@@ -352,7 +363,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
   });
 
   app.post("/alerts", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       body: {
@@ -375,6 +386,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },
@@ -382,7 +394,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
   });
 
   app.patch("/alerts/:id", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       params: {
@@ -409,6 +421,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
@@ -417,7 +430,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
   });
 
   app.delete("/alerts/:id", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       params: {
@@ -435,6 +448,7 @@ export function registerAlertsRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },

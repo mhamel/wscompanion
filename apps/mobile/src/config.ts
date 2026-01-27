@@ -3,6 +3,8 @@ export const config = {
   apiTimeoutMs: parsePositiveInt(process.env.EXPO_PUBLIC_API_TIMEOUT_MS, 15_000),
   sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   appEnv: process.env.EXPO_PUBLIC_APP_ENV ?? 'development',
+  revenueCatIosApiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
+  revenueCatAndroidApiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY,
 };
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {

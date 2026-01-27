@@ -598,7 +598,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   } as const;
 
   app.post("/wheel/detect", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       body: {
@@ -620,6 +620,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },
@@ -627,7 +628,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.get("/wheel/cycles", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       querystring: {
@@ -678,6 +679,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },
@@ -685,7 +687,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.get("/wheel/cycles/:id", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       params: {
@@ -734,6 +736,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
@@ -742,7 +745,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.post("/wheel/cycles", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       body: {
@@ -766,6 +769,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },
@@ -773,7 +777,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.patch("/wheel/cycles/:id", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       params: {
@@ -799,6 +803,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
@@ -807,7 +812,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.post("/wheel/cycles/:id/close", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       params: {
@@ -830,6 +835,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
@@ -838,7 +844,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.post("/wheel/cycles/merge", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       body: {
@@ -863,6 +869,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
@@ -871,7 +878,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
   });
 
   app.post("/wheel/cycles/:id/split", {
-    preHandler: app.authenticate,
+    preHandler: [app.authenticate, app.requirePro],
     schema: {
       security: [{ bearerAuth: [] }],
       params: {
@@ -904,6 +911,7 @@ export function registerWheelRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         404: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
