@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
+import pino from "pino";
 import { loadConfig } from "./config";
 import { captureException, closeSentry, initSentry } from "./observability/sentry";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
@@ -16,6 +17,21 @@ import { loadDevSecrets } from "./devSecrets";
 import { getNewsScheduleEverySeconds, loadNewsRssFeeds } from "./news/config";
 import { ingestNewsRssFeed } from "./news/ingest";
 import { sendExpoPushMessages, type ExpoPushMessage } from "./notifications/expoPush";
+
+const logger = pino({
+  level: process.env.LOG_LEVEL ?? "info",
+  redact: {
+    paths: [
+      "req.headers.authorization",
+      "req.headers.cookie",
+      "req.body.password",
+      "req.body.code",
+      "req.body.accessToken",
+      "req.body.refreshToken",
+    ],
+    remove: true,
+  },
+});
 
 type SyncJob = {
   syncRunId: string;
@@ -178,7 +194,7 @@ async function handleSyncJob(
         },
       );
     } catch (err) {
-      console.error("analytics: enqueue pnl-recompute failed", err);
+      logger.error({ err }, "analytics: enqueue pnl-recompute failed");
     }
   }
 
@@ -305,7 +321,7 @@ async function handlePnlRecomputeJob(
   });
 
   if (result.anomalies.length > 0) {
-    console.warn("pnl: anomalies", { userId, anomalies: result.anomalies.slice(0, 20) });
+    logger.warn({ userId, anomalies: result.anomalies.slice(0, 20) }, "pnl: anomalies");
   }
 
   await bumpPnlCacheVersion(cacheRedis, userId, baseCurrency);
@@ -443,7 +459,7 @@ async function handleNewsScanJob(prisma: PrismaClient, redis: IORedis) {
   }
 
   if (errors.length > 0) {
-    console.warn("news: ingestion errors", { count: errors.length, errors: errors.slice(0, 3) });
+    logger.warn({ count: errors.length, errors: errors.slice(0, 3) }, "news: ingestion errors");
   }
 
   return {
@@ -661,7 +677,7 @@ async function handleAlertsDeliverJob(prisma: PrismaClient) {
   }
 
   if (errors.length > 0) {
-    console.warn("alerts: delivery errors", { count: errors.length, errors: errors.slice(0, 3) });
+    logger.warn({ count: errors.length, errors: errors.slice(0, 3) }, "alerts: delivery errors");
   }
 
   return {
@@ -762,6 +778,7 @@ async function handleExportRunJob(
 async function main() {
   dotenv.config();
   loadDevSecrets();
+  logger.level = process.env.LOG_LEVEL ?? "info";
   initSentry();
   const config = loadConfig();
   const s3 = createS3ExportsClient(config);
@@ -1066,18 +1083,18 @@ async function main() {
   };
 
   process.on("SIGINT", () => {
-    shutdown().catch((err) => console.error(err));
+    shutdown().catch((err) => logger.error({ err }, "worker: shutdown failed"));
   });
   process.on("SIGTERM", () => {
-    shutdown().catch((err) => console.error(err));
+    shutdown().catch((err) => logger.error({ err }, "worker: shutdown failed"));
   });
 
-  console.log("worker: started");
+  logger.info("worker: started");
 }
 
 main().catch(async (err) => {
   captureException(err, { tags: { component: "worker", phase: "startup" } });
   await closeSentry();
-  console.error(err);
+  logger.error({ err }, "worker: startup failed");
   process.exit(1);
 });

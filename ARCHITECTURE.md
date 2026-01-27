@@ -808,10 +808,12 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
 ## Observabilité & analytics (croissance)
 
 - Logs structurés (pino) + corrélation `request_id`.
+  - Conventions: `docs/LOGGING.md`
 - Traces OpenTelemetry (API → DB → providers).
 - Erreurs: Sentry (mobile + backend).
 - Produit: tracking events (PostHog/Segment) pour funnel:
   - signup, connect start/complete, first sync, first “wow”, paywall shown, upgrade
+  - Plan d’événements: `docs/ANALYTICS_EVENTS.md`
 
 <a id="arch-deploiement"></a>
 ## Déploiement (cible MVP)

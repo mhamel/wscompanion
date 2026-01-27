@@ -3,6 +3,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import jwt from "@fastify/jwt";
 import type { Queue } from "bullmq";
+import { randomUUID } from "crypto";
 import { AppError } from "./errors";
 import type { PrismaClient } from "@prisma/client";
 import type { RedisClientType } from "redis";
@@ -42,8 +43,23 @@ function getJwtSecret(): string {
   throw new Error("AUTH_JWT_SECRET is required in production");
 }
 
+function normalizeRequestId(value: string | string[] | undefined): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.length > 200) return null;
+  return trimmed;
+}
+
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   const app = Fastify({
+    genReqId: (req) => {
+      const headerId =
+        normalizeRequestId(req.headers["x-request-id"]) ??
+        normalizeRequestId(req.headers["x-correlation-id"]);
+
+      return headerId ?? randomUUID();
+    },
     logger:
       options.logger === false
         ? false
@@ -61,6 +77,10 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
               remove: true,
             },
           },
+  });
+
+  app.addHook("onRequest", async (req, reply) => {
+    reply.header("x-request-id", req.id);
   });
 
   if (options.prisma) {

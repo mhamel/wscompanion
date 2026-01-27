@@ -41,7 +41,7 @@
 <a id="obs-top"></a>
 ## Observabilité (tech)
 
-- [ ] OBS-001 — Conventions logs (JSON), `request_id`, niveaux, redaction. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
+- [x] OBS-001 — Conventions logs (JSON), `request_id`, niveaux, redaction. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite), [LOGGING.md](./LOGGING.md).
 - [ ] OBS-002 — Tracing OpenTelemetry (API→DB→providers) + propagation context. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [x] OBS-003 — Sentry (backend + mobile): release, sourcemaps, alerting. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [ ] OBS-004 — SLOs MVP: disponibilité API, latence endpoints clés, succès jobs sync/export. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
@@ -49,5 +49,5 @@
 <a id="an-top"></a>
 ## Analytics produit (croissance)
 
-- [ ] AN-001 — Plan d’événements (PostHog/Segment): signup, connect start/complete, first sync, first wow, paywall shown, upgrade. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite), [PRODUIT.md](../PRODUIT.md#prd-wow).
+- [x] AN-001 — Plan d’événements (PostHog/Segment): signup, connect start/complete, first sync, first wow, paywall shown, upgrade. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite), [PRODUIT.md](../PRODUIT.md#prd-wow), [ANALYTICS_EVENTS.md](./ANALYTICS_EVENTS.md).
 - [ ] AN-002 — Funnels & dashboards: time-to-wow, rétention hebdo, conversion pro, causes d’échec sync. Réf: [PRODUIT.md](../PRODUIT.md#prd-wow).
