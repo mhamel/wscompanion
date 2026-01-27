@@ -100,4 +100,4 @@ Priorité C (data gouvernance):
 ## 7) Git / livraison
 
 - Branche: `main`
-- À livrer: commit + push contenant `docs/PNL360_SPEC.md`, le backlog mis à jour, le fix fees P&L + fixture, et la stabilisation du test health.
+- Commit principal (cette itération): `b4016ed` (DA-010..015 spec P&L + fix fees + fixture + handoff)
