@@ -25,7 +25,10 @@ function TemplateCard(props: { template: AlertTemplate; onPress: () => void }) {
 }
 
 export function CreateAlertScreen({ navigation }: Props) {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const queryClient = useQueryClient();
 
   const [selected, setSelected] = React.useState<AlertTemplate | null>(null);

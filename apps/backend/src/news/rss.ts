@@ -135,7 +135,8 @@ export function parseRssOrAtom(xml: string): ParsedNewsItem[] {
     for (const item of parseRssItems(rssChannel)) {
       const title = pickText(item.title) ?? toStringOrNull(item.title) ?? "";
       const link = pickLink(item.link) ?? "";
-      const publishedAt = parseDate(item.pubDate) ?? parseDate(item.published) ?? parseDate(item.updated);
+      const publishedAt =
+        parseDate(item.pubDate) ?? parseDate(item.published) ?? parseDate(item.updated);
       if (!title || !link || !publishedAt) continue;
 
       const canonical = canonicalizeUrl(link);

@@ -31,7 +31,10 @@ export function pnlTickerTimelineCacheKey(
 }
 
 type RedisGet = { get: (key: string) => Promise<string | null> };
-type RedisIncr = { incr: (key: string) => Promise<number>; expire?: (key: string, seconds: number) => Promise<unknown> };
+type RedisIncr = {
+  incr: (key: string) => Promise<number>;
+  expire?: (key: string, seconds: number) => Promise<unknown>;
+};
 
 export async function getPnlCacheVersion(
   redis: RedisGet | undefined,
@@ -66,4 +69,3 @@ export async function bumpPnlCacheVersion(
     return null;
   }
 }
-

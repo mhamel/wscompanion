@@ -193,7 +193,9 @@ async function connectionsListHandler(req: FastifyRequest) {
       provider: connection.provider,
       status: connection.status,
       connectedAt: connection.connectedAt.toISOString(),
-      disconnectedAt: connection.disconnectedAt ? connection.disconnectedAt.toISOString() : undefined,
+      disconnectedAt: connection.disconnectedAt
+        ? connection.disconnectedAt.toISOString()
+        : undefined,
       lastSyncAt: connection.lastSyncAt ? connection.lastSyncAt.toISOString() : undefined,
     })),
   };

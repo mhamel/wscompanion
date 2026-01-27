@@ -40,4 +40,3 @@ export const ALERT_TEMPLATES: AlertTemplate[] = [
 export function getAlertTemplate(type: string): AlertTemplate | undefined {
   return ALERT_TEMPLATES.find((t) => t.type === type);
 }
-

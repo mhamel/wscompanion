@@ -33,11 +33,13 @@ export function loadNewsRssFeeds(env: NodeJS.ProcessEnv = process.env): NewsRssF
           ? (obj.symbols as string[]).map(normalizeSymbol).filter(Boolean)
           : [];
       const enabled = obj.enabled === undefined ? true : Boolean(obj.enabled);
-      const weight = typeof obj.weight === "number" && Number.isFinite(obj.weight) ? obj.weight : 100;
+      const weight =
+        typeof obj.weight === "number" && Number.isFinite(obj.weight) ? obj.weight : 100;
 
       if (!provider) throw new Error(`NEWS_RSS_FEEDS_JSON[${index}].provider is required`);
       if (!url) throw new Error(`NEWS_RSS_FEEDS_JSON[${index}].url is required`);
-      if (symbols.length === 0) throw new Error(`NEWS_RSS_FEEDS_JSON[${index}].symbols is required`);
+      if (symbols.length === 0)
+        throw new Error(`NEWS_RSS_FEEDS_JSON[${index}].symbols is required`);
 
       return { provider, url, symbols, enabled, weight } satisfies NewsRssFeedConfig;
     })
@@ -51,4 +53,3 @@ export function getNewsScheduleEverySeconds(env: NodeJS.ProcessEnv = process.env
   if (!Number.isFinite(value) || value <= 0) return 1800;
   return Math.floor(value);
 }
-

@@ -33,7 +33,10 @@ function formatAuthError(error: unknown): string {
 
 export function AuthScreen() {
   const setTokens = useAuthStore((s) => s.setTokens);
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
 
   const [step, setStep] = React.useState<Step>('email');
   const [email, setEmail] = React.useState('');

@@ -31,4 +31,3 @@ export function loadDevSecrets(): void {
   process.env.SNAPTRADE_CLIENT_ID ??= clientId;
   process.env.SNAPTRADE_CONSUMER_KEY ??= consumerKey;
 }
-

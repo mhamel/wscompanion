@@ -79,7 +79,10 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 }
 
 export function ConnectionsScreen() {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 

@@ -201,7 +201,9 @@ async function tickerSummaryHandler(req: FastifyRequest) {
             ...(avgCostMinor !== null && avgCostCurrency
               ? { avgCost: money(avgCostMinor, avgCostCurrency) }
               : {}),
-            ...(marketValueCurrency ? { marketValue: money(totalMarketValueMinor, marketValueCurrency) } : {}),
+            ...(marketValueCurrency
+              ? { marketValue: money(totalMarketValueMinor, marketValueCurrency) }
+              : {}),
           }
         : undefined,
     pnl: pnlObject(row),
@@ -271,10 +273,7 @@ async function tickerPnlHandler(req: FastifyRequest) {
   const txs = await prisma.transaction.findMany({
     where: {
       userId: req.user.sub,
-      OR: [
-        { instrument: { symbol } },
-        { optionContract: { underlyingInstrument: { symbol } } },
-      ],
+      OR: [{ instrument: { symbol } }, { optionContract: { underlyingInstrument: { symbol } } }],
     },
     include: {
       instrument: true,
@@ -324,7 +323,8 @@ async function tickerPnlHandler(req: FastifyRequest) {
     }
   }
 
-  const percentBps = deployedCashMinor > 0n ? divRound(row.netPnlMinor * 10_000n, deployedCashMinor) : null;
+  const percentBps =
+    deployedCashMinor > 0n ? divRound(row.netPnlMinor * 10_000n, deployedCashMinor) : null;
   const returnPct = percentBps !== null ? Number(percentBps) / 100 : null;
 
   return {
@@ -406,8 +406,11 @@ async function tickerHoldHandler(req: FastifyRequest) {
     });
   }
 
-  const firstBuyGrossMinor = firstBuy.grossAmountMinor !== null ? absBigInt(firstBuy.grossAmountMinor) : null;
-  const firstBuyGrossCurrency = normalizeCurrency(firstBuy.priceCurrency ?? firstBuy.instrument?.currency ?? baseCurrency);
+  const firstBuyGrossMinor =
+    firstBuy.grossAmountMinor !== null ? absBigInt(firstBuy.grossAmountMinor) : null;
+  const firstBuyGrossCurrency = normalizeCurrency(
+    firstBuy.priceCurrency ?? firstBuy.instrument?.currency ?? baseCurrency,
+  );
 
   const firstBuyPriceMinorRaw =
     firstBuy.priceAmountMinor !== null
@@ -444,7 +447,8 @@ async function tickerHoldHandler(req: FastifyRequest) {
   for (const tx of stockTxs) {
     const side = classifyStockSide(tx.type);
     if (side === "other") continue;
-    const qtyMinor = tx.quantity !== null ? parseDecimalToQuantityMinor(tx.quantity.toString()) : null;
+    const qtyMinor =
+      tx.quantity !== null ? parseDecimalToQuantityMinor(tx.quantity.toString()) : null;
     if (!qtyMinor) continue;
     heldQtyMinor += side === "buy" ? absBigInt(qtyMinor) : -absBigInt(qtyMinor);
     if (heldQtyMinor > maxHeldQtyMinor) maxHeldQtyMinor = heldQtyMinor;
@@ -476,7 +480,10 @@ async function tickerHoldHandler(req: FastifyRequest) {
     } else if (snap.marketValueAmountMinor !== null && snap.quantity) {
       const qtyMinor = parseDecimalToQuantityMinor(snap.quantity.toString());
       if (qtyMinor && qtyMinor !== 0n) {
-        referencePriceMinorRaw = divRound(snap.marketValueAmountMinor * QUANTITY_SCALE, absBigInt(qtyMinor));
+        referencePriceMinorRaw = divRound(
+          snap.marketValueAmountMinor * QUANTITY_SCALE,
+          absBigInt(qtyMinor),
+        );
         referencePriceCurrency = snap.marketValueCurrency ?? snap.instrument.currency;
       }
     }
@@ -767,7 +774,14 @@ export function registerTickerRoutes(app: FastifyInstance) {
             returnOnDeployedCashPct: { type: ["number", "null"] },
             lastUpdatedAt: { type: "string", format: "date-time" },
           },
-          required: ["symbol", "baseCurrency", "pnl", "deployedCash", "returnOnDeployedCashPct", "lastUpdatedAt"],
+          required: [
+            "symbol",
+            "baseCurrency",
+            "pnl",
+            "deployedCash",
+            "returnOnDeployedCashPct",
+            "lastUpdatedAt",
+          ],
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },

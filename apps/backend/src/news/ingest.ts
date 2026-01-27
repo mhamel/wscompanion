@@ -37,7 +37,11 @@ async function loadFeedMeta(redis: RedisCache | undefined, url: string): Promise
   }
 }
 
-async function saveFeedMeta(redis: RedisCache | undefined, url: string, meta: FeedMeta): Promise<void> {
+async function saveFeedMeta(
+  redis: RedisCache | undefined,
+  url: string,
+  meta: FeedMeta,
+): Promise<void> {
   if (!redis) return;
   try {
     await redis.setex(metaKey(url), FEED_META_TTL_SECONDS, JSON.stringify(meta));

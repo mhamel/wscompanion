@@ -181,7 +181,10 @@ async function wheelCycleByIdHandler(req: FastifyRequest) {
 
     const grossMinor = absBigInt(tx.grossAmountMinor);
     const currency = normalizeCurrency(
-      tx.priceCurrency ?? tx.instrument?.currency ?? tx.optionContract?.currency ?? cycle.baseCurrency,
+      tx.priceCurrency ??
+        tx.instrument?.currency ??
+        tx.optionContract?.currency ??
+        cycle.baseCurrency,
     );
 
     const converted = convertMinorAmount({
@@ -217,7 +220,8 @@ async function wheelCycleByIdHandler(req: FastifyRequest) {
     notes: cycle.notes ?? undefined,
     aggregates: {
       optionPremiums: money(optionPremiumsMinor, cycle.baseCurrency),
-      stockPnl: cycle.status === "closed" ? money(stockCashflowMinor, cycle.baseCurrency) : undefined,
+      stockPnl:
+        cycle.status === "closed" ? money(stockCashflowMinor, cycle.baseCurrency) : undefined,
     },
     legs: cycle.legs.map((leg) => ({
       id: leg.id,
@@ -251,7 +255,11 @@ async function wheelCycleCreateHandler(req: FastifyRequest) {
   const symbolRaw = typeof body.symbol === "string" ? body.symbol : "";
   const symbol = symbolRaw ? normalizeSymbol(symbolRaw) : "";
   if (!symbol) {
-    throw new AppError({ code: "VALIDATION_ERROR", message: "symbol is required", statusCode: 400 });
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "symbol is required",
+      statusCode: 400,
+    });
   }
 
   const openedAtRaw = typeof body.openedAt === "string" ? body.openedAt : "";
@@ -261,7 +269,9 @@ async function wheelCycleCreateHandler(req: FastifyRequest) {
   }
 
   const baseCurrencyRaw = typeof body.baseCurrency === "string" ? body.baseCurrency : "";
-  const baseCurrency = baseCurrencyRaw ? normalizeCurrency(baseCurrencyRaw) : await getUserBaseCurrency(req);
+  const baseCurrency = baseCurrencyRaw
+    ? normalizeCurrency(baseCurrencyRaw)
+    : await getUserBaseCurrency(req);
 
   const notes = typeof body.notes === "string" ? body.notes : undefined;
   const tags =
@@ -476,14 +486,23 @@ async function wheelCycleSplitHandler(req: FastifyRequest) {
     throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid id", statusCode: 400 });
   }
 
-  const body = req.body as { legIds?: unknown; notes?: unknown; tags?: unknown; openedAt?: unknown };
+  const body = req.body as {
+    legIds?: unknown;
+    notes?: unknown;
+    tags?: unknown;
+    openedAt?: unknown;
+  };
   const legIds =
     Array.isArray(body.legIds) && body.legIds.every((l) => typeof l === "string")
       ? (body.legIds as string[]).map((l) => l.trim()).filter(Boolean)
       : [];
 
   if (legIds.length === 0) {
-    throw new AppError({ code: "VALIDATION_ERROR", message: "legIds is required", statusCode: 400 });
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "legIds is required",
+      statusCode: 400,
+    });
   }
 
   const notes = typeof body.notes === "string" ? body.notes : undefined;
@@ -642,7 +661,16 @@ export function registerWheelRoutes(app: FastifyInstance) {
                   tags: { type: "array", items: { type: "string" } },
                   legCount: { type: "integer" },
                 },
-                required: ["id", "symbol", "status", "openedAt", "baseCurrency", "autoDetected", "tags", "legCount"],
+                required: [
+                  "id",
+                  "symbol",
+                  "status",
+                  "openedAt",
+                  "baseCurrency",
+                  "autoDetected",
+                  "tags",
+                  "legCount",
+                ],
               },
             },
           },
@@ -692,7 +720,17 @@ export function registerWheelRoutes(app: FastifyInstance) {
             },
             legs: { type: "array", items: wheelLegSchema },
           },
-          required: ["id", "symbol", "status", "openedAt", "baseCurrency", "autoDetected", "tags", "aggregates", "legs"],
+          required: [
+            "id",
+            "symbol",
+            "status",
+            "openedAt",
+            "baseCurrency",
+            "autoDetected",
+            "tags",
+            "aggregates",
+            "legs",
+          ],
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },

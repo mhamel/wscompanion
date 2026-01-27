@@ -14,20 +14,16 @@ export type PnlTransactionInput = {
   grossAmountMinor: bigint | null;
   feesAmountMinor: bigint | null;
   feesCurrency: string | null;
-  instrument:
-    | {
-        symbol: string | null;
-        currency: string;
-      }
-    | null;
-  optionContract:
-    | {
-        currency: string;
-        right?: string | null;
-        multiplier?: number | null;
-        underlyingInstrument: { symbol: string | null };
-      }
-    | null;
+  instrument: {
+    symbol: string | null;
+    currency: string;
+  } | null;
+  optionContract: {
+    currency: string;
+    right?: string | null;
+    multiplier?: number | null;
+    underlyingInstrument: { symbol: string | null };
+  } | null;
   raw: unknown | null;
 };
 
@@ -247,7 +243,11 @@ function classifyTransaction(tx: PnlTransactionInput): PnlKind {
   if (type.includes("dividend")) return "dividend";
   if (type.includes("fee") || type.includes("commission")) return "fee";
 
-  const isOption = Boolean(tx.optionContract) || type.includes("option") || type.includes("call") || type.includes("put");
+  const isOption =
+    Boolean(tx.optionContract) ||
+    type.includes("option") ||
+    type.includes("call") ||
+    type.includes("put");
   if (isOption) {
     if (type.includes("sell") || type.includes("sto")) return "option_sell";
     if (type.includes("buy") || type.includes("bto")) return "option_buy";
@@ -260,7 +260,9 @@ function classifyTransaction(tx: PnlTransactionInput): PnlKind {
   return "unknown";
 }
 
-function parseExplicitFxRateScaled(raw: unknown): { from: string; to: string; rate: number } | null {
+function parseExplicitFxRateScaled(
+  raw: unknown,
+): { from: string; to: string; rate: number } | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const obj = raw as Record<string, unknown>;
 
@@ -269,7 +271,8 @@ function parseExplicitFxRateScaled(raw: unknown): { from: string; to: string; ra
     const fx = fxObj as Record<string, unknown>;
     const from = typeof fx.fromCurrency === "string" ? fx.fromCurrency : "";
     const to = typeof fx.toCurrency === "string" ? fx.toCurrency : "";
-    const rate = typeof fx.rate === "number" ? fx.rate : typeof fx.rate === "string" ? Number(fx.rate) : NaN;
+    const rate =
+      typeof fx.rate === "number" ? fx.rate : typeof fx.rate === "string" ? Number(fx.rate) : NaN;
     if (from && to && Number.isFinite(rate) && rate > 0) {
       return { from, to, rate };
     }
@@ -313,10 +316,7 @@ function ensureAccumulator(map: Map<string, PnlAccumulator>, symbol: string): Pn
   return fresh;
 }
 
-function ensureDailyAccumulator(
-  map: Map<string, DailyAccumulator>,
-  key: string,
-): DailyAccumulator {
+function ensureDailyAccumulator(map: Map<string, DailyAccumulator>, key: string): DailyAccumulator {
   const existing = map.get(key);
   if (existing) return existing;
   const fresh: DailyAccumulator = {
@@ -331,11 +331,7 @@ function ensureDailyAccumulator(
   return fresh;
 }
 
-function applyFees(
-  totals: PnlAccumulator,
-  daily: DailyAccumulator,
-  feeMinorBase: bigint,
-) {
+function applyFees(totals: PnlAccumulator, daily: DailyAccumulator, feeMinorBase: bigint) {
   if (feeMinorBase === 0n) return;
   totals.fees += feeMinorBase;
   daily.fees += feeMinorBase;

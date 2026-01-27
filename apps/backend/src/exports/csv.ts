@@ -55,7 +55,9 @@ export async function generateExportCsv(input: {
   type: ExportType;
   params?: unknown;
 }): Promise<{ filename: string; contentType: string; body: Buffer }> {
-  const preferences = await input.prisma.userPreferences.findUnique({ where: { userId: input.userId } });
+  const preferences = await input.prisma.userPreferences.findUnique({
+    where: { userId: input.userId },
+  });
   const baseCurrency = normalizeCurrency(preferences?.baseCurrency ?? "USD");
   const today = new Date().toISOString().slice(0, 10);
 
@@ -110,7 +112,12 @@ export async function generateExportCsv(input: {
       const year = tx.executedAt.getUTCFullYear();
       if (yearFilter && year !== yearFilter) continue;
 
-      if (!tx.optionContractId && !tx.type.toLowerCase().includes("option") && !tx.type.toLowerCase().includes("call") && !tx.type.toLowerCase().includes("put")) {
+      if (
+        !tx.optionContractId &&
+        !tx.type.toLowerCase().includes("option") &&
+        !tx.type.toLowerCase().includes("call") &&
+        !tx.type.toLowerCase().includes("put")
+      ) {
         continue;
       }
 
@@ -140,14 +147,17 @@ export async function generateExportCsv(input: {
         continue;
       }
 
-      const delta = dir === "sell" ? absBigInt(converted.amountMinor) : -absBigInt(converted.amountMinor);
+      const delta =
+        dir === "sell" ? absBigInt(converted.amountMinor) : -absBigInt(converted.amountMinor);
       acc.netPremiumMinor += delta;
       acc.count += 1;
     }
 
     const years = Array.from(byYear.keys()).sort((a, b) => a - b);
     const lines: string[] = [];
-    lines.push(csvLine(["year", "net_option_premiums", "base_currency", "trades_count", "fx_missing"]));
+    lines.push(
+      csvLine(["year", "net_option_premiums", "base_currency", "trades_count", "fx_missing"]),
+    );
     for (const year of years) {
       const row = byYear.get(year);
       if (!row) continue;
@@ -164,7 +174,9 @@ export async function generateExportCsv(input: {
 
     const body = Buffer.from(lines.join("\n") + "\n", "utf8");
     return {
-      filename: yearFilter ? `option_premiums_${yearFilter}.csv` : `option_premiums_by_year_${today}.csv`,
+      filename: yearFilter
+        ? `option_premiums_${yearFilter}.csv`
+        : `option_premiums_by_year_${today}.csv`,
       contentType: "text/csv; charset=utf-8",
       body,
     };

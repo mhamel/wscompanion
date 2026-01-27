@@ -17,7 +17,10 @@ function normalizeCurrency(input: string): string {
 }
 
 export function SettingsScreen() {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
 
@@ -175,4 +178,3 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
-

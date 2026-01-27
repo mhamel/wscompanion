@@ -169,7 +169,11 @@ async function handleSyncJob(
       await analyticsQueue.add(
         "pnl-recompute",
         { userId: job.data.userId },
-        { jobId: `pnl-recompute:${job.data.userId}`, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },
+        {
+          jobId: `pnl-recompute:${job.data.userId}`,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5_000 },
+        },
       );
     } catch (err) {
       console.error("analytics: enqueue pnl-recompute failed", err);
@@ -226,7 +230,10 @@ async function handleSyncScanJob(prisma: PrismaClient, syncQueue: Queue) {
 async function handlePnlRecomputeJob(
   prisma: PrismaClient,
   job: Job<AnalyticsJob>,
-  cacheRedis?: { incr: (key: string) => Promise<number>; expire?: (key: string, seconds: number) => Promise<unknown> },
+  cacheRedis?: {
+    incr: (key: string) => Promise<number>;
+    expire?: (key: string, seconds: number) => Promise<unknown>;
+  },
 ) {
   const userId = job.data.userId;
   const now = new Date();
@@ -340,7 +347,12 @@ function classifyWheelLegKind(tx: {
   if (t.includes("fee") || t.includes("commission")) return "fee";
 
   const rightRaw = tx.optionContract?.right?.trim().toLowerCase() ?? "";
-  const right = rightRaw.startsWith("p") || t.includes("put") ? "put" : rightRaw.startsWith("c") || t.includes("call") ? "call" : "";
+  const right =
+    rightRaw.startsWith("p") || t.includes("put")
+      ? "put"
+      : rightRaw.startsWith("c") || t.includes("call")
+        ? "call"
+        : "";
   const isOption = Boolean(tx.optionContract) || t.includes("option") || right.length > 0;
   const isAssignment = t.includes("assigned") || t.includes("assignment") || t.includes("exercise");
 
@@ -575,11 +587,18 @@ function parseNewsSpikeConfig(config: unknown): { lookbackHours: number; minArti
   const defaults = { lookbackHours: 12, minArticles: 5 };
   if (!config || typeof config !== "object" || Array.isArray(config)) return defaults;
   const obj = config as Record<string, unknown>;
-  const lookbackHours = typeof obj.lookbackHours === "number" ? obj.lookbackHours : defaults.lookbackHours;
+  const lookbackHours =
+    typeof obj.lookbackHours === "number" ? obj.lookbackHours : defaults.lookbackHours;
   const minArticles = typeof obj.minArticles === "number" ? obj.minArticles : defaults.minArticles;
   return {
-    lookbackHours: Number.isFinite(lookbackHours) && lookbackHours > 0 ? Math.min(Math.trunc(lookbackHours), 168) : defaults.lookbackHours,
-    minArticles: Number.isFinite(minArticles) && minArticles > 0 ? Math.min(Math.trunc(minArticles), 1000) : defaults.minArticles,
+    lookbackHours:
+      Number.isFinite(lookbackHours) && lookbackHours > 0
+        ? Math.min(Math.trunc(lookbackHours), 168)
+        : defaults.lookbackHours,
+    minArticles:
+      Number.isFinite(minArticles) && minArticles > 0
+        ? Math.min(Math.trunc(minArticles), 1000)
+        : defaults.minArticles,
   };
 }
 
@@ -621,7 +640,13 @@ async function handleAlertsEvaluateJob(prisma: PrismaClient) {
       data: {
         alertRuleId: rule.id,
         triggeredAt: now,
-        payload: { kind: "news_spike", symbol, count, lookbackHours: cfg.lookbackHours, minArticles: cfg.minArticles },
+        payload: {
+          kind: "news_spike",
+          symbol,
+          count,
+          lookbackHours: cfg.lookbackHours,
+          minArticles: cfg.minArticles,
+        },
       },
     });
     triggered += 1;
@@ -649,8 +674,14 @@ function buildAlertPushContent(event: {
   const baseData = { eventId: event.id, alertRuleId: event.alertRuleId, type: event.type, symbol };
 
   if (event.type === "news_spike") {
-    const payload = event.payload && typeof event.payload === "object" && !Array.isArray(event.payload) ? (event.payload as Record<string, unknown>) : {};
-    const count = typeof payload.count === "number" && Number.isFinite(payload.count) ? Math.trunc(payload.count) : undefined;
+    const payload =
+      event.payload && typeof event.payload === "object" && !Array.isArray(event.payload)
+        ? (event.payload as Record<string, unknown>)
+        : {};
+    const count =
+      typeof payload.count === "number" && Number.isFinite(payload.count)
+        ? Math.trunc(payload.count)
+        : undefined;
     const lookbackHours =
       typeof payload.lookbackHours === "number" && Number.isFinite(payload.lookbackHours)
         ? Math.trunc(payload.lookbackHours)
@@ -744,7 +775,10 @@ async function handleAlertsDeliverJob(prisma: PrismaClient) {
 
       const hasOkTicket = res.tickets.some((t) => t.status === "ok");
       if (hasOkTicket) {
-        await prisma.alertEvent.update({ where: { id: event.id }, data: { deliveredAt: new Date() } });
+        await prisma.alertEvent.update({
+          where: { id: event.id },
+          data: { deliveredAt: new Date() },
+        });
         delivered += 1;
       }
     } catch (err) {
@@ -881,7 +915,11 @@ async function main() {
 
   const newsEverySeconds = getNewsScheduleEverySeconds(process.env);
   if (newsEverySeconds > 0) {
-    await newsQueue.add("news-scan", {}, { repeat: { every: newsEverySeconds * 1000 }, jobId: "news-scan" });
+    await newsQueue.add(
+      "news-scan",
+      {},
+      { repeat: { every: newsEverySeconds * 1000 }, jobId: "news-scan" },
+    );
   }
 
   const alertsEverySeconds = Number(process.env.ALERTS_SCHEDULE_EVERY_SECONDS ?? "300");
@@ -893,7 +931,9 @@ async function main() {
     );
   }
 
-  const alertsDeliveryEverySeconds = Number(process.env.ALERTS_DELIVERY_SCHEDULE_EVERY_SECONDS ?? "60");
+  const alertsDeliveryEverySeconds = Number(
+    process.env.ALERTS_DELIVERY_SCHEDULE_EVERY_SECONDS ?? "60",
+  );
   if (Number.isFinite(alertsDeliveryEverySeconds) && alertsDeliveryEverySeconds > 0) {
     await alertsQueue.add(
       "alerts-deliver",
@@ -996,7 +1036,11 @@ async function main() {
         const attempts = job.opts.attempts ?? 1;
         const isFinalAttempt = job.attemptsMade + 1 >= attempts;
         if (isFinalAttempt) {
-          await newsDlq.add(job.name, { error: errorMessage }, { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` });
+          await newsDlq.add(
+            job.name,
+            { error: errorMessage },
+            { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
+          );
         }
 
         throw err;
@@ -1024,7 +1068,11 @@ async function main() {
         const attempts = job.opts.attempts ?? 1;
         const isFinalAttempt = job.attemptsMade + 1 >= attempts;
         if (isFinalAttempt) {
-          await alertsDlq.add(job.name, { error: errorMessage }, { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` });
+          await alertsDlq.add(
+            job.name,
+            { error: errorMessage },
+            { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
+          );
         }
 
         throw err;

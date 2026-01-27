@@ -100,4 +100,3 @@ export function registerPreferencesRoutes(app: FastifyInstance) {
     handler: preferencesPutHandler,
   });
 }
-

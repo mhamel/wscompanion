@@ -18,7 +18,10 @@ import { Screen } from '../ui/Screen';
 import { Body, Title } from '../ui/Typography';
 
 export function AlertsScreen() {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const navigation = useNavigation<any>();
   const registration = useNotificationsStore((s) => s.registration);
   const setRegistration = useNotificationsStore((s) => s.setRegistration);

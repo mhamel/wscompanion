@@ -32,7 +32,9 @@ function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
-function isTicketError(ticket: ExpoPushTicket): ticket is Extract<ExpoPushTicket, { status: "error" }> {
+function isTicketError(
+  ticket: ExpoPushTicket,
+): ticket is Extract<ExpoPushTicket, { status: "error" }> {
   return ticket.status === "error";
 }
 
@@ -114,4 +116,3 @@ export async function sendExpoPushMessages(input: {
 
   return { tickets: allTickets, invalidTokens: Array.from(invalidTokens) };
 }
-

@@ -70,7 +70,10 @@ function TxRow(props: { tx: TransactionItem }) {
 }
 
 export function TransactionsFilterScreen({ route }: Props) {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
 
   const initialSymbol = route.params.symbol ?? '';
   const initialType = route.params.type ?? '';

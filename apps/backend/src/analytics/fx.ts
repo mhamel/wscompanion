@@ -121,4 +121,3 @@ export function convertMinorAmount(input: {
     ok: true,
   };
 }
-

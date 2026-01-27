@@ -60,7 +60,10 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 }
 
 export function HomeScreen() {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const [syncBusy, setSyncBusy] = React.useState(false);
   const [syncError, setSyncError] = React.useState<string | null>(null);

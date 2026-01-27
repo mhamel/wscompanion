@@ -49,7 +49,10 @@ function ExportRow(props: { job: ExportJob; onShare: () => void; sharing: boolea
 }
 
 export function ExportsScreen() {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const [year, setYear] = React.useState(() => String(new Date().getFullYear()));
   const [creatingType, setCreatingType] = React.useState<string | null>(null);
   const [sharingId, setSharingId] = React.useState<string | null>(null);

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { FX_RATE_SCALE, type FxRateProvider } from "./fx";
-import { computeTickerPnl360, type PnlPositionSnapshotInput, type PnlTransactionInput } from "./pnl";
+import {
+  computeTickerPnl360,
+  type PnlPositionSnapshotInput,
+  type PnlTransactionInput,
+} from "./pnl";
 
 function fxFromMap(rates: Record<string, number>): FxRateProvider {
   const map = new Map<string, bigint>();
@@ -22,7 +26,9 @@ function fxFromMap(rates: Record<string, number>): FxRateProvider {
   };
 }
 
-function tx(partial: Partial<PnlTransactionInput> & Pick<PnlTransactionInput, "id" | "executedAt" | "type">): PnlTransactionInput {
+function tx(
+  partial: Partial<PnlTransactionInput> & Pick<PnlTransactionInput, "id" | "executedAt" | "type">,
+): PnlTransactionInput {
   return {
     id: partial.id,
     executedAt: partial.executedAt,
@@ -162,7 +168,7 @@ describe("computeTickerPnl360", () => {
 
   it("converts amounts to base currency using FX rates", () => {
     const asOf = new Date("2026-01-03T12:00:00Z");
-    const fx = fxFromMap({ "CAD_USD": 0.75 });
+    const fx = fxFromMap({ CAD_USD: 0.75 });
 
     const transactions: PnlTransactionInput[] = [
       tx({

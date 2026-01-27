@@ -22,7 +22,10 @@ async function exportsListHandler(req: FastifyRequest) {
 
   const cursorRaw = typeof query.cursor === "string" ? query.cursor : "";
   const cursor = cursorRaw ? decodeCursor<ExportJobsCursor>(cursorRaw) : null;
-  if (cursorRaw && (!cursor || typeof cursor.createdAt !== "string" || typeof cursor.id !== "string")) {
+  if (
+    cursorRaw &&
+    (!cursor || typeof cursor.createdAt !== "string" || typeof cursor.id !== "string")
+  ) {
     throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid cursor", statusCode: 400 });
   }
 
@@ -68,7 +71,9 @@ async function exportsListHandler(req: FastifyRequest) {
           }
         : undefined,
     })),
-    nextCursor: next ? encodeCursor({ createdAt: next.createdAt.toISOString(), id: next.id }) : undefined,
+    nextCursor: next
+      ? encodeCursor({ createdAt: next.createdAt.toISOString(), id: next.id })
+      : undefined,
   };
 }
 
@@ -95,12 +100,20 @@ async function exportCreateHandler(req: FastifyRequest) {
 
   const typeRaw = typeof body.type === "string" ? body.type.trim() : "";
   if (!typeRaw || !isExportType(typeRaw)) {
-    throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid export type", statusCode: 400 });
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid export type",
+      statusCode: 400,
+    });
   }
 
   const format = typeof body.format === "string" ? body.format.trim() : "";
   if (!format || !isExportFormat(format)) {
-    throw new AppError({ code: "VALIDATION_ERROR", message: "Invalid export format", statusCode: 400 });
+    throw new AppError({
+      code: "VALIDATION_ERROR",
+      message: "Invalid export format",
+      statusCode: 400,
+    });
   }
 
   if (format === "csv" && typeRaw === "user_data") {

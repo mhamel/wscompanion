@@ -111,7 +111,10 @@ function NewsRow(props: { item: NewsItem; onPress: () => void }) {
 }
 
 export function TickerScreen({ route, navigation }: Props) {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const symbol = route.params.symbol;
   const [tab, setTab] = React.useState<Tab>(route.params.tab ?? 'Trades');
   const [wheelStatus, setWheelStatus] = React.useState<'open' | 'closed'>('open');

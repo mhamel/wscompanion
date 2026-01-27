@@ -111,7 +111,10 @@ function CycleHeader(props: { cycle: WheelCycleDetail }) {
 }
 
 export function WheelCycleDetailScreen({ route }: Props) {
-  const api = React.useMemo(() => createApiClient({ baseUrl: config.apiBaseUrl }), []);
+  const api = React.useMemo(
+    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    [],
+  );
   const id = route.params.id;
 
   const [editing, setEditing] = React.useState(false);
@@ -263,4 +266,3 @@ const styles = StyleSheet.create({
   buttonsRow: { flexDirection: 'row', gap: tokens.spacing.sm, marginTop: tokens.spacing.sm },
   pressed: { opacity: 0.85 },
 });
-

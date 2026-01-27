@@ -32,7 +32,14 @@ async function main() {
     redis = undefined;
   }
 
-  const app = buildServer({ prisma, redis, syncQueue, analyticsQueue, exportsQueue, s3Exports: s3Exports ?? undefined });
+  const app = buildServer({
+    prisma,
+    redis,
+    syncQueue,
+    analyticsQueue,
+    exportsQueue,
+    s3Exports: s3Exports ?? undefined,
+  });
   app.addHook("onClose", async () => {
     try {
       await bullConnection.quit();

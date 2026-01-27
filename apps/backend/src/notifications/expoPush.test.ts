@@ -7,7 +7,13 @@ describe("sendExpoPushMessages", () => {
     const fetchImpl = vi.fn(async () => {
       return new Response(
         JSON.stringify({
-          data: [{ status: "error", message: "not registered", details: { error: "DeviceNotRegistered" } }],
+          data: [
+            {
+              status: "error",
+              message: "not registered",
+              details: { error: "DeviceNotRegistered" },
+            },
+          ],
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
@@ -40,4 +46,3 @@ describe("sendExpoPushMessages", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
-

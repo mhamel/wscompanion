@@ -4,6 +4,99 @@ import type { paths } from './schema';
 import { ApiError } from './http';
 import type { ProblemDetails } from './types';
 
+class TimeoutError extends Error {
+  readonly timeoutMs: number;
+
+  constructor(timeoutMs: number) {
+    super(`Request timed out after ${timeoutMs}ms`);
+    this.name = 'TimeoutError';
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+function isAbortError(err: unknown): boolean {
+  return Boolean(err && typeof err === 'object' && 'name' in err && (err as any).name === 'AbortError');
+}
+
+function toApiErrorFromUnknown(err: unknown): ApiError {
+  if (err instanceof ApiError) return err;
+
+  if (err instanceof TimeoutError || isAbortError(err)) {
+    return new ApiError({
+      status: 0,
+      message: 'La requête a expiré.',
+      problem: { code: 'TIMEOUT', message: 'La requête a expiré. Réessaie.' },
+    });
+  }
+
+  const message = err instanceof Error ? err.message : String(err);
+  const looksLikeNetwork =
+    err instanceof TypeError ||
+    /Network request failed/i.test(message) ||
+    /Failed to fetch/i.test(message) ||
+    /NetworkError/i.test(message);
+
+  if (looksLikeNetwork) {
+    return new ApiError({
+      status: 0,
+      message: 'Erreur réseau.',
+      problem: { code: 'NETWORK_ERROR', message: 'Erreur réseau. Vérifie ta connexion.' },
+    });
+  }
+
+  return new ApiError({
+    status: 0,
+    message: 'Erreur inattendue.',
+    problem: {
+      code: 'UNKNOWN_ERROR',
+      message: 'Erreur inattendue.',
+      details:
+        err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : { error: err },
+    },
+  });
+}
+
+function createTimeoutFetch(timeoutMs: number): typeof fetch {
+  const safeTimeoutMs = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 0;
+  const baseFetch = globalThis.fetch.bind(globalThis);
+
+  return async (request, init) => {
+    if (!safeTimeoutMs) return baseFetch(request, init);
+
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<Response>((_resolve, reject) => {
+      timeoutHandle = setTimeout(() => reject(new TimeoutError(safeTimeoutMs)), safeTimeoutMs);
+    });
+
+    if (typeof AbortController === 'undefined') {
+      try {
+        return await Promise.race([baseFetch(request, init), timeoutPromise]);
+      } finally {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+      }
+    }
+
+    const controller = new AbortController();
+    const initSignal = init?.signal;
+    const anyFn = (AbortSignal as any)?.any as ((signals: AbortSignal[]) => AbortSignal) | undefined;
+    const signal = initSignal && typeof anyFn === 'function' ? anyFn([initSignal, controller.signal]) : controller.signal;
+
+    const abortHandle = setTimeout(() => controller.abort(), safeTimeoutMs);
+    try {
+      const resPromise = baseFetch(request, { ...init, signal });
+      return await Promise.race([resPromise, timeoutPromise]);
+    } catch (err) {
+      if (err instanceof TimeoutError || isAbortError(err)) {
+        throw new TimeoutError(safeTimeoutMs);
+      }
+      throw err;
+    } finally {
+      clearTimeout(abortHandle);
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }
+  };
+}
+
 export type Money = {
   amountMinor: string;
   currency: string;
@@ -333,9 +426,20 @@ export type ApiClient = {
   logout(): Promise<void>;
 };
 
-export function createApiClient(input: { baseUrl: string }): ApiClient {
-  const client = createClient<paths>({ baseUrl: input.baseUrl });
+export function createApiClient(input: { baseUrl: string; timeoutMs?: number }): ApiClient {
+  const client = createClient<paths>({
+    baseUrl: input.baseUrl,
+    fetch: createTimeoutFetch(input.timeoutMs ?? 15_000),
+  });
   let refreshInFlight: Promise<AuthTokens> | null = null;
+
+  async function safeCall<T>(p: Promise<{ data?: T; error?: unknown; response: Response }>) {
+    try {
+      return await p;
+    } catch (e) {
+      throw toApiErrorFromUnknown(e);
+    }
+  }
 
   function toProblemDetails(error: unknown): ProblemDetails | undefined {
     if (!error || typeof error !== 'object') return undefined;
@@ -379,12 +483,12 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
 
     refreshInFlight = (async () => {
       try {
-        const tokens = unwrap(await client.POST('/v1/auth/refresh', { body: { refreshToken } }));
+        const tokens = unwrap(await safeCall(client.POST('/v1/auth/refresh', { body: { refreshToken } })));
         await setTokens(tokens);
         return tokens;
       } catch (e) {
         await setTokens(null);
-        throw e;
+        throw toApiErrorFromUnknown(e);
       } finally {
         refreshInFlight = null;
       }
@@ -400,42 +504,42 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
 
     if (!accessToken) {
       const tokens = await refreshTokens();
-      const res = await makeRequest(tokens.accessToken);
+      const res = await safeCall(makeRequest(tokens.accessToken));
       return unwrap(res);
     }
 
-    const first = await makeRequest(accessToken);
+    const first = await safeCall(makeRequest(accessToken));
     if (!first.error) return unwrap(first);
     if (first.response.status !== 401) return unwrap(first);
 
     const tokens = await refreshTokens();
-    const retry = await makeRequest(tokens.accessToken);
+    const retry = await safeCall(makeRequest(tokens.accessToken));
     return unwrap(retry);
   }
 
   return {
     health: async () => {
-      const res = await client.GET('/v1/health');
+      const res = await safeCall(client.GET('/v1/health'));
       return unwrap(res, { ok: false });
     },
 
     authStart: async (body) => {
-      const res = await client.POST('/v1/auth/start', { body });
+      const res = await safeCall(client.POST('/v1/auth/start', { body }));
       return unwrap(res);
     },
 
     authVerify: async (body) => {
-      const res = await client.POST('/v1/auth/verify', { body });
+      const res = await safeCall(client.POST('/v1/auth/verify', { body }));
       return unwrap(res);
     },
 
     authRefresh: async (body) => {
-      const res = await client.POST('/v1/auth/refresh', { body });
+      const res = await safeCall(client.POST('/v1/auth/refresh', { body }));
       return unwrap(res);
     },
 
     authLogout: async (body) => {
-      const res = await client.POST('/v1/auth/logout', { body });
+      const res = await safeCall(client.POST('/v1/auth/logout', { body }));
       return unwrap(res);
     },
 
@@ -687,7 +791,7 @@ export function createApiClient(input: { baseUrl: string }): ApiClient {
 
       try {
         if (refreshToken) {
-          await unwrap(await client.POST('/v1/auth/logout', { body: { refreshToken } }));
+          await unwrap(await safeCall(client.POST('/v1/auth/logout', { body: { refreshToken } })));
         }
       } finally {
         await setTokens(null);

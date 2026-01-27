@@ -1,10 +1,6 @@
 import type { PrismaClient, TickerPnlDaily, TickerPnlTotal } from "@prisma/client";
 import type { RedisClientType } from "redis";
-import {
-  getPnlCacheVersion,
-  pnlTickerTimelineCacheKey,
-  pnlTotalsCacheKey,
-} from "./pnlCache";
+import { getPnlCacheVersion, pnlTickerTimelineCacheKey, pnlTotalsCacheKey } from "./pnlCache";
 
 const CACHE_TTL_SECONDS = 60;
 
