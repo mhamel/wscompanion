@@ -27,12 +27,13 @@ Ce document formalise les règles de données et de calcul (P&L, wheel, news) po
 <a id="da-pnl360"></a>
 ## P&L 360° (spec de calcul)
 
-- [ ] DA-010 — Définir le modèle de calcul (cashflows) et les métriques exposées: réalisé, non-réalisé, primes options, dividendes, fees, total. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360).
-- [ ] DA-011 — Options: conventions de signe (premium reçu vs payé), assignations, expirations, close-to-open, roll. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
-- [ ] DA-012 — Réalisé/non-réalisé: choix FIFO vs average cost (ou alignement SnapTrade) + traçabilité “sources”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
-- [ ] DA-013 — Timeline quotidienne: règles d’agrégation `ticker_pnl_daily` + backfill + recalcul ciblé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
-- [ ] DA-014 — “Cash vs rendement”: définition rendement (sur capital engagé) + limites. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
-- [ ] DA-015 — Comparatif “si j’avais juste hold”: hypothèses (premier achat, DCA, splits?) + doc. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
+- Source de vérité (MVP): `docs/PNL360_SPEC.md`
+- [x] DA-010 — Définir le modèle de calcul (cashflows) et les métriques exposées: réalisé, non-réalisé, primes options, dividendes, fees, total. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360).
+- [x] DA-011 — Options: conventions de signe (premium reçu vs payé), assignations, expirations, close-to-open, roll. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
+- [x] DA-012 — Réalisé/non-réalisé: choix FIFO vs average cost (ou alignement SnapTrade) + traçabilité “sources”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
+- [x] DA-013 — Timeline quotidienne: règles d’agrégation `ticker_pnl_daily` + backfill + recalcul ciblé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
+- [x] DA-014 — “Cash vs rendement”: définition rendement (sur capital engagé) + limites. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
+- [x] DA-015 — Comparatif “si j’avais juste hold”: hypothèses (premier achat, DCA, splits?) + doc. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
 - [x] DA-016 — Jeux de tests (fixtures) couvrant cas difficiles: multi-comptes, options, assignations, dividendes, conversions FX. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
 
 <a id="da-wheel"></a>

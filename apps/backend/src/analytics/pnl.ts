@@ -518,20 +518,28 @@ export function computeTickerPnl360(input: ComputeTickerPnl360Input): {
           })
         : null;
 
-    if (feesBase && feesBase.ok) {
-      applyFees(totalsAcc, dailyAcc, absBigInt(feesBase.amountMinor));
-    } else if (feesMinor !== null && feesCurrency !== baseCurrency) {
-      anomalies.push(`fees_fx_missing:${symbol}:${tx.id}`);
-    }
-
     if (kind === "fee") {
       const feeCandidate = feesBase?.ok
         ? absBigInt(feesBase.amountMinor)
         : grossBase?.ok
           ? absBigInt(grossBase.amountMinor)
           : 0n;
+
       applyFees(totalsAcc, dailyAcc, feeCandidate);
+
+      if (!feesBase?.ok && feesMinor !== null && feesCurrency !== baseCurrency) {
+        anomalies.push(`fees_fx_missing:${symbol}:${tx.id}`);
+      } else if (!grossBase?.ok && grossMinor !== null && grossCurrency !== baseCurrency) {
+        anomalies.push(`gross_fx_missing:${symbol}:${tx.id}`);
+      }
+
       continue;
+    }
+
+    if (feesBase && feesBase.ok) {
+      applyFees(totalsAcc, dailyAcc, absBigInt(feesBase.amountMinor));
+    } else if (feesMinor !== null && feesCurrency !== baseCurrency) {
+      anomalies.push(`fees_fx_missing:${symbol}:${tx.id}`);
     }
 
     if (kind === "dividend") {

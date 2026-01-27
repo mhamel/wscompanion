@@ -346,6 +346,7 @@ Indexes:
 ### P&L 360 (agrégats)
 
 On stocke des agrégats pour rendre l’UI “instantanée”.
+Conventions de calcul (MVP): `docs/PNL360_SPEC.md`.
 
 #### `ticker_pnl_totals`
 
