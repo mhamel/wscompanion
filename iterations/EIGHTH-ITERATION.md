@@ -126,5 +126,4 @@ Priorité C (assistant premium):
 ## 7) Git / livraison
 
 - Branche: `main`
-- Commit(s): à renseigner après merge/commit final de cette itération (voir `git log -1`).
-
+- Commit principal (cette itération): `778499d` (voir `git show 778499d`).
