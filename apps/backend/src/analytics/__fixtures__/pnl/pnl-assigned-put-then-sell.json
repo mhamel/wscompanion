@@ -1,0 +1,96 @@
+{
+  "id": "pnl-assigned-put-then-sell",
+  "description": "Put assignment becomes stock buy; subsequent sell realizes P&L",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "quantity": "1",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "10000",
+        "optionContract": {
+          "currency": "USD",
+          "right": "put",
+          "multiplier": 100,
+          "underlyingInstrument": { "symbol": "XYZ" }
+        }
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "assigned",
+        "quantity": "100",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "500000",
+        "instrument": { "symbol": "XYZ", "currency": "USD" },
+        "optionContract": {
+          "currency": "USD",
+          "right": "put",
+          "multiplier": 100,
+          "underlyingInstrument": { "symbol": "XYZ" }
+        }
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-03T10:00:00Z",
+        "type": "sell",
+        "quantity": "100",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "550000",
+        "instrument": { "symbol": "XYZ", "currency": "USD" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "XYZ",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "50000",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "10000",
+        "dividendsMinor": "0",
+        "feesMinor": "0",
+        "netPnlMinor": "60000",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "XYZ",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "10000",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "XYZ",
+        "baseCurrency": "USD",
+        "date": "2026-01-02",
+        "netPnlMinor": "10000",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "XYZ",
+        "baseCurrency": "USD",
+        "date": "2026-01-03",
+        "netPnlMinor": "60000",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "50000",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}

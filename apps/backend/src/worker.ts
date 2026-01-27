@@ -7,6 +7,7 @@ import { captureException, closeSentry, initSentry } from "./observability/sentr
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
+import { detectWheelCycles, normalizeSymbol as normalizeWheelSymbol } from "./analytics/wheel";
 import { generateExportCsv } from "./exports/csv";
 import { generateExportJson } from "./exports/json";
 import { createS3ExportsClient, uploadExportObject, type S3ExportsClient } from "./exports/s3";
@@ -318,138 +319,10 @@ async function handlePnlRecomputeJob(
   };
 }
 
-type WheelLegDraft = {
-  kind: string;
-  occurredAt: Date;
-  transactionId: string | null;
-  raw: unknown | null;
-};
-
-type WheelCycleDraft = {
-  symbol: string;
-  status: "open" | "closed";
-  openedAt: Date;
-  closedAt: Date | null;
-  legs: WheelLegDraft[];
-};
-
-function normalizeSymbol(value: string): string {
-  return value.trim().toUpperCase();
-}
-
-function classifyWheelLegKind(tx: {
-  type: string;
-  optionContract: { right: string } | null;
-}): string | null {
-  const t = tx.type.trim().toLowerCase();
-  if (!t) return null;
-
-  if (t.includes("dividend")) return "dividend";
-  if (t.includes("fee") || t.includes("commission")) return "fee";
-
-  const rightRaw = tx.optionContract?.right?.trim().toLowerCase() ?? "";
-  const right =
-    rightRaw.startsWith("p") || t.includes("put")
-      ? "put"
-      : rightRaw.startsWith("c") || t.includes("call")
-        ? "call"
-        : "";
-  const isOption = Boolean(tx.optionContract) || t.includes("option") || right.length > 0;
-  const isAssignment = t.includes("assigned") || t.includes("assignment") || t.includes("exercise");
-
-  if (isOption) {
-    if (isAssignment) {
-      if (right === "put") return "assigned_put";
-      if (right === "call") return "called_away";
-      return null;
-    }
-
-    if (t.includes("sell") || t.includes("sto")) {
-      if (right === "put") return "sold_put";
-      if (right === "call") return "sold_call";
-      return null;
-    }
-
-    if (t.includes("buy") || t.includes("bto")) {
-      if (right === "put") return "bought_put";
-      return null;
-    }
-
-    return null;
-  }
-
-  if (t.includes("buy")) return "stock_buy";
-  if (t.includes("sell")) return "stock_sell";
-  return null;
-}
-
-function detectWheelCycles(input: {
-  symbol: string;
-  transactions: Array<{
-    id: string;
-    executedAt: Date;
-    type: string;
-    optionContract: { right: string } | null;
-    raw: unknown | null;
-  }>;
-}): WheelCycleDraft[] {
-  const cycles: WheelCycleDraft[] = [];
-  let current: WheelCycleDraft | null = null;
-
-  for (const tx of input.transactions) {
-    const kind = classifyWheelLegKind(tx);
-    if (!kind) continue;
-
-    const isCycleStart = kind === "sold_put" || kind === "sold_call";
-
-    if (!current) {
-      if (!isCycleStart) continue;
-      current = {
-        symbol: input.symbol,
-        status: "open",
-        openedAt: tx.executedAt,
-        closedAt: null,
-        legs: [],
-      };
-    } else if (kind === "sold_put" && current.legs.some((l) => l.kind === "sold_put")) {
-      const lastAt = current.legs[current.legs.length - 1]?.occurredAt ?? tx.executedAt;
-      current.closedAt = lastAt;
-      current.status = "open";
-      cycles.push(current);
-      current = {
-        symbol: input.symbol,
-        status: "open",
-        openedAt: tx.executedAt,
-        closedAt: null,
-        legs: [],
-      };
-    }
-
-    current.legs.push({
-      kind,
-      occurredAt: tx.executedAt,
-      transactionId: tx.id,
-      raw: tx.raw,
-    });
-
-    if (kind === "called_away") {
-      current.status = "closed";
-      current.closedAt = tx.executedAt;
-      cycles.push(current);
-      current = null;
-    }
-  }
-
-  if (current) {
-    cycles.push(current);
-  }
-
-  return cycles;
-}
-
 async function handleWheelDetectJob(prisma: PrismaClient, job: Job<AnalyticsJob>) {
   const userId = job.data.userId;
-  const symbolFilter = typeof job.data.symbol === "string" ? normalizeSymbol(job.data.symbol) : "";
+  const symbolFilter =
+    typeof job.data.symbol === "string" ? normalizeWheelSymbol(job.data.symbol) : "";
 
   const preferences = await prisma.userPreferences.findUnique({ where: { userId } });
   const baseCurrency = preferences?.baseCurrency ?? "USD";
@@ -479,7 +352,7 @@ async function handleWheelDetectJob(prisma: PrismaClient, job: Job<AnalyticsJob>
     const symbol =
       tx.instrument?.symbol ?? tx.optionContract?.underlyingInstrument?.symbol ?? undefined;
     if (!symbol) continue;
-    const key = normalizeSymbol(symbol);
+    const key = normalizeWheelSymbol(symbol);
     const arr = bySymbol.get(key) ?? [];
     arr.push(tx);
     bySymbol.set(key, arr);

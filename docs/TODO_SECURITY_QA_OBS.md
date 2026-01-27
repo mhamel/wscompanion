@@ -33,7 +33,7 @@
 ## QA & tests
 
 - [x] QA-001 — Stratégie tests: unitaires (calculs) + intégration (DB/jobs) + contract tests (OpenAPI). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
-- [ ] QA-002 — Jeux de fixtures P&L 360 + wheel (golden files) + non-régression. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
+- [x] QA-002 — Jeux de fixtures P&L 360 + wheel (golden files) + non-régression. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
 - [ ] QA-003 — Tests sync SnapTrade en sandbox + idempotence + retries + DLQ. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-sync).
 - [ ] QA-004 — Plan QA mobile (device matrix, offline, perf, crash) + tests e2e (Detox si pertinent). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-mobile).
 - [ ] QA-005 — Definition of Done (DoD) par feature: perf, logs, métriques, tests, docs, empty states. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).

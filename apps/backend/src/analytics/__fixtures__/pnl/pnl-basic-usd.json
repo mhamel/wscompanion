@@ -1,0 +1,113 @@
+{
+  "id": "pnl-basic-usd",
+  "description": "Buy/sell + option premium + dividend + fees + snapshot",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "buy",
+        "quantity": "10",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "100000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "USD",
+        "instrument": { "symbol": "AAPL", "currency": "USD" }
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "sell",
+        "quantity": "5",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "60000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "USD",
+        "instrument": { "symbol": "AAPL", "currency": "USD" }
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-02T11:00:00Z",
+        "type": "option_sell_to_open",
+        "quantity": "1",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "20000",
+        "feesAmountMinor": "50",
+        "feesCurrency": "USD",
+        "optionContract": {
+          "currency": "USD",
+          "right": "call",
+          "multiplier": 100,
+          "underlyingInstrument": { "symbol": "AAPL" }
+        }
+      },
+      {
+        "id": "t4",
+        "executedAt": "2026-01-02T12:00:00Z",
+        "type": "dividend",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "5000",
+        "instrument": { "symbol": "AAPL", "currency": "USD" }
+      }
+    ],
+    "positionSnapshots": [
+      {
+        "instrument": { "symbol": "AAPL", "currency": "USD" },
+        "asOf": "2026-01-03T12:00:00Z",
+        "marketValueAmountMinor": "65000",
+        "marketValueCurrency": "USD",
+        "unrealizedPnlAmountMinor": "15000",
+        "unrealizedPnlCurrency": "USD"
+      }
+    ]
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "10000",
+        "unrealizedPnlMinor": "15000",
+        "optionPremiumsMinor": "20000",
+        "dividendsMinor": "5000",
+        "feesMinor": "250",
+        "netPnlMinor": "49750",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "-100",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-02",
+        "netPnlMinor": "34750",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "10000",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-03",
+        "netPnlMinor": "49750",
+        "marketValueMinor": "65000",
+        "realizedPnlMinor": "10000",
+        "unrealizedPnlMinor": "15000"
+      }
+    ],
+    "anomalies": []
+  }
+}

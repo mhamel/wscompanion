@@ -1,196 +1,189 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { FX_RATE_SCALE, type FxRateProvider } from "./fx";
+import { createEnvFxRateProvider } from "./fx";
 import {
   computeTickerPnl360,
   type PnlPositionSnapshotInput,
   type PnlTransactionInput,
 } from "./pnl";
 
-function fxFromMap(rates: Record<string, number>): FxRateProvider {
-  const map = new Map<string, bigint>();
-  for (const [pair, rate] of Object.entries(rates)) {
-    map.set(pair.toUpperCase(), BigInt(Math.round(rate * Number(FX_RATE_SCALE))));
+type PnlFixtureTx = {
+  id: string;
+  executedAt: string;
+  type: string;
+  quantity?: string | null;
+  priceAmountMinor?: string | null;
+  priceCurrency?: string | null;
+  grossAmountMinor?: string | null;
+  feesAmountMinor?: string | null;
+  feesCurrency?: string | null;
+  instrument?: { symbol: string | null; currency: string } | null;
+  optionContract?: {
+    currency: string;
+    right?: string | null;
+    multiplier?: number | null;
+    underlyingInstrument: { symbol: string | null };
+  } | null;
+  raw?: unknown | null;
+};
+
+type PnlFixtureSnapshot = {
+  instrument: { symbol: string | null; currency: string };
+  asOf: string;
+  marketValueAmountMinor?: string | null;
+  marketValueCurrency?: string | null;
+  unrealizedPnlAmountMinor?: string | null;
+  unrealizedPnlCurrency?: string | null;
+};
+
+type PnlFixture = {
+  id: string;
+  description?: string;
+  input: {
+    userId: string;
+    baseCurrency: string;
+    asOf: string;
+    fxRates?: Record<string, unknown>;
+    transactions: PnlFixtureTx[];
+    positionSnapshots: PnlFixtureSnapshot[];
+  };
+  expected: {
+    totals: Array<{
+      symbol: string;
+      baseCurrency: string;
+      realizedPnlMinor: string;
+      unrealizedPnlMinor: string;
+      optionPremiumsMinor: string;
+      dividendsMinor: string;
+      feesMinor: string;
+      netPnlMinor: string;
+      lastRecomputedAt: string;
+    }>;
+    daily: Array<{
+      symbol: string;
+      baseCurrency: string;
+      date: string;
+      netPnlMinor: string;
+      marketValueMinor: string;
+      realizedPnlMinor: string;
+      unrealizedPnlMinor: string;
+    }>;
+    anomalies: string[];
+  };
+};
+
+function parseIsoDate(value: string): Date {
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) {
+    throw new Error(`Invalid ISO date: ${JSON.stringify(value)}`);
   }
+  return d;
+}
 
+function parseBigint(value: unknown): bigint | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && value.trim()) return BigInt(value);
+  if (typeof value === "number" && Number.isFinite(value)) return BigInt(Math.trunc(value));
+  throw new Error(`Invalid bigint: ${JSON.stringify(value)}`);
+}
+
+function txFromFixture(f: PnlFixtureTx): PnlTransactionInput {
   return {
-    getRateScaled: ({ from, to }) => {
-      const fromNorm = from.trim().toUpperCase();
-      const toNorm = to.trim().toUpperCase();
-      if (fromNorm === toNorm) return FX_RATE_SCALE;
-      const direct = map.get(`${fromNorm}_${toNorm}`) ?? map.get(`${fromNorm}${toNorm}`);
-      if (direct) return direct;
-      const inverse = map.get(`${toNorm}_${fromNorm}`) ?? map.get(`${toNorm}${fromNorm}`);
-      if (!inverse) return null;
-      return (FX_RATE_SCALE * FX_RATE_SCALE) / inverse;
-    },
+    id: f.id,
+    executedAt: parseIsoDate(f.executedAt),
+    type: f.type,
+    quantity: f.quantity ?? null,
+    priceAmountMinor: parseBigint(f.priceAmountMinor),
+    priceCurrency: f.priceCurrency ?? null,
+    grossAmountMinor: parseBigint(f.grossAmountMinor),
+    feesAmountMinor: parseBigint(f.feesAmountMinor),
+    feesCurrency: f.feesCurrency ?? null,
+    instrument: f.instrument ?? null,
+    optionContract: f.optionContract ?? null,
+    raw: f.raw ?? null,
   };
 }
 
-function tx(
-  partial: Partial<PnlTransactionInput> & Pick<PnlTransactionInput, "id" | "executedAt" | "type">,
-): PnlTransactionInput {
+function snapshotFromFixture(f: PnlFixtureSnapshot): PnlPositionSnapshotInput {
   return {
-    id: partial.id,
-    executedAt: partial.executedAt,
-    type: partial.type,
-    quantity: partial.quantity ?? null,
-    priceAmountMinor: partial.priceAmountMinor ?? null,
-    priceCurrency: partial.priceCurrency ?? null,
-    grossAmountMinor: partial.grossAmountMinor ?? null,
-    feesAmountMinor: partial.feesAmountMinor ?? null,
-    feesCurrency: partial.feesCurrency ?? null,
-    instrument: partial.instrument ?? null,
-    optionContract: partial.optionContract ?? null,
-    raw: partial.raw ?? null,
+    instrument: f.instrument,
+    asOf: parseIsoDate(f.asOf),
+    marketValueAmountMinor: parseBigint(f.marketValueAmountMinor),
+    marketValueCurrency: f.marketValueCurrency ?? null,
+    unrealizedPnlAmountMinor: parseBigint(f.unrealizedPnlAmountMinor),
+    unrealizedPnlCurrency: f.unrealizedPnlCurrency ?? null,
   };
 }
 
-describe("computeTickerPnl360", () => {
-  it("computes realized/unrealized, premiums, dividends, fees (cumulative daily)", () => {
-    const asOf = new Date("2026-01-03T12:00:00Z");
-    const fx = fxFromMap({});
+function serializePnlResult(result: ReturnType<typeof computeTickerPnl360>): PnlFixture["expected"] {
+  return {
+    totals: result.totals.map((row) => ({
+      symbol: row.symbol,
+      baseCurrency: row.baseCurrency,
+      realizedPnlMinor: row.realizedPnlMinor.toString(),
+      unrealizedPnlMinor: row.unrealizedPnlMinor.toString(),
+      optionPremiumsMinor: row.optionPremiumsMinor.toString(),
+      dividendsMinor: row.dividendsMinor.toString(),
+      feesMinor: row.feesMinor.toString(),
+      netPnlMinor: row.netPnlMinor.toString(),
+      lastRecomputedAt: row.lastRecomputedAt.toISOString(),
+    })),
+    daily: result.daily.map((row) => ({
+      symbol: row.symbol,
+      baseCurrency: row.baseCurrency,
+      date: row.date.toISOString().slice(0, 10),
+      netPnlMinor: row.netPnlMinor.toString(),
+      marketValueMinor: row.marketValueMinor.toString(),
+      realizedPnlMinor: row.realizedPnlMinor.toString(),
+      unrealizedPnlMinor: row.unrealizedPnlMinor.toString(),
+    })),
+    anomalies: result.anomalies,
+  };
+}
 
-    const transactions: PnlTransactionInput[] = [
-      tx({
-        id: "t1",
-        executedAt: new Date("2026-01-01T10:00:00Z"),
-        type: "buy",
-        quantity: "10",
-        priceCurrency: "USD",
-        grossAmountMinor: 100_000n,
-        feesAmountMinor: 100n,
-        feesCurrency: "USD",
-        instrument: { symbol: "AAPL", currency: "USD" },
-      }),
-      tx({
-        id: "t2",
-        executedAt: new Date("2026-01-02T10:00:00Z"),
-        type: "sell",
-        quantity: "5",
-        priceCurrency: "USD",
-        grossAmountMinor: 60_000n,
-        feesAmountMinor: 100n,
-        feesCurrency: "USD",
-        instrument: { symbol: "AAPL", currency: "USD" },
-      }),
-      tx({
-        id: "t3",
-        executedAt: new Date("2026-01-02T11:00:00Z"),
-        type: "option_sell_to_open",
-        quantity: "1",
-        priceCurrency: "USD",
-        grossAmountMinor: 20_000n,
-        feesAmountMinor: 50n,
-        feesCurrency: "USD",
-        optionContract: {
-          currency: "USD",
-          underlyingInstrument: { symbol: "AAPL" },
-          right: "call",
-          multiplier: 100,
-        },
-      }),
-      tx({
-        id: "t4",
-        executedAt: new Date("2026-01-02T12:00:00Z"),
-        type: "dividend",
-        grossAmountMinor: 5_000n,
-        priceCurrency: "USD",
-        instrument: { symbol: "AAPL", currency: "USD" },
-      }),
-    ];
+function loadFixtures(): PnlFixture[] {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const fixturesDir = path.join(here, "__fixtures__", "pnl");
 
-    const snapshots: PnlPositionSnapshotInput[] = [
-      {
-        instrument: { symbol: "AAPL", currency: "USD" },
-        asOf,
-        marketValueAmountMinor: 65_000n,
-        marketValueCurrency: "USD",
-        unrealizedPnlAmountMinor: 15_000n,
-        unrealizedPnlCurrency: "USD",
-      },
-    ];
+  const entries = fs
+    .readdirSync(fixturesDir, { withFileTypes: true })
+    .filter((ent) => ent.isFile() && ent.name.endsWith(".json"))
+    .map((ent) => ent.name)
+    .sort((a, b) => a.localeCompare(b));
 
-    const result = computeTickerPnl360({
-      userId: "u1",
-      baseCurrency: "USD",
-      asOf,
-      transactions,
-      positionSnapshots: snapshots,
-      fx,
-    });
+  return entries.map((name) => {
+    const raw = fs.readFileSync(path.join(fixturesDir, name), "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed as PnlFixture;
+  });
+}
 
-    expect(result.anomalies).toEqual([]);
-    expect(result.totals).toEqual([
-      {
-        symbol: "AAPL",
-        baseCurrency: "USD",
-        realizedPnlMinor: 10_000n,
-        unrealizedPnlMinor: 15_000n,
-        optionPremiumsMinor: 20_000n,
-        dividendsMinor: 5_000n,
-        feesMinor: 250n,
-        netPnlMinor: 49_750n,
-        lastRecomputedAt: asOf,
-      },
-    ]);
+describe("QA-002: P&L 360 fixtures (golden files)", () => {
+  const fixtures = loadFixtures();
 
-    const aaplDaily = result.daily.filter((row) => row.symbol === "AAPL");
-    expect(aaplDaily).toEqual([
-      {
-        symbol: "AAPL",
-        baseCurrency: "USD",
-        date: new Date("2026-01-01"),
-        netPnlMinor: -100n,
-        marketValueMinor: 0n,
-        realizedPnlMinor: 0n,
-        unrealizedPnlMinor: 0n,
-      },
-      {
-        symbol: "AAPL",
-        baseCurrency: "USD",
-        date: new Date("2026-01-02"),
-        netPnlMinor: 34_750n,
-        marketValueMinor: 0n,
-        realizedPnlMinor: 10_000n,
-        unrealizedPnlMinor: 0n,
-      },
-      {
-        symbol: "AAPL",
-        baseCurrency: "USD",
-        date: new Date("2026-01-03"),
-        netPnlMinor: 49_750n,
-        marketValueMinor: 65_000n,
-        realizedPnlMinor: 10_000n,
-        unrealizedPnlMinor: 15_000n,
-      },
-    ]);
+  it("has fixtures", () => {
+    expect(fixtures.length).toBeGreaterThan(0);
   });
 
-  it("converts amounts to base currency using FX rates", () => {
-    const asOf = new Date("2026-01-03T12:00:00Z");
-    const fx = fxFromMap({ CAD_USD: 0.75 });
+  for (const fixture of fixtures) {
+    it(fixture.id, () => {
+      const fxRates = fixture.input.fxRates ?? {};
+      const fx = createEnvFxRateProvider({
+        FX_RATES_JSON: JSON.stringify(fxRates),
+      });
 
-    const transactions: PnlTransactionInput[] = [
-      tx({
-        id: "t1",
-        executedAt: new Date("2026-01-01T10:00:00Z"),
-        type: "dividend",
-        grossAmountMinor: 10_000n,
-        priceCurrency: "CAD",
-        instrument: { symbol: "SHOP", currency: "CAD" },
-      }),
-    ];
+      const result = computeTickerPnl360({
+        userId: fixture.input.userId,
+        baseCurrency: fixture.input.baseCurrency,
+        asOf: parseIsoDate(fixture.input.asOf),
+        transactions: fixture.input.transactions.map(txFromFixture),
+        positionSnapshots: fixture.input.positionSnapshots.map(snapshotFromFixture),
+        fx,
+      });
 
-    const result = computeTickerPnl360({
-      userId: "u1",
-      baseCurrency: "USD",
-      asOf,
-      transactions,
-      positionSnapshots: [],
-      fx,
+      expect(serializePnlResult(result)).toEqual(fixture.expected);
     });
-
-    expect(result.totals[0]?.dividendsMinor).toBe(7_500n);
-    expect(result.totals[0]?.netPnlMinor).toBe(7_500n);
-  });
+  }
 });

@@ -1,0 +1,77 @@
+{
+  "id": "pnl-option-premiums-buy-to-close",
+  "description": "Option sell premium minus buy-to-close premium",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "quantity": "1",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "5000",
+        "optionContract": {
+          "currency": "USD",
+          "right": "call",
+          "multiplier": 100,
+          "underlyingInstrument": { "symbol": "AAPL" }
+        }
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "option_buy_to_close",
+        "quantity": "1",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "2000",
+        "optionContract": {
+          "currency": "USD",
+          "right": "call",
+          "multiplier": 100,
+          "underlyingInstrument": { "symbol": "AAPL" }
+        }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "3000",
+        "dividendsMinor": "0",
+        "feesMinor": "0",
+        "netPnlMinor": "3000",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "5000",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-02",
+        "netPnlMinor": "3000",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}

@@ -9,6 +9,7 @@ Ce repo vise 3 niveaux de couverture :
 2) **Backend tests (unitaires / intégration)**  
    - Unitaires : fonctions “pures” (calculs P&L, wheel detection) — rapides, pas de DB.
    - Intégration : Fastify `inject()` + Prisma + Postgres (ex: purge `DELETE /v1/me`).
+   - QA-002 (golden files) : fixtures dans `apps/backend/src/analytics/__fixtures__/pnl` et `apps/backend/src/analytics/__fixtures__/wheel` (tests: `apps/backend/src/analytics/pnl.test.ts`, `apps/backend/src/analytics/wheel.test.ts`).
 
 3) **Mobile typecheck**  
    - Commande : `npx tsc -p apps/mobile/tsconfig.json --noEmit`
@@ -36,4 +37,3 @@ npm --workspace apps/backend test
 ## CI
 
 Le workflow `.github/workflows/ci.yml` démarre Postgres + Redis via `services`, applique les migrations (`prisma migrate deploy`), puis exécute les tests et le build.
-

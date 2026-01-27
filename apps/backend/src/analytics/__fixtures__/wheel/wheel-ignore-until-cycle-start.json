@@ -1,0 +1,46 @@
+{
+  "id": "wheel-ignore-until-cycle-start",
+  "description": "Events before first sold_put/sold_call are ignored (no cycle yet)",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "buy",
+        "optionContract": null,
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "dividend",
+        "optionContract": null,
+        "raw": null
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-03T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "call" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "open",
+      "openedAt": "2026-01-03T10:00:00.000Z",
+      "closedAt": null,
+      "legs": [
+        {
+          "kind": "sold_call",
+          "occurredAt": "2026-01-03T10:00:00.000Z",
+          "transactionId": "t3",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "pnl-missing-fx-anomaly",
+  "description": "Missing FX rate produces anomaly + zeroed amounts",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "dividend",
+        "priceCurrency": "CAD",
+        "grossAmountMinor": "10000",
+        "instrument": { "symbol": "SHOP", "currency": "CAD" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "0",
+        "feesMinor": "0",
+        "netPnlMinor": "0",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "0",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": ["gross_fx_missing:SHOP:t1"]
+  }
+}

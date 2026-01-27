@@ -1,0 +1,79 @@
+{
+  "id": "wheel-two-sold-puts-split",
+  "description": "A second sold_put starts a new open cycle (heuristic split)",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "assigned",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-05T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t4",
+        "executedAt": "2026-01-06T10:00:00Z",
+        "type": "assigned",
+        "optionContract": { "right": "put" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "open",
+      "openedAt": "2026-01-01T10:00:00.000Z",
+      "closedAt": "2026-01-02T10:00:00.000Z",
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-01T10:00:00.000Z",
+          "transactionId": "t1",
+          "raw": null
+        },
+        {
+          "kind": "assigned_put",
+          "occurredAt": "2026-01-02T10:00:00.000Z",
+          "transactionId": "t2",
+          "raw": null
+        }
+      ]
+    },
+    {
+      "symbol": "AAPL",
+      "status": "open",
+      "openedAt": "2026-01-05T10:00:00.000Z",
+      "closedAt": null,
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-05T10:00:00.000Z",
+          "transactionId": "t3",
+          "raw": null
+        },
+        {
+          "kind": "assigned_put",
+          "occurredAt": "2026-01-06T10:00:00.000Z",
+          "transactionId": "t4",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}
