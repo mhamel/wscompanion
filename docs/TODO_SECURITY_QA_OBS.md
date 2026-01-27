@@ -43,7 +43,7 @@
 
 - [ ] OBS-001 — Conventions logs (JSON), `request_id`, niveaux, redaction. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [ ] OBS-002 — Tracing OpenTelemetry (API→DB→providers) + propagation context. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
-- [ ] OBS-003 — Sentry (backend + mobile): release, sourcemaps, alerting. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
+- [x] OBS-003 — Sentry (backend + mobile): release, sourcemaps, alerting. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [ ] OBS-004 — SLOs MVP: disponibilité API, latence endpoints clés, succès jobs sync/export. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
 
 <a id="an-top"></a>

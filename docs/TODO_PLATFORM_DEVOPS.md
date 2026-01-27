@@ -40,7 +40,7 @@
 
 - [ ] PL-030 — Centraliser logs (pino) + corrélation `request_id` + dashboards. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [ ] PL-031 — Mettre en place OpenTelemetry (collector + traces) + sampling. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
-- [ ] PL-032 — Sentry (backend + mobile) + alerting (taux erreurs, jobs failures). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
+- [x] PL-032 — Sentry (backend + mobile) + alerting (taux erreurs, jobs failures). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 
 <a id="pl-adr"></a>
 ## ADRs (décisions à consigner)

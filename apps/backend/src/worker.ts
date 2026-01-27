@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { loadConfig } from "./config";
+import { captureException, closeSentry, initSentry } from "./observability/sentry";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
@@ -888,6 +889,7 @@ async function handleExportRunJob(
 async function main() {
   dotenv.config();
   loadDevSecrets();
+  initSentry();
   const config = loadConfig();
   const s3 = createS3ExportsClient(config);
 
@@ -961,6 +963,19 @@ async function main() {
         throw new Error(`Unknown job: ${job.name}`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
+        const attempts = job.opts.attempts ?? 1;
+        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+
+        if (isFinalAttempt) {
+          captureException(err, {
+            tags: { component: "worker", queue: "sync", job: job.name },
+            extras: {
+              jobId: job.id ?? null,
+              attemptsMade: job.attemptsMade,
+              attempts,
+            },
+          });
+        }
 
         if (job.name === "sync-initial" || job.name === "sync-incremental") {
           await prisma.syncRun
@@ -972,8 +987,6 @@ async function main() {
               // ignore (e.g. user purged)
             });
 
-          const attempts = job.opts.attempts ?? 1;
-          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
           if (isFinalAttempt) {
             await dlq.add(
               job.name,
@@ -1008,6 +1021,15 @@ async function main() {
         const attempts = job.opts.attempts ?? 1;
         const isFinalAttempt = job.attemptsMade + 1 >= attempts;
         if (isFinalAttempt) {
+          captureException(err, {
+            tags: { component: "worker", queue: "analytics", job: job.name },
+            extras: {
+              jobId: job.id ?? null,
+              attemptsMade: job.attemptsMade,
+              attempts,
+            },
+          });
+
           await analyticsDlq.add(
             job.name,
             { ...(job.data as AnalyticsJob), error: errorMessage },
@@ -1036,6 +1058,15 @@ async function main() {
         const attempts = job.opts.attempts ?? 1;
         const isFinalAttempt = job.attemptsMade + 1 >= attempts;
         if (isFinalAttempt) {
+          captureException(err, {
+            tags: { component: "worker", queue: "news", job: job.name },
+            extras: {
+              jobId: job.id ?? null,
+              attemptsMade: job.attemptsMade,
+              attempts,
+            },
+          });
+
           await newsDlq.add(
             job.name,
             { error: errorMessage },
@@ -1068,6 +1099,15 @@ async function main() {
         const attempts = job.opts.attempts ?? 1;
         const isFinalAttempt = job.attemptsMade + 1 >= attempts;
         if (isFinalAttempt) {
+          captureException(err, {
+            tags: { component: "worker", queue: "alerts", job: job.name },
+            extras: {
+              jobId: job.id ?? null,
+              attemptsMade: job.attemptsMade,
+              attempts,
+            },
+          });
+
           await alertsDlq.add(
             job.name,
             { error: errorMessage },
@@ -1092,6 +1132,8 @@ async function main() {
         throw new Error(`Unknown job: ${job.name}`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
+        const attempts = job.opts.attempts ?? 1;
+        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
 
         if (job.name === "export-run") {
           const exportJobId = (job.data as ExportsJob).exportJobId;
@@ -1104,9 +1146,17 @@ async function main() {
               // ignore
             });
 
-          const attempts = job.opts.attempts ?? 1;
-          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
           if (isFinalAttempt) {
+            captureException(err, {
+              tags: { component: "worker", queue: "exports", job: job.name },
+              extras: {
+                jobId: job.id ?? null,
+                exportJobId,
+                attemptsMade: job.attemptsMade,
+                attempts,
+              },
+            });
+
             await exportsDlq.add(
               job.name,
               { ...(job.data as ExportsJob), error: errorMessage },
@@ -1139,6 +1189,7 @@ async function main() {
     await exportsDlq.close();
     await connection.quit();
     await prisma.$disconnect();
+    await closeSentry();
   };
 
   process.on("SIGINT", () => {
@@ -1151,7 +1202,9 @@ async function main() {
   console.log("worker: started");
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
+  captureException(err, { tags: { component: "worker", phase: "startup" } });
+  await closeSentry();
   console.error(err);
   process.exit(1);
 });

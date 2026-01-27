@@ -7,10 +7,12 @@ import { buildServer } from "./server";
 import { loadConfig } from "./config";
 import { loadDevSecrets } from "./devSecrets";
 import { createS3ExportsClient } from "./exports/s3";
+import { captureException, closeSentry, initSentry } from "./observability/sentry";
 
 async function main() {
   dotenv.config();
   loadDevSecrets();
+  initSentry();
   const config = loadConfig();
   const prisma = new PrismaClient();
 
@@ -51,7 +53,9 @@ async function main() {
   await app.listen({ port: config.PORT, host: "0.0.0.0" });
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
+  captureException(err, { tags: { component: "api", phase: "startup" } });
+  await closeSentry();
   console.error(err);
   process.exit(1);
 });

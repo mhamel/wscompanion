@@ -19,6 +19,7 @@ import { registerTickerRoutes } from "./routes/tickers";
 import { registerTransactionsRoutes } from "./routes/transactions";
 import { registerWheelRoutes } from "./routes/wheel";
 import type { S3ExportsClient } from "./exports/s3";
+import { captureException } from "./observability/sentry";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -231,10 +232,42 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     return reply.status(404).send({ code: "NOT_FOUND", message: "Not found" });
   });
 
-  app.setErrorHandler(async (err, _req, reply) => {
+  app.setErrorHandler(async (err, req, reply) => {
+    const route = req.routeOptions?.url ?? req.url.split("?")[0];
+    const userId = typeof req.user?.sub === "string" ? req.user.sub : undefined;
+
     if (err instanceof AppError) {
+      if (err.statusCode >= 500) {
+        captureException(err, {
+          tags: {
+            component: "api",
+            method: req.method,
+            route,
+            code: err.code,
+            status_code: String(err.statusCode),
+          },
+          extras: {
+            requestId: req.id,
+          },
+          user: userId ? { id: userId } : undefined,
+        });
+      }
+
       return reply.status(err.statusCode).send(err.toProblemDetails());
     }
+
+    captureException(err, {
+      tags: {
+        component: "api",
+        method: req.method,
+        route,
+        status_code: "500",
+      },
+      extras: {
+        requestId: req.id,
+      },
+      user: userId ? { id: userId } : undefined,
+    });
 
     return reply.status(500).send({ code: "INTERNAL_ERROR", message: "Internal error" });
   });
