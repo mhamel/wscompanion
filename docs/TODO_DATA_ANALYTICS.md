@@ -33,7 +33,7 @@ Ce document formalise les règles de données et de calcul (P&L, wheel, news) po
 - [ ] DA-013 — Timeline quotidienne: règles d’agrégation `ticker_pnl_daily` + backfill + recalcul ciblé. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
 - [ ] DA-014 — “Cash vs rendement”: définition rendement (sur capital engagé) + limites. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
 - [ ] DA-015 — Comparatif “si j’avais juste hold”: hypothèses (premier achat, DCA, splits?) + doc. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360).
-- [ ] DA-016 — Jeux de tests (fixtures) couvrant cas difficiles: multi-comptes, options, assignations, dividendes, conversions FX. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
+- [x] DA-016 — Jeux de tests (fixtures) couvrant cas difficiles: multi-comptes, options, assignations, dividendes, conversions FX. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-deploiement).
 
 <a id="da-wheel"></a>
 ## Wheel / Covered Calls (spec de détection)

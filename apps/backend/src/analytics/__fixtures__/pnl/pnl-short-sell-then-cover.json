@@ -1,0 +1,72 @@
+{
+  "id": "pnl-short-sell-then-cover",
+  "description": "Short sell then buy-to-cover generates realized P&L; day-1 net is fees only",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "sell",
+        "quantity": "10",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "100000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "USD",
+        "instrument": { "symbol": "TSLA", "currency": "USD" }
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "buy",
+        "quantity": "10",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "90000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "USD",
+        "instrument": { "symbol": "TSLA", "currency": "USD" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "TSLA",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "10000",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "0",
+        "feesMinor": "200",
+        "netPnlMinor": "9800",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "TSLA",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "-100",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "TSLA",
+        "baseCurrency": "USD",
+        "date": "2026-01-02",
+        "netPnlMinor": "9800",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "10000",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}
+

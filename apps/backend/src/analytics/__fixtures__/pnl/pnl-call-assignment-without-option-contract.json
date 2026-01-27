@@ -1,0 +1,72 @@
+{
+  "id": "pnl-call-assignment-without-option-contract",
+  "description": "Call exercise without optionContract becomes stock sell; closes lots FIFO; symbol/right from raw",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "buy",
+        "quantity": "100",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "1000000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "USD",
+        "instrument": { "symbol": "AAPL", "currency": "USD" }
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "exercise",
+        "quantity": "100",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "1100000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "USD",
+        "raw": { "underlyingSymbol": "AAPL", "optionType": "call" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "100000",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "0",
+        "feesMinor": "200",
+        "netPnlMinor": "99800",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "-100",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-02",
+        "netPnlMinor": "99800",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "100000",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}
+

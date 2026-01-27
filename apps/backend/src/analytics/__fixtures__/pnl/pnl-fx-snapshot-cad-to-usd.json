@@ -1,0 +1,49 @@
+{
+  "id": "pnl-fx-snapshot-cad-to-usd",
+  "description": "Position snapshot FX conversion (market value + unrealized P&L) from CAD into USD base",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": { "CAD_USD": 0.75 },
+    "transactions": [],
+    "positionSnapshots": [
+      {
+        "instrument": { "symbol": "SHOP", "currency": "CAD" },
+        "asOf": "2026-01-03T12:00:00Z",
+        "marketValueAmountMinor": "10000",
+        "marketValueCurrency": "CAD",
+        "unrealizedPnlAmountMinor": "2000",
+        "unrealizedPnlCurrency": "CAD"
+      }
+    ]
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "1500",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "0",
+        "feesMinor": "0",
+        "netPnlMinor": "1500",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "date": "2026-01-03",
+        "netPnlMinor": "1500",
+        "marketValueMinor": "7500",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "1500"
+      }
+    ],
+    "anomalies": []
+  }
+}
+

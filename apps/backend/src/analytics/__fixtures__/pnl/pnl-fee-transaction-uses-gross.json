@@ -1,0 +1,49 @@
+{
+  "id": "pnl-fee-transaction-uses-gross",
+  "description": "Fee/commission transaction uses grossAmountMinor when feesAmountMinor is missing",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "commission",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "1234",
+        "instrument": { "symbol": "AAPL", "currency": "USD" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "0",
+        "feesMinor": "1234",
+        "netPnlMinor": "-1234",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "AAPL",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "-1234",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}
+

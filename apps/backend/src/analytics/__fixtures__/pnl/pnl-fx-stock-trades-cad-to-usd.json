@@ -1,0 +1,72 @@
+{
+  "id": "pnl-fx-stock-trades-cad-to-usd",
+  "description": "Stock buy/sell in CAD converted to USD base currency (realized + fees)",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": { "CAD_USD": 0.75 },
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "buy",
+        "quantity": "10",
+        "priceCurrency": "CAD",
+        "grossAmountMinor": "10000",
+        "feesAmountMinor": "100",
+        "feesCurrency": "CAD",
+        "instrument": { "symbol": "SHOP", "currency": "CAD" }
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "sell",
+        "quantity": "10",
+        "priceCurrency": "CAD",
+        "grossAmountMinor": "12000",
+        "feesAmountMinor": "200",
+        "feesCurrency": "CAD",
+        "instrument": { "symbol": "SHOP", "currency": "CAD" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "1500",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "0",
+        "feesMinor": "225",
+        "netPnlMinor": "1275",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "-75",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      },
+      {
+        "symbol": "SHOP",
+        "baseCurrency": "USD",
+        "date": "2026-01-02",
+        "netPnlMinor": "1275",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "1500",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}
+

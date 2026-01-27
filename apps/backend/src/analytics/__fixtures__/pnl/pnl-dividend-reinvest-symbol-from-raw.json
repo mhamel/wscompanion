@@ -1,0 +1,49 @@
+{
+  "id": "pnl-dividend-reinvest-symbol-from-raw",
+  "description": "Dividend reinvest uses dividend logic; symbol derived from raw when instrument is missing",
+  "input": {
+    "userId": "u1",
+    "baseCurrency": "USD",
+    "asOf": "2026-01-03T12:00:00Z",
+    "fxRates": {},
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "dividend_reinvest",
+        "priceCurrency": "USD",
+        "grossAmountMinor": "5000",
+        "raw": { "underlyingSymbol": "MSFT" }
+      }
+    ],
+    "positionSnapshots": []
+  },
+  "expected": {
+    "totals": [
+      {
+        "symbol": "MSFT",
+        "baseCurrency": "USD",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0",
+        "optionPremiumsMinor": "0",
+        "dividendsMinor": "5000",
+        "feesMinor": "0",
+        "netPnlMinor": "5000",
+        "lastRecomputedAt": "2026-01-03T12:00:00.000Z"
+      }
+    ],
+    "daily": [
+      {
+        "symbol": "MSFT",
+        "baseCurrency": "USD",
+        "date": "2026-01-01",
+        "netPnlMinor": "5000",
+        "marketValueMinor": "0",
+        "realizedPnlMinor": "0",
+        "unrealizedPnlMinor": "0"
+      }
+    ],
+    "anomalies": []
+  }
+}
+
