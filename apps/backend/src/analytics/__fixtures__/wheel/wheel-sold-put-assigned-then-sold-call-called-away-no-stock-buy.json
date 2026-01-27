@@ -1,0 +1,71 @@
+{
+  "id": "wheel-sold-put-assigned-then-sold-call-called-away-no-stock-buy",
+  "description": "Assignment can be followed by sold call/called away without an explicit stock buy leg",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-05T10:00:00Z",
+        "type": "assigned",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-10T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "call" },
+        "raw": null
+      },
+      {
+        "id": "t4",
+        "executedAt": "2026-01-15T10:00:00Z",
+        "type": "assigned",
+        "optionContract": { "right": "call" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "closed",
+      "openedAt": "2026-01-01T10:00:00.000Z",
+      "closedAt": "2026-01-15T10:00:00.000Z",
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-01T10:00:00.000Z",
+          "transactionId": "t1",
+          "raw": null
+        },
+        {
+          "kind": "assigned_put",
+          "occurredAt": "2026-01-05T10:00:00.000Z",
+          "transactionId": "t2",
+          "raw": null
+        },
+        {
+          "kind": "sold_call",
+          "occurredAt": "2026-01-10T10:00:00.000Z",
+          "transactionId": "t3",
+          "raw": null
+        },
+        {
+          "kind": "called_away",
+          "occurredAt": "2026-01-15T10:00:00.000Z",
+          "transactionId": "t4",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}

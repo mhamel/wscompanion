@@ -1,0 +1,45 @@
+{
+  "id": "wheel-sold-call-then-exercise-call-closes",
+  "description": "exercise on a call is treated as called_away and closes the cycle",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "STO",
+        "optionContract": { "right": "call" },
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-08T10:00:00Z",
+        "type": "exercise",
+        "optionContract": { "right": "call" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "closed",
+      "openedAt": "2026-01-01T10:00:00.000Z",
+      "closedAt": "2026-01-08T10:00:00.000Z",
+      "legs": [
+        {
+          "kind": "sold_call",
+          "occurredAt": "2026-01-01T10:00:00.000Z",
+          "transactionId": "t1",
+          "raw": null
+        },
+        {
+          "kind": "called_away",
+          "occurredAt": "2026-01-08T10:00:00.000Z",
+          "transactionId": "t2",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}

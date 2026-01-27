@@ -41,7 +41,7 @@ Ce document formalise les règles de données et de calcul (P&L, wheel, news) po
 - [ ] DA-020 — Définir le “cycle” wheel: événements, début/fin, états open/closed, métriques net premiums/stock P&L/fees. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
 - [ ] DA-021 — Heuristiques MVP de grouping des legs (par symbol + dates + strike + type) + tolérances. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-data-wheel).
 - [ ] DA-022 — Overrides: modèle de patch (merge/split, relabel) + audit + replays. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
-- [ ] DA-023 — Jeux de tests wheel (fixtures) pour 10–20 scénarios réels. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel).
+- [x] DA-023 — Jeux de tests wheel (fixtures) pour 10–20 scénarios réels. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel).
 
 <a id="da-news"></a>
 ## News (ingestion & mapping ticker↔article)

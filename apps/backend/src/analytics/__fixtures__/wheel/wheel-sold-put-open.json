@@ -1,0 +1,32 @@
+{
+  "id": "wheel-sold-put-open",
+  "description": "Sold put starts a cycle and remains open without close events",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": { "source": "snaptrade", "note": "sold_put" }
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "open",
+      "openedAt": "2026-01-01T10:00:00.000Z",
+      "closedAt": null,
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-01T10:00:00.000Z",
+          "transactionId": "t1",
+          "raw": { "source": "snaptrade", "note": "sold_put" }
+        }
+      ]
+    }
+  ]
+}

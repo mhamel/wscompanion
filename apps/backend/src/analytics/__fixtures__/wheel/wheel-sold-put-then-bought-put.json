@@ -1,0 +1,45 @@
+{
+  "id": "wheel-sold-put-then-bought-put",
+  "description": "A bought_put leg is included after a sold_put",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-03T10:00:00Z",
+        "type": "bto",
+        "optionContract": { "right": "put" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "open",
+      "openedAt": "2026-01-01T10:00:00.000Z",
+      "closedAt": null,
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-01T10:00:00.000Z",
+          "transactionId": "t1",
+          "raw": null
+        },
+        {
+          "kind": "bought_put",
+          "occurredAt": "2026-01-03T10:00:00.000Z",
+          "transactionId": "t2",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}

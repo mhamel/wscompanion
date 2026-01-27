@@ -1,0 +1,72 @@
+{
+  "id": "wheel-unknown-transactions-ignored",
+  "description": "Transactions with unknown kinds are ignored even inside a cycle",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "interest",
+        "optionContract": null,
+        "raw": null
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-03T10:00:00Z",
+        "type": "transfer",
+        "optionContract": null,
+        "raw": null
+      },
+      {
+        "id": "t4",
+        "executedAt": "2026-01-10T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "call" },
+        "raw": null
+      },
+      {
+        "id": "t5",
+        "executedAt": "2026-01-15T10:00:00Z",
+        "type": "assigned",
+        "optionContract": { "right": "call" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "closed",
+      "openedAt": "2026-01-01T10:00:00.000Z",
+      "closedAt": "2026-01-15T10:00:00.000Z",
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-01T10:00:00.000Z",
+          "transactionId": "t1",
+          "raw": null
+        },
+        {
+          "kind": "sold_call",
+          "occurredAt": "2026-01-10T10:00:00.000Z",
+          "transactionId": "t4",
+          "raw": null
+        },
+        {
+          "kind": "called_away",
+          "occurredAt": "2026-01-15T10:00:00.000Z",
+          "transactionId": "t5",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}

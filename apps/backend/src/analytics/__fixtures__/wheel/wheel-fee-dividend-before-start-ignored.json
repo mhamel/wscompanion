@@ -1,0 +1,46 @@
+{
+  "id": "wheel-fee-dividend-before-start-ignored",
+  "description": "Fee/dividend legs are ignored until a cycle has started",
+  "input": {
+    "symbol": "AAPL",
+    "transactions": [
+      {
+        "id": "t1",
+        "executedAt": "2026-01-01T10:00:00Z",
+        "type": "commission",
+        "optionContract": null,
+        "raw": null
+      },
+      {
+        "id": "t2",
+        "executedAt": "2026-01-02T10:00:00Z",
+        "type": "dividend_reinvest",
+        "optionContract": null,
+        "raw": null
+      },
+      {
+        "id": "t3",
+        "executedAt": "2026-01-03T10:00:00Z",
+        "type": "option_sell_to_open",
+        "optionContract": { "right": "put" },
+        "raw": null
+      }
+    ]
+  },
+  "expected": [
+    {
+      "symbol": "AAPL",
+      "status": "open",
+      "openedAt": "2026-01-03T10:00:00.000Z",
+      "closedAt": null,
+      "legs": [
+        {
+          "kind": "sold_put",
+          "occurredAt": "2026-01-03T10:00:00.000Z",
+          "transactionId": "t3",
+          "raw": null
+        }
+      ]
+    }
+  ]
+}
