@@ -106,5 +106,4 @@ Priorité C (assistant premium):
 ## 7) Git / livraison
 
 - Branche: `main`
-- Commit principal (cette itération): `<fill-me-after-merge>` (Sentry backend + sourcemaps + docs)
-
+- Commit principal (cette itération): `5ff1cc4` (Sentry backend + sourcemaps + docs)
