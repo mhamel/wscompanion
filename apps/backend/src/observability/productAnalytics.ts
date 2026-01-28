@@ -1,4 +1,5 @@
 export const PRODUCT_ANALYTICS_EVENT_NAMES = [
+  "app_opened",
   "auth_signup_started",
   "auth_signup_succeeded",
   "auth_login_succeeded",

@@ -51,4 +51,4 @@
 
 - [x] AN-001 — Plan d’événements (PostHog/Segment): signup, connect start/complete, first sync, first wow, paywall shown, upgrade. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite), [PRODUIT.md](../PRODUIT.md#prd-wow), [ANALYTICS_EVENTS.md](./ANALYTICS_EVENTS.md).
 - [x] AN-010 — Implémenter le tracking + wiring PostHog (API `POST /v1/analytics/event`, worker events, kill switch). Réf: [ANALYTICS.md](./ANALYTICS.md), [ANALYTICS_EVENTS.md](./ANALYTICS_EVENTS.md).
-- [ ] AN-002 — Funnels & dashboards: time-to-wow, rétention hebdo, conversion pro, causes d’échec sync. Réf: [PRODUIT.md](../PRODUIT.md#prd-wow).
+- [x] AN-002 — Funnels & dashboards: time-to-wow, rétention hebdo, conversion pro, causes d’échec sync. Réf: [PRODUIT.md](../PRODUIT.md#prd-wow).

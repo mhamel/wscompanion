@@ -4,6 +4,7 @@ import { createApiClient } from '../api/client';
 import { config } from '../config';
 
 export const ANALYTICS_EVENT_NAMES = [
+  'app_opened',
   'auth_signup_started',
   'auth_signup_succeeded',
   'auth_login_succeeded',
@@ -118,4 +119,3 @@ export async function trackWowFirstPnlViewedOnce(input: {
     // ignore persistence errors
   }
 }
-

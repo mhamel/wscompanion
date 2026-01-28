@@ -22,6 +22,12 @@ Implémentation actuelle: tracking via l’API (`POST /v1/analytics/event`) avec
 
 ## Funnel minimal (MVP)
 
+### 0) Rétention / sessions
+
+- `app_opened`
+  - Quand: l’app passe en foreground (startup + retour foreground) **quand l’utilisateur est authentifié**
+  - Propriétés: `reason` (`startup|foreground`)
+
 ### 1) Signup / Login
 
 - `auth_signup_started`
@@ -91,6 +97,7 @@ Définition MVP: l’utilisateur voit un écran P&L “utile” (ex: Home avec t
 ### Couverture (au 2026-01-28)
 
 Mobile:
+- `app_opened`
 - `auth_signup_succeeded`, `auth_login_succeeded`
 - `connect_snaptrade_started`, `connect_snaptrade_completed`, `connect_snaptrade_failed`
 - `paywall_shown`, `purchase_started`, `purchase_succeeded`, `purchase_failed`, `restore_*`

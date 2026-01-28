@@ -1,4 +1,4 @@
-# Analytics produit (PostHog) — Implémentation & dashboards (AN-010)
+# Analytics produit (PostHog) — Implémentation & dashboards (AN-010, AN-002)
 
 Objectif: instrumenter le funnel “time‑to‑wow” + conversion Pro **sans PII** (pas d’email/nom, pas de positions/transactions brutes).
 
@@ -70,8 +70,11 @@ Graphiques:
 - Distribution de durée: `sync_initial_completed` (prop `duration_ms`)
 - Volume agrégé: `sync_initial_completed` (prop `tx_count`)
 
-### D) Rétention (note)
+### D) Rétention (hebdo)
 
-Avec les events actuels, la rétention hebdo est approximative (beaucoup d’events sont “one‑shot”).
-Pour une vraie rétention, ajouter un event récurrent type `app_opened` ou `home_viewed`, puis utiliser les insights “Retention”/“Stickiness”.
+Event:
+- `app_opened` (startup + retour foreground, après auth)
 
+Insights PostHog (recommandé):
+- **Retention**: event = `app_opened`, interval = Weekly, “Returning users” (par cohort si besoin)
+- **Stickiness**: event = `app_opened`, interval = Weekly (WAU)

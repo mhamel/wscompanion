@@ -1110,6 +1110,7 @@
                   "event": {
                     "type": "string",
                     "enum": [
+                      "app_opened",
                       "auth_signup_started",
                       "auth_signup_succeeded",
                       "auth_login_succeeded",

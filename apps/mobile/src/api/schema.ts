@@ -871,7 +871,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        event: "auth_signup_started" | "auth_signup_succeeded" | "auth_login_succeeded" | "connect_snaptrade_started" | "connect_snaptrade_completed" | "connect_snaptrade_failed" | "sync_initial_started" | "sync_initial_completed" | "sync_initial_failed" | "wow_first_pnl_viewed" | "paywall_shown" | "purchase_started" | "purchase_succeeded" | "purchase_failed" | "restore_started" | "restore_succeeded" | "restore_failed" | "entitlement_pro_activated";
+                        event: "app_opened" | "auth_signup_started" | "auth_signup_succeeded" | "auth_login_succeeded" | "connect_snaptrade_started" | "connect_snaptrade_completed" | "connect_snaptrade_failed" | "sync_initial_started" | "sync_initial_completed" | "sync_initial_failed" | "wow_first_pnl_viewed" | "paywall_shown" | "purchase_started" | "purchase_succeeded" | "purchase_failed" | "restore_started" | "restore_succeeded" | "restore_failed" | "entitlement_pro_activated";
                         properties?: {
                             [key: string]: unknown;
                         };
