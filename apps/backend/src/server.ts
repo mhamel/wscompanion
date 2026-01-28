@@ -9,6 +9,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { RedisClientType } from "redis";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerAlertsRoutes } from "./routes/alerts";
+import { registerAnalyticsRoutes } from "./routes/analytics";
 import { registerBillingRoutes } from "./routes/billing";
 import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
@@ -185,6 +186,18 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   });
 
   app.addSchema({
+    $id: "AuthVerifyResponse",
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      accessToken: { type: "string" },
+      refreshToken: { type: "string" },
+      isNewUser: { type: "boolean" },
+    },
+    required: ["accessToken", "refreshToken", "isNewUser"],
+  });
+
+  app.addSchema({
     $id: "Me",
     type: "object",
     additionalProperties: false,
@@ -329,6 +342,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
 
       registerAuthRoutes(v1);
       registerAlertsRoutes(v1);
+      registerAnalyticsRoutes(v1);
       registerBillingRoutes(v1);
       registerConnectionRoutes(v1);
       registerDeviceRoutes(v1);

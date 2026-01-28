@@ -3,6 +3,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { createApiClient, type Money, type NewsItem, type TickerSummaryResponse } from '../api/client';
 import { ApiError } from '../api/http';
+import { trackWowFirstPnlViewedOnce } from '../analytics/analytics';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { isPaywallError } from '../billing/paywall';
 import { config } from '../config';
@@ -139,6 +140,12 @@ export function TickerScreen({ route, navigation }: Props) {
     queryFn: () => api.tickerSummary({ symbol }),
   });
 
+  React.useEffect(() => {
+    if (!summaryQuery.isLoading && !summaryQuery.isError && summaryQuery.data) {
+      void trackWowFirstPnlViewedOnce({ screen: 'ticker', symbolsCount: 1 });
+    }
+  }, [summaryQuery.isLoading, summaryQuery.isError, summaryQuery.data?.symbol]);
+
   const newsQuery = useInfiniteQuery({
     queryKey: ['tickerNews', symbol],
     queryFn: ({ pageParam }) =>
@@ -169,7 +176,7 @@ export function TickerScreen({ route, navigation }: Props) {
 
   async function detectWheel() {
     if (!isPro) {
-      navigation.navigate('Paywall');
+      navigation.navigate('Paywall', { source: 'wheel' });
       return;
     }
 
@@ -180,7 +187,7 @@ export function TickerScreen({ route, navigation }: Props) {
       await wheelQuery.refetch();
     } catch (e) {
       if (isPaywallError(e)) {
-        navigation.navigate('Paywall');
+        navigation.navigate('Paywall', { source: 'wheel' });
         return;
       }
 
@@ -291,7 +298,7 @@ export function TickerScreen({ route, navigation }: Props) {
               {!isPro ? (
                 <View style={styles.card}>
                   <Body>Pro requis: Wheel tracker.</Body>
-                  <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+                  <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall', { source: 'wheel' })} />
                 </View>
               ) : (
                 <>

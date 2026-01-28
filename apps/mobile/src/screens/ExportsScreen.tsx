@@ -85,7 +85,7 @@ export function ExportsScreen() {
 
   async function createExport(type: 'pnl_realized_by_ticker' | 'option_premiums_by_year') {
     if (!isPro) {
-      navigation.navigate('Paywall');
+      navigation.navigate('Paywall', { source: 'exports' });
       return;
     }
 
@@ -98,7 +98,7 @@ export function ExportsScreen() {
       await exportsQuery.refetch();
     } catch (e) {
       if (isPaywallError(e)) {
-        navigation.navigate('Paywall');
+        navigation.navigate('Paywall', { source: 'exports' });
         return;
       }
 
@@ -120,7 +120,7 @@ export function ExportsScreen() {
       await Share.share({ message: res.url });
     } catch (e) {
       if (isPaywallError(e)) {
-        navigation.navigate('Paywall');
+        navigation.navigate('Paywall', { source: 'exports' });
         return;
       }
 
@@ -147,7 +147,7 @@ export function ExportsScreen() {
           <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
             <View style={styles.card}>
               <Body>Pro requis: exports CSV.</Body>
-              <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+              <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall', { source: 'exports' })} />
             </View>
           </View>
         ) : null}

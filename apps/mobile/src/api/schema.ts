@@ -151,7 +151,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["def-3"];
+                        "application/json": components["schemas"]["def-4"];
                     };
                 };
                 /** @description Default Response */
@@ -340,7 +340,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["def-4"];
+                        "application/json": components["schemas"]["def-5"];
                     };
                 };
                 /** @description Default Response */
@@ -845,6 +845,80 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/analytics/event": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        event: "auth_signup_started" | "auth_signup_succeeded" | "auth_login_succeeded" | "connect_snaptrade_started" | "connect_snaptrade_completed" | "connect_snaptrade_failed" | "sync_initial_started" | "sync_initial_completed" | "sync_initial_failed" | "wow_first_pnl_viewed" | "paywall_shown" | "purchase_started" | "purchase_succeeded" | "purchase_failed" | "restore_started" | "restore_succeeded" | "restore_failed" | "entitlement_pro_activated";
+                        properties?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+                /** @description Default Response */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["def-0"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3610,8 +3684,14 @@ export interface components {
             accessToken: string;
             refreshToken: string;
         };
-        /** Me */
+        /** AuthVerifyResponse */
         "def-4": {
+            accessToken: string;
+            refreshToken: string;
+            isNewUser: boolean;
+        };
+        /** Me */
+        "def-5": {
             id: string;
             email: string;
         };

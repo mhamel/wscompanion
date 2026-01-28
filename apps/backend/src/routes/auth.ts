@@ -312,6 +312,9 @@ async function authVerifyHandler(req: FastifyRequest) {
     },
   });
 
+  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  const isNewUser = !existing;
+
   const user = await prisma.user.upsert({
     where: { email },
     create: { email },
@@ -335,7 +338,7 @@ async function authVerifyHandler(req: FastifyRequest) {
     { expiresIn: sessionCfg.accessTokenTtlSeconds },
   );
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, isNewUser };
 }
 
 async function authRefreshHandler(req: FastifyRequest) {
@@ -549,7 +552,7 @@ export function registerAuthRoutes(app: FastifyInstance) {
         required: ["email", "code"],
       },
       response: {
-        200: { $ref: "AuthTokens#" },
+        200: { $ref: "AuthVerifyResponse#" },
         400: { $ref: "ProblemDetails#" },
         429: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },

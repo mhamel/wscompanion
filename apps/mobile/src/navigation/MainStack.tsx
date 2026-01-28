@@ -21,7 +21,7 @@ export type MainStackParamList = {
   Exports: undefined;
   Connections: undefined;
   Settings: undefined;
-  Paywall: undefined;
+  Paywall: { source?: 'settings' | 'wheel' | 'alerts' | 'exports' };
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();

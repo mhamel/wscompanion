@@ -5,6 +5,7 @@ import IORedis from "ioredis";
 import pino from "pino";
 import { loadConfig } from "./config";
 import { captureException, closeSentry, initSentry } from "./observability/sentry";
+import { trackProductEvent } from "./observability/productAnalytics";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
@@ -127,6 +128,22 @@ async function handleSyncJob(
     throw new Error("BrokerConnection is not connected");
   }
 
+  if (mode === "initial") {
+    void trackProductEvent(
+      {
+        event: "sync_initial_started",
+        distinctId: job.data.userId,
+        properties: {
+          user_id: job.data.userId,
+          sync_run_id: syncRun.id,
+          broker_connection_id: brokerConnection.id,
+          broker: brokerConnection.provider,
+        },
+      },
+      logger,
+    );
+  }
+
   const account = await prisma.account.upsert({
     where: {
       brokerConnectionId_externalAccountId: {
@@ -181,6 +198,23 @@ async function handleSyncJob(
       },
     },
   });
+
+  if (mode === "initial") {
+    void trackProductEvent(
+      {
+        event: "sync_initial_completed",
+        distinctId: job.data.userId,
+        properties: {
+          user_id: job.data.userId,
+          sync_run_id: syncRun.id,
+          broker_connection_id: brokerConnection.id,
+          duration_ms: finishedAt.getTime() - now.getTime(),
+          tx_count: ingestionResult.total,
+        },
+      },
+      logger,
+    );
+  }
 
   if (analyticsQueue) {
     try {
@@ -882,6 +916,23 @@ async function main() {
               job.name,
               { ...(job.data as SyncJob), error: errorMessage },
               { jobId: `dlq:${job.id ?? (job.data as SyncJob).syncRunId}` },
+            );
+          }
+
+          if (job.name === "sync-initial" && isFinalAttempt) {
+            void trackProductEvent(
+              {
+                event: "sync_initial_failed",
+                distinctId: (job.data as SyncJob).userId,
+                properties: {
+                  user_id: (job.data as SyncJob).userId,
+                  sync_run_id: (job.data as SyncJob).syncRunId,
+                  reason: errorMessage,
+                  attempts_made: job.attemptsMade + 1,
+                  attempts,
+                },
+              },
+              logger,
             );
           }
         }

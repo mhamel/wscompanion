@@ -3,6 +3,9 @@ import { useAuthStore, type AuthTokens } from '../auth/authStore';
 import type { paths } from './schema';
 import { ApiError } from './http';
 import type { ProblemDetails } from './types';
+import type { AnalyticsEventName } from '../analytics/analytics';
+
+export type AuthVerifyResponse = AuthTokens & { isNewUser: boolean };
 
 class TimeoutError extends Error {
   readonly timeoutMs: number;
@@ -390,7 +393,7 @@ export type UserPreferences = {
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
-  authVerify(input: { email: string; code: string }): Promise<AuthTokens>;
+  authVerify(input: { email: string; code: string }): Promise<AuthVerifyResponse>;
   authRefresh(input: { refreshToken: string }): Promise<AuthTokens>;
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
@@ -398,6 +401,7 @@ export type ApiClient = {
   preferencesGet(): Promise<UserPreferences>;
   preferencesPut(input: UserPreferences): Promise<UserPreferences>;
   billingEntitlement(): Promise<BillingEntitlement>;
+  analyticsTrack(input: { event: AnalyticsEventName; properties?: Record<string, unknown> }): Promise<{ ok: boolean }>;
   deviceRegister(input: { pushToken: string; platform: 'ios' | 'android' }): Promise<{ id: string }>;
   deviceDelete(input: { id: string }): Promise<{ ok: boolean }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
@@ -576,6 +580,12 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
     billingEntitlement: async (): Promise<BillingEntitlement> => {
       return withAuth((accessToken) =>
         client.GET('/v1/billing/entitlement', { headers: { Authorization: bearer(accessToken) } }),
+      );
+    },
+
+    analyticsTrack: async (body) => {
+      return withAuth((accessToken) =>
+        client.POST('/v1/analytics/event', { body, headers: { Authorization: bearer(accessToken) } }),
       );
     },
 

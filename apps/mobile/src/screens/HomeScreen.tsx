@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { createApiClient, type SyncStatusItem } from '../api/client';
 import { ApiError } from '../api/http';
+import { trackWowFirstPnlViewedOnce } from '../analytics/analytics';
 import { config } from '../config';
 import type { MainTabParamList } from '../navigation/MainTabs';
 import { loadSearchHistory, pushSearchHistory, saveSearchHistory } from '../search/history';
@@ -95,6 +96,12 @@ export function HomeScreen() {
   const topTickers = tickers.slice(0, 10);
   const activeConnection = syncStatusQuery.data?.items?.find((item) => item.status === 'connected');
   const displayConnection = activeConnection ?? syncStatusQuery.data?.items?.[0];
+
+  React.useEffect(() => {
+    if (!tickersQuery.isLoading && !tickersQuery.isError && topTickers.length > 0) {
+      void trackWowFirstPnlViewedOnce({ screen: 'home', symbolsCount: topTickers.length });
+    }
+  }, [tickersQuery.isLoading, tickersQuery.isError, topTickers.length]);
 
   const totalNet = React.useMemo(() => {
     if (topTickers.length === 0) return null;

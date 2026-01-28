@@ -181,7 +181,9 @@ export function AlertsScreen() {
           <AppButton
             title="Créer une alerte"
             onPress={() =>
-              isPro ? navigation.getParent()?.navigate('CreateAlert') : navigation.navigate('Paywall')
+              isPro
+                ? navigation.getParent()?.navigate('CreateAlert')
+                : navigation.navigate('Paywall', { source: 'alerts' })
             }
           />
         </View>
@@ -190,7 +192,7 @@ export function AlertsScreen() {
           <View style={{ paddingHorizontal: tokens.spacing.md, gap: tokens.spacing.sm }}>
             <View style={styles.card}>
               <Body>Pro requis: alertes + notifications.</Body>
-              <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+              <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall', { source: 'alerts' })} />
             </View>
           </View>
         ) : null}

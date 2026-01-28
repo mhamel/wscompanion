@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { AppError } from "../errors";
 import { getEntitlement } from "../entitlements";
+import { trackProductEvent } from "../observability/productAnalytics";
 
 async function billingEntitlementHandler(req: FastifyRequest) {
   const entitlement = await getEntitlement(req);
@@ -134,6 +135,9 @@ async function revenueCatWebhookHandler(req: FastifyRequest) {
     orderBy: { createdAt: "desc" },
   });
 
+  const previouslyActive =
+    existing?.status === "active" && (!existing.expiresAt || existing.expiresAt > new Date());
+
   if (existing) {
     await prisma.entitlement.update({
       where: { id: existing.id },
@@ -152,6 +156,24 @@ async function revenueCatWebhookHandler(req: FastifyRequest) {
     } catch {
       // ignore cache errors
     }
+  }
+
+  if (!previouslyActive) {
+    void trackProductEvent(
+      {
+        event: "entitlement_pro_activated",
+        distinctId: userId,
+        properties: {
+          user_id: userId,
+          plan: "pro",
+          source: "webhook",
+          expires_at: expiresAt ? expiresAt.toISOString() : null,
+          revenuecat_event_id: typeof event.id === "string" ? event.id : undefined,
+          revenuecat_event_type: typeof event.type === "string" ? event.type : undefined,
+        },
+      },
+      req.log,
+    );
   }
 
   return { ok: true };

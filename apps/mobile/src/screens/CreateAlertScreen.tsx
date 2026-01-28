@@ -93,7 +93,7 @@ export function CreateAlertScreen({ navigation }: Props) {
       navigation.goBack();
     } catch (e) {
       if (isPaywallError(e)) {
-        navigation.navigate('Paywall');
+        navigation.navigate('Paywall', { source: 'alerts' });
         return;
       }
 
@@ -112,7 +112,7 @@ export function CreateAlertScreen({ navigation }: Props) {
       <Screen>
         <Title>Pro requis</Title>
         <Body>La création d’alertes est une fonctionnalité Pro.</Body>
-        <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall')} />
+        <AppButton title="Passer Pro" onPress={() => navigation.navigate('Paywall', { source: 'alerts' })} />
       </Screen>
     );
   }

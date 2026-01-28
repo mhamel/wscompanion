@@ -811,9 +811,10 @@ Un menu “More” (icône profil en haut à droite) donne accès à:
   - Conventions: `docs/LOGGING.md`
 - Traces OpenTelemetry (API → DB → providers).
 - Erreurs: Sentry (mobile + backend).
-- Produit: tracking events (PostHog/Segment) pour funnel:
+- Produit: tracking events (PostHog) pour funnel:
   - signup, connect start/complete, first sync, first “wow”, paywall shown, upgrade
   - Plan d’événements: `docs/ANALYTICS_EVENTS.md`
+  - Implémentation & dashboards: `docs/ANALYTICS.md`
 
 <a id="arch-deploiement"></a>
 ## Déploiement (cible MVP)

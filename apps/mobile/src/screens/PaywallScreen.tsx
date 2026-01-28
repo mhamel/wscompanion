@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api/client';
 import { ApiError } from '../api/http';
+import { trackEvent } from '../analytics/analytics';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { purchasePro, restoreRevenueCatPurchases } from '../billing/revenuecat';
 import { config } from '../config';
@@ -10,6 +11,10 @@ import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
 import { Body, Title } from '../ui/Typography';
+import type { MainStackParamList } from '../navigation/MainStack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+type Props = NativeStackScreenProps<MainStackParamList, 'Paywall'>;
 
 function formatPlanLabel(plan: 'free' | 'pro' | undefined): string {
   if (plan === 'pro') return 'Pro';
@@ -17,12 +22,13 @@ function formatPlanLabel(plan: 'free' | 'pro' | undefined): string {
   return '…';
 }
 
-export function PaywallScreen() {
+export function PaywallScreen({ route }: Props) {
   const api = React.useMemo(
     () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
     [],
   );
   const queryClient = useQueryClient();
+  const source = route.params?.source ?? 'unknown';
 
   const entitlementQuery = useBillingEntitlementQuery();
   const meQuery = useQuery({
@@ -40,6 +46,10 @@ export function PaywallScreen() {
 
   const canUseRevenueCat = Platform.OS !== 'web';
 
+  React.useEffect(() => {
+    void trackEvent('paywall_shown', { source });
+  }, [source]);
+
   async function refreshEntitlement() {
     await queryClient.invalidateQueries({ queryKey: ['billingEntitlement'] });
   }
@@ -50,15 +60,20 @@ export function PaywallScreen() {
     setInfo(null);
 
     try {
+      void trackEvent('purchase_started', { source });
       const id = userId ?? (await meQuery.refetch()).data?.id;
       if (!id) throw new Error('Impossible de déterminer ton user id (endpoint /v1/me).');
 
       await purchasePro(id);
+      void trackEvent('purchase_succeeded', { source });
       setInfo(
         'Achat effectué. Ton accès Pro peut prendre un court délai à se synchroniser côté serveur.',
       );
       await refreshEntitlement();
     } catch (e) {
+      const reason =
+        e && typeof e === 'object' && 'userCancelled' in e && (e as any).userCancelled ? 'cancelled' : 'unknown';
+      void trackEvent('purchase_failed', { source, reason });
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
       } else if (e instanceof Error) {
@@ -77,13 +92,18 @@ export function PaywallScreen() {
     setInfo(null);
 
     try {
+      void trackEvent('restore_started', { source });
       const id = userId ?? (await meQuery.refetch()).data?.id;
       if (!id) throw new Error('Impossible de déterminer ton user id (endpoint /v1/me).');
 
       await restoreRevenueCatPurchases(id);
+      void trackEvent('restore_succeeded', { source });
       setInfo('Achats restaurés. Synchronisation en cours…');
       await refreshEntitlement();
     } catch (e) {
+      const reason =
+        e && typeof e === 'object' && 'userCancelled' in e && (e as any).userCancelled ? 'cancelled' : 'unknown';
+      void trackEvent('restore_failed', { source, reason });
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
       } else if (e instanceof Error) {
@@ -156,4 +176,3 @@ const styles = StyleSheet.create({
   info: { color: tokens.colors.mutedText },
   muted: { color: tokens.colors.mutedText },
 });
-

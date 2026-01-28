@@ -2,7 +2,7 @@
 
 Objectif: définir un **funnel mesurable** (time‑to‑wow + conversion Pro) sans capturer de données sensibles.
 
-Ce document est volontairement “provider‑agnostic” (PostHog / Segment / autre). Le choix d’outil et l’implémentation de tracking seront une itération séparée.
+Implémentation actuelle: tracking via l’API (`POST /v1/analytics/event`) avec forwarding vers **PostHog** (si configuré). Réf: `docs/ANALYTICS.md`.
 
 ## Principes
 
@@ -83,9 +83,27 @@ Définition MVP: l’utilisateur voit un écran P&L “utile” (ex: Home avec t
   - Quand: backend voit le plan `pro` actif (source de vérité serveur)
   - Propriétés: `source` (`webhook|override`), `expires_at` (optionnel)
 
-## Notes d’implémentation (quand tu coderas le tracking)
+## Implémentation actuelle (référence code)
 
-- Émettre les events “produit” **côté mobile** (meilleure vérité UX), et compléter par des events “système” côté backend/worker (sync/jobs).
-- Pour `entitlement_pro_activated`, l’événement doit être émis côté backend (après webhook RevenueCat ou override).
-- Garder une “kill switch” via env pour désactiver le tracking en dev.
+- Mobile → backend: `apps/mobile/src/analytics/analytics.ts` (envoi à `POST /v1/analytics/event`).
+- Backend/worker → PostHog: `apps/backend/src/observability/productAnalytics.ts`.
 
+### Couverture (au 2026-01-28)
+
+Mobile:
+- `auth_signup_succeeded`, `auth_login_succeeded`
+- `connect_snaptrade_started`, `connect_snaptrade_completed`, `connect_snaptrade_failed`
+- `paywall_shown`, `purchase_started`, `purchase_succeeded`, `purchase_failed`, `restore_*`
+- `wow_first_pnl_viewed` (**dédup côté device**)
+
+Backend/worker:
+- `sync_initial_started`, `sync_initial_completed`, `sync_initial_failed`
+- `entitlement_pro_activated` (RevenueCat webhook)
+
+Non implémenté (par design / à faire):
+- `auth_signup_started` (nécessite un `anonymous_id`/alias si on veut un vrai “started” avant session)
+
+### Kill switch
+
+- Mobile: `EXPO_PUBLIC_ANALYTICS_ENABLED=false` → aucun event envoyé à l’API.
+- Backend: `POSTHOG_API_KEY` vide ou `ANALYTICS_DISABLED=true` → aucun forwarding PostHog.

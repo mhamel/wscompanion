@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { ApiError } from '../api/http';
 import { createApiClient } from '../api/client';
 import { useAuthStore } from '../auth/authStore';
+import { trackEvent } from '../analytics/analytics';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -70,7 +71,8 @@ export function AuthScreen() {
 
     try {
       const tokensRes = await api.authVerify({ email, code });
-      await setTokens(tokensRes);
+      await setTokens({ accessToken: tokensRes.accessToken, refreshToken: tokensRes.refreshToken });
+      void trackEvent(tokensRes.isNewUser ? 'auth_signup_succeeded' : 'auth_login_succeeded');
     } catch (e) {
       setError(formatAuthError(e));
     } finally {

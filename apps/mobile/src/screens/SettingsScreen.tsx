@@ -125,7 +125,7 @@ export function SettingsScreen() {
           title={entitlementQuery.data?.plan === 'pro' ? 'Gérer Pro' : 'Passer Pro'}
           variant="secondary"
           disabled={busy !== null}
-          onPress={() => navigation.navigate('Paywall')}
+          onPress={() => navigation.navigate('Paywall', { source: 'settings' })}
         />
       </View>
 

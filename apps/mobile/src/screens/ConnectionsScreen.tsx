@@ -5,6 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { createApiClient, type SnaptradeCallbackBody, type SyncStatusItem } from '../api/client';
 import { ApiError } from '../api/http';
+import { markConnectCompletedNow, trackEvent } from '../analytics/analytics';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -102,6 +103,7 @@ export function ConnectionsScreen() {
   async function connectSnaptrade() {
     setBusy(true);
     setError(null);
+    void trackEvent('connect_snaptrade_started');
 
     try {
       const start = await api.snaptradeStart();
@@ -110,22 +112,33 @@ export function ConnectionsScreen() {
       const result = await WebBrowser.openAuthSessionAsync(start.redirectUrl, returnUrl);
       if (result.type !== 'success' || !result.url) {
         setError('Connexion annulée.');
+        void trackEvent('connect_snaptrade_failed', { reason: 'cancelled' });
         return;
       }
 
       const callbackBody = parseSnaptradeCallbackUrl(result.url, start.state);
       if (!callbackBody) {
         setError('Callback invalide (données manquantes).');
+        void trackEvent('connect_snaptrade_failed', { reason: 'invalid_callback' });
         return;
       }
 
-      await api.snaptradeCallback(callbackBody);
+      const callbackRes = await api.snaptradeCallback(callbackBody);
+      await markConnectCompletedNow();
+      void trackEvent('connect_snaptrade_completed', {
+        broker: 'wealthsimple',
+        provider: 'snaptrade',
+        connection_id: callbackRes.brokerConnectionId,
+        sync_run_id: callbackRes.syncRunId,
+      });
       await syncStatusQuery.refetch();
     } catch (e) {
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
+        void trackEvent('connect_snaptrade_failed', { reason: e.problem?.code ?? 'provider_error' });
       } else {
         setError('Erreur réseau.');
+        void trackEvent('connect_snaptrade_failed', { reason: 'network_error' });
       }
     } finally {
       setBusy(false);
