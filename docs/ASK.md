@@ -40,3 +40,4 @@ Quota/rate limit:
 ## Mobile
 
 - Ask consomme `POST /v1/ask` (et ré-utilise `threadId` pour poursuivre la conversation).
+- Ask affiche des conversations récentes (threads) et permet d’ouvrir / supprimer une conversation.

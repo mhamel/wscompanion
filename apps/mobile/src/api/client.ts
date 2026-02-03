@@ -200,6 +200,42 @@ export type AskResponse = {
   sections: AskSection[];
 };
 
+export type AskThreadListItem = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+  messageCount: number;
+};
+
+export type AskThreadsResponse = {
+  items: AskThreadListItem[];
+  nextCursor?: string;
+};
+
+export type AskThread = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string;
+};
+
+export type AskThreadMessage = {
+  id: string;
+  role: string;
+  content: string;
+  data?: unknown;
+  createdAt: string;
+};
+
+export type AskThreadDetailResponse = {
+  thread: AskThread;
+  items: AskThreadMessage[];
+  nextCursor?: string;
+};
+
 export type TickerNewsResponse = {
   items: NewsItem[];
   nextCursor?: string;
@@ -447,6 +483,13 @@ export type ApiClient = {
     properties?: Record<string, unknown>;
   }): Promise<{ ok: boolean }>;
   ask(input: { question: string; symbol?: string; threadId?: string }): Promise<AskResponse>;
+  askThreadsList(input?: { cursor?: string; limit?: number }): Promise<AskThreadsResponse>;
+  askThreadGet(input: {
+    id: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<AskThreadDetailResponse>;
+  askThreadDelete(input: { id: string }): Promise<{ ok: boolean }>;
   disclaimerGet(): Promise<DisclaimerResponse>;
   disclaimerAccept(): Promise<{
     ok: boolean;
@@ -711,6 +754,43 @@ export function createApiClient(input: {
       return withAuth((accessToken) =>
         client.POST("/v1/ask", {
           body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    askThreadsList: async (input?: {
+      cursor?: string;
+      limit?: number;
+    }): Promise<AskThreadsResponse> => {
+      return withAuth((accessToken) =>
+        client.GET("/v1/ask/threads", {
+          params: { query: { cursor: input?.cursor, limit: input?.limit } },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    askThreadGet: async (input: {
+      id: string;
+      cursor?: string;
+      limit?: number;
+    }): Promise<AskThreadDetailResponse> => {
+      return withAuth((accessToken) =>
+        client.GET("/v1/ask/threads/{id}", {
+          params: {
+            path: { id: input.id },
+            query: { cursor: input.cursor, limit: input.limit },
+          },
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    askThreadDelete: async (input: { id: string }): Promise<{ ok: boolean }> => {
+      return withAuth((accessToken) =>
+        client.DELETE("/v1/ask/threads/{id}", {
+          params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
       );

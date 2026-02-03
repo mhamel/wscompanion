@@ -73,6 +73,18 @@ export function AskScreen({ route }: Props) {
   const disclaimerNeedsAcceptance = Boolean(disclaimer) && !disclaimerIsAccepted;
   const mustAcceptDisclaimer = disclaimerRequired || disclaimerNeedsAcceptance;
 
+  const threadsQuery = useQuery({
+    queryKey: ["askThreads"],
+    queryFn: () => api.askThreadsList({ limit: 20 }),
+    enabled: isPro && disclaimerIsAccepted,
+  });
+
+  const threadQuery = useQuery({
+    queryKey: ["askThread", threadId],
+    queryFn: () => api.askThreadGet({ id: threadId as string, limit: 50 }),
+    enabled: Boolean(threadId) && isPro && disclaimerIsAccepted,
+  });
+
   function goPaywall() {
     navigation.navigate("Paywall", { source: "ask" });
   }
@@ -120,6 +132,10 @@ export function AskScreen({ route }: Props) {
       });
       setResult(res);
       setThreadId(res.threadId);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["askThreads"] }),
+        queryClient.invalidateQueries({ queryKey: ["askThread", res.threadId] }),
+      ]);
     } catch (e) {
       if (isPaywallError(e)) {
         goPaywall();
@@ -150,6 +166,25 @@ export function AskScreen({ route }: Props) {
     );
   }
 
+  async function deleteThread(id: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.askThreadDelete({ id });
+      setThreadId(null);
+      setResult(null);
+      await queryClient.invalidateQueries({ queryKey: ["askThreads"] });
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setError(e.problem?.message ?? e.message);
+      } else {
+        setError("Erreur réseau.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Screen>
       <Title>Ask</Title>
@@ -169,6 +204,29 @@ export function AskScreen({ route }: Props) {
             setError(null);
           }}
         />
+      ) : null}
+
+      {!threadId && threadsQuery.data?.items?.length ? (
+        <View style={styles.threadList}>
+          <Text style={styles.threadListTitle}>Conversations récentes</Text>
+          {threadsQuery.data.items.slice(0, 8).map((t) => (
+            <Pressable
+              key={t.id}
+              onPress={() => {
+                setThreadId(t.id);
+                setResult(null);
+                setError(null);
+              }}
+              style={({ pressed }) => [styles.threadRow, pressed ? styles.pressed : null]}
+            >
+              <View style={styles.threadRowText}>
+                <Text style={styles.threadTitle}>{t.title}</Text>
+                <Text style={styles.threadMeta}>{t.messageCount} message(s)</Text>
+              </View>
+              <Text style={styles.threadOpen}>Ouvrir</Text>
+            </Pressable>
+          ))}
+        </View>
       ) : null}
 
       {mustAcceptDisclaimer ? (
@@ -226,6 +284,54 @@ export function AskScreen({ route }: Props) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
+      {threadId && threadQuery.data ? (
+        <View style={styles.threadCard}>
+          <View style={styles.threadHeader}>
+            <Text style={styles.threadHeaderTitle}>
+              {threadQuery.data.thread.title}
+            </Text>
+            <Pressable
+              onPress={() =>
+                Alert.alert("Supprimer", "Supprimer cette conversation ?", [
+                  { text: "Annuler", style: "cancel" },
+                  {
+                    text: "Supprimer",
+                    style: "destructive",
+                    onPress: () => void deleteThread(threadId),
+                  },
+                ])
+              }
+              disabled={busy || busyDisclaimer}
+              style={({ pressed }) => [
+                styles.threadDelete,
+                pressed ? styles.pressed : null,
+              ]}
+            >
+              <Text style={styles.threadDeleteText}>Supprimer</Text>
+            </Pressable>
+          </View>
+
+          <ScrollView style={styles.threadMessages}>
+            {threadQuery.data.items
+              .slice()
+              .reverse()
+              .map((m) => (
+                <View
+                  key={m.id}
+                  style={[
+                    styles.messageBubble,
+                    m.role === "user"
+                      ? styles.messageUser
+                      : styles.messageAssistant,
+                  ]}
+                >
+                  <Text style={styles.messageText}>{m.content}</Text>
+                </View>
+              ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       {result ? (
         <ScrollView contentContainerStyle={styles.result}>
           <Text style={styles.answer}>{result.answer}</Text>
@@ -276,6 +382,26 @@ export function AskScreen({ route }: Props) {
 const styles = StyleSheet.create({
   fields: { gap: 12, marginTop: 12 },
   error: { color: tokens.colors.negative, marginTop: 12 },
+  threadList: {
+    marginTop: 12,
+    backgroundColor: tokens.colors.card,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  threadListTitle: { color: tokens.colors.text, fontSize: 16, fontWeight: "600" },
+  threadRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.border,
+  },
+  threadRowText: { flex: 1, paddingRight: 12 },
+  threadTitle: { color: tokens.colors.text, fontSize: 14, fontWeight: "600" },
+  threadMeta: { color: tokens.colors.mutedText, marginTop: 2, fontSize: 12 },
+  threadOpen: { color: tokens.colors.primary, fontWeight: "600" },
   notice: {
     marginTop: 12,
     backgroundColor: tokens.colors.card,
@@ -285,6 +411,36 @@ const styles = StyleSheet.create({
   },
   noticeText: { color: tokens.colors.text },
   noticeActions: { gap: 10 },
+  threadCard: {
+    marginTop: 12,
+    backgroundColor: tokens.colors.card,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  threadHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  threadHeaderTitle: { color: tokens.colors.text, fontSize: 16, fontWeight: "600", flex: 1 },
+  threadDelete: {
+    backgroundColor: tokens.colors.border,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  threadDeleteText: { color: tokens.colors.negative, fontSize: 12, fontWeight: "600" },
+  threadMessages: { maxHeight: 220 },
+  messageBubble: { borderRadius: 12, padding: 10, marginBottom: 8 },
+  messageUser: { backgroundColor: tokens.colors.border, alignSelf: "flex-end" },
+  messageAssistant: {
+    backgroundColor: tokens.colors.card,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+  },
+  messageText: { color: tokens.colors.text },
   result: { paddingBottom: 40, gap: 16, marginTop: 16 },
   answer: { color: tokens.colors.text, fontSize: 16 },
   section: {
