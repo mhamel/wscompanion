@@ -27,14 +27,18 @@ Règle: **toute requête HTTP** doit pouvoir être corrélée côté client/supp
 ## Redaction (données sensibles)
 
 Redaction côté API/worker (suppression des champs dans les logs):
+
 - `req.headers.authorization`
 - `req.headers.cookie`
 - `req.body.password`
+- `req.body.email`
 - `req.body.code`
 - `req.body.accessToken`
 - `req.body.refreshToken`
+- `req.body.properties`
 
 Important: ne jamais logger de payloads SnapTrade “bruts” contenant tokens/secrets.
+Guide classification: `docs/DATA_CLASSIFICATION.md`
 
 ## Conventions de structure (recommandations)
 
@@ -50,9 +54,9 @@ Quand tu ajoutes des logs:
 
 ## Debug rapide
 
-1) Reproduire l’appel (mobile ou curl) et récupérer `x-request-id` dans la réponse.
-2) Chercher ce `request_id` dans les logs (API) et dans Sentry (erreurs API).
-3) Si c’est un job, chercher par `queue`/`jobId`/`exportJobId` côté worker.
+1. Reproduire l’appel (mobile ou curl) et récupérer `x-request-id` dans la réponse.
+2. Chercher ce `request_id` dans les logs (API) et dans Sentry (erreurs API).
+3. Si c’est un job, chercher par `queue`/`jobId`/`exportJobId` côté worker.
 
 ## Tracing (OpenTelemetry)
 
