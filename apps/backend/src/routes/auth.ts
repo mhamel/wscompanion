@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { AppError } from "../errors";
 import nodemailer from "nodemailer";
 import { deleteExportObject } from "../exports/s3";
+import { enforceRateLimit, getRequestRateLimitStore, hashRateLimitKeyPart } from "../rateLimit";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -41,6 +42,45 @@ function getOtpConfig(): OtpConfig {
     maxAttempts: Number.isFinite(maxAttempts) && maxAttempts > 0 ? maxAttempts : 5,
     backoffMaxSeconds:
       Number.isFinite(backoffMaxSeconds) && backoffMaxSeconds > 0 ? backoffMaxSeconds : 60,
+  };
+}
+
+type AuthIpRateLimitConfig = {
+  startWindowSeconds: number;
+  startMaxPerWindowPerIp: number;
+  verifyWindowSeconds: number;
+  verifyMaxPerWindowPerIp: number;
+  refreshWindowSeconds: number;
+  refreshMaxPerWindowPerIp: number;
+};
+
+function getAuthIpRateLimitConfig(): AuthIpRateLimitConfig {
+  const startWindowSeconds = Number(process.env.AUTH_START_IP_RATE_WINDOW_SECONDS ?? "60");
+  const startMaxPerWindowPerIp = Number(process.env.AUTH_START_IP_RATE_MAX ?? "10");
+  const verifyWindowSeconds = Number(process.env.AUTH_VERIFY_IP_RATE_WINDOW_SECONDS ?? "60");
+  const verifyMaxPerWindowPerIp = Number(process.env.AUTH_VERIFY_IP_RATE_MAX ?? "30");
+  const refreshWindowSeconds = Number(process.env.AUTH_REFRESH_IP_RATE_WINDOW_SECONDS ?? "60");
+  const refreshMaxPerWindowPerIp = Number(process.env.AUTH_REFRESH_IP_RATE_MAX ?? "60");
+
+  return {
+    startWindowSeconds:
+      Number.isFinite(startWindowSeconds) && startWindowSeconds > 0 ? startWindowSeconds : 60,
+    startMaxPerWindowPerIp:
+      Number.isFinite(startMaxPerWindowPerIp) && startMaxPerWindowPerIp > 0
+        ? startMaxPerWindowPerIp
+        : 10,
+    verifyWindowSeconds:
+      Number.isFinite(verifyWindowSeconds) && verifyWindowSeconds > 0 ? verifyWindowSeconds : 60,
+    verifyMaxPerWindowPerIp:
+      Number.isFinite(verifyMaxPerWindowPerIp) && verifyMaxPerWindowPerIp > 0
+        ? verifyMaxPerWindowPerIp
+        : 30,
+    refreshWindowSeconds:
+      Number.isFinite(refreshWindowSeconds) && refreshWindowSeconds > 0 ? refreshWindowSeconds : 60,
+    refreshMaxPerWindowPerIp:
+      Number.isFinite(refreshMaxPerWindowPerIp) && refreshMaxPerWindowPerIp > 0
+        ? refreshMaxPerWindowPerIp
+        : 60,
   };
 }
 
@@ -157,6 +197,14 @@ async function authStartHandler(req: FastifyRequest, reply: FastifyReply) {
     });
   }
 
+  const ipCfg = getAuthIpRateLimitConfig();
+  await enforceRateLimit({
+    store: getRequestRateLimitStore(req.server.redis),
+    key: `rl:auth:start:ip:${hashRateLimitKeyPart(req.ip)}`,
+    max: ipCfg.startMaxPerWindowPerIp,
+    windowSeconds: ipCfg.startWindowSeconds,
+  });
+
   const cfg = getOtpConfig();
   const now = new Date();
   const windowStart = new Date(now.getTime() - cfg.rateWindowSeconds * 1000);
@@ -230,6 +278,14 @@ async function authVerifyHandler(req: FastifyRequest) {
       statusCode: 400,
     });
   }
+
+  const ipCfg = getAuthIpRateLimitConfig();
+  await enforceRateLimit({
+    store: getRequestRateLimitStore(req.server.redis),
+    key: `rl:auth:verify:ip:${hashRateLimitKeyPart(req.ip)}`,
+    max: ipCfg.verifyMaxPerWindowPerIp,
+    windowSeconds: ipCfg.verifyWindowSeconds,
+  });
 
   const cfg = getOtpConfig();
   const now = new Date();
@@ -362,6 +418,14 @@ async function authRefreshHandler(req: FastifyRequest) {
       statusCode: 400,
     });
   }
+
+  const ipCfg = getAuthIpRateLimitConfig();
+  await enforceRateLimit({
+    store: getRequestRateLimitStore(req.server.redis),
+    key: `rl:auth:refresh:ip:${hashRateLimitKeyPart(req.ip)}`,
+    max: ipCfg.refreshMaxPerWindowPerIp,
+    windowSeconds: ipCfg.refreshWindowSeconds,
+  });
 
   const now = new Date();
   const session = await prisma.session.findFirst({

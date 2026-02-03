@@ -286,6 +286,23 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     const userId = typeof req.user?.sub === "string" ? req.user.sub : undefined;
 
     if (err instanceof AppError) {
+      if (err.statusCode === 429) {
+        const retryAfterSecondsRaw =
+          err.details &&
+          typeof err.details === "object" &&
+          !Array.isArray(err.details) &&
+          Object.prototype.hasOwnProperty.call(err.details, "retryAfterSeconds")
+            ? (err.details as Record<string, unknown>).retryAfterSeconds
+            : undefined;
+
+        const retryAfterSeconds =
+          typeof retryAfterSecondsRaw === "number" ? retryAfterSecondsRaw : null;
+
+        if (retryAfterSeconds && Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+          reply.header("Retry-After", String(Math.ceil(retryAfterSeconds)));
+        }
+      }
+
       if (err.statusCode >= 500) {
         captureException(err, {
           tags: {

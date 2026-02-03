@@ -114,7 +114,7 @@
 <a id="be-nfr"></a>
 ## NFRs: sécurité, performance, observabilité
 
-- [ ] BE-130 — Rate limiting (IP + user) + protections brute-force OTP. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
+- [x] BE-130 — Rate limiting (IP + user) + protections brute-force OTP. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [x] BE-131 — Observabilité: OpenTelemetry traces + métriques jobs + Sentry. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-observabilite).
 - [ ] BE-132 — Performance: caching agrégats chauds + headers cache + pagination cursor partout. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-performance).
 - [ ] BE-133 — Fiabilité: jobs idempotents + retries contrôlés + DLQ + playbooks incident. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).

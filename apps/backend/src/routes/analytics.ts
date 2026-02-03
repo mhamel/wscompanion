@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { AppError } from "../errors";
 import { getEntitlement } from "../entitlements";
+import { enforceRateLimit, getRequestRateLimitStore, hashRateLimitKeyPart } from "../rateLimit";
 import {
   PRODUCT_ANALYTICS_EVENT_NAMES,
   isProductAnalyticsEventName,
@@ -13,6 +14,15 @@ function toPlainObject(value: unknown): Record<string, unknown> | undefined {
 }
 
 async function analyticsEventHandler(req: FastifyRequest) {
+  const windowSeconds = Number(process.env.ANALYTICS_EVENT_RATE_WINDOW_SECONDS ?? "60");
+  const max = Number(process.env.ANALYTICS_EVENT_RATE_MAX ?? "120");
+  await enforceRateLimit({
+    store: getRequestRateLimitStore(req.server.redis),
+    key: `rl:analytics:event:user:${hashRateLimitKeyPart(req.user.sub)}`,
+    max,
+    windowSeconds,
+  });
+
   const body = req.body as { event?: unknown; properties?: unknown };
   const event = typeof body.event === "string" ? body.event.trim() : "";
   if (!event || !isProductAnalyticsEventName(event)) {
@@ -71,6 +81,7 @@ export function registerAnalyticsRoutes(app: FastifyInstance) {
           required: ["ok"],
         },
         400: { $ref: "ProblemDetails#" },
+        429: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
@@ -78,4 +89,3 @@ export function registerAnalyticsRoutes(app: FastifyInstance) {
     handler: analyticsEventHandler,
   });
 }
-
