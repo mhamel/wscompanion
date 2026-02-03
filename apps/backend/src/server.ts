@@ -36,6 +36,16 @@ type BuildServerOptions = {
   s3Exports?: S3ExportsClient;
 };
 
+function parseTrustProxyEnv(value: string | undefined): boolean | number {
+  if (!value) return false;
+  const trimmed = value.trim().toLowerCase();
+  if (["1", "true", "yes", "y", "on"].includes(trimmed)) return true;
+  if (["0", "false", "no", "n", "off"].includes(trimmed)) return false;
+  const asNumber = Number(trimmed);
+  if (Number.isFinite(asNumber) && asNumber >= 0) return Math.floor(asNumber);
+  return false;
+}
+
 function getJwtSecret(): string {
   const secret = process.env.AUTH_JWT_SECRET?.trim();
   if (secret) return secret;
@@ -56,6 +66,7 @@ function normalizeRequestId(value: string | string[] | undefined): string | null
 
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   const app = Fastify({
+    trustProxy: parseTrustProxyEnv(process.env.TRUST_PROXY),
     genReqId: (req) => {
       const headerId =
         normalizeRequestId(req.headers["x-request-id"]) ??

@@ -44,3 +44,35 @@ describe("health", () => {
     }
   }, 15_000);
 });
+
+describe("trustProxy", () => {
+  it("uses x-forwarded-for for req.ip when TRUST_PROXY=true", async () => {
+    const previous = process.env.TRUST_PROXY;
+    process.env.TRUST_PROXY = "true";
+
+    const app = buildServer({ logger: false });
+    app.get("/test-ip", async (req) => {
+      return { ip: req.ip, ips: req.ips };
+    });
+
+    await app.ready();
+    try {
+      const res = await app.inject({
+        method: "GET",
+        url: "/test-ip",
+        headers: {
+          "x-forwarded-for": "203.0.113.10, 10.0.0.1",
+        },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().ip).toBe("203.0.113.10");
+    } finally {
+      await app.close();
+      if (previous === undefined) {
+        delete process.env.TRUST_PROXY;
+      } else {
+        process.env.TRUST_PROXY = previous;
+      }
+    }
+  });
+});
