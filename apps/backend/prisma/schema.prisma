@@ -28,6 +28,7 @@ model User {
   exportJobs      ExportJob[]
   brokerConnections BrokerConnection[]
   syncRuns         SyncRun[]
+  askThreads       AskThread[]
 }
 
 model Session {
@@ -139,6 +140,32 @@ model BrokerConnection {
 
   @@index([userId])
   @@unique([provider, externalConnectionId])
+}
+
+model AskThread {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastMessageAt DateTime @default(now())
+
+  messages  AskMessage[]
+
+  @@index([userId, lastMessageAt])
+}
+
+model AskMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  threadId  String   @db.Uuid
+  thread    AskThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([threadId, createdAt])
 }
 
 model SyncRun {

@@ -196,6 +196,7 @@ export type AskSection = {
 
 export type AskResponse = {
   answer: string;
+  threadId: string;
   sections: AskSection[];
 };
 
@@ -445,7 +446,7 @@ export type ApiClient = {
     event: AnalyticsEventName;
     properties?: Record<string, unknown>;
   }): Promise<{ ok: boolean }>;
-  ask(input: { question: string; symbol?: string }): Promise<AskResponse>;
+  ask(input: { question: string; symbol?: string; threadId?: string }): Promise<AskResponse>;
   disclaimerGet(): Promise<DisclaimerResponse>;
   disclaimerAccept(): Promise<{
     ok: boolean;
@@ -705,6 +706,7 @@ export function createApiClient(input: {
     ask: async (body: {
       question: string;
       symbol?: string;
+      threadId?: string;
     }): Promise<AskResponse> => {
       return withAuth((accessToken) =>
         client.POST("/v1/ask", {

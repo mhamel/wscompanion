@@ -574,6 +574,8 @@ async function meDeleteHandler(req: FastifyRequest) {
     await tx.positionSnapshot.deleteMany({ where: { account: { userId } } });
     await tx.account.deleteMany({ where: { userId } });
 
+    await tx.askThread.deleteMany({ where: { userId } });
+
     await tx.syncRun.deleteMany({ where: { userId } });
     await tx.brokerConnection.deleteMany({ where: { userId } });
 

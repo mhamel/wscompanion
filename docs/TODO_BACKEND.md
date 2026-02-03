@@ -109,7 +109,7 @@
 ## Assistant (premium, optionnel)
 
 - [x] BE-120 — Endpoint “Ask”: récupération contexte (P&L/news/transactions) + réponse structurée + citations. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-assistant).
-- [ ] BE-121 — Stockage conversations + limites (rate limit, quotas premium) + redaction PII. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
+- [x] BE-121 — Stockage conversations + limites (rate limit, quotas premium) + redaction PII. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite), `docs/ASK.md`, `apps/backend/src/routes/ask.ts`.
 
 <a id="be-nfr"></a>
 ## NFRs: sécurité, performance, observabilité

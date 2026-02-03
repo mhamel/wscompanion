@@ -107,6 +107,20 @@ describe("DELETE /v1/me", () => {
       },
     });
 
+    const askThread = await prisma.askThread.create({
+      data: {
+        userId: user.id,
+        title: "Ask: AAPL",
+        lastMessageAt: new Date(),
+      },
+    });
+    await prisma.askMessage.createMany({
+      data: [
+        { threadId: askThread.id, role: "user", content: "Why AAPL?" },
+        { threadId: askThread.id, role: "assistant", content: "No advice." },
+      ],
+    });
+
     const wheelCycle = await prisma.wheelCycle.create({
       data: {
         userId: user.id,
@@ -215,6 +229,11 @@ describe("DELETE /v1/me", () => {
 
     expect(await prisma.tickerPnlTotal.findMany({ where: { userId: user.id } })).toHaveLength(0);
     expect(await prisma.tickerPnlDaily.findMany({ where: { userId: user.id } })).toHaveLength(0);
+
+    expect(await prisma.askThread.findMany({ where: { userId: user.id } })).toHaveLength(0);
+    expect(
+      await prisma.askMessage.findMany({ where: { thread: { userId: user.id } } }),
+    ).toHaveLength(0);
 
     expect(await prisma.wheelCycle.findMany({ where: { userId: user.id } })).toHaveLength(0);
     expect(

@@ -55,6 +55,7 @@ export function AskScreen({ route }: Props) {
 
   const [question, setQuestion] = React.useState(route.params?.q ?? "");
   const [symbol, setSymbol] = React.useState("");
+  const [threadId, setThreadId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [busyDisclaimer, setBusyDisclaimer] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -115,8 +116,10 @@ export function AskScreen({ route }: Props) {
       const res = await api.ask({
         question,
         symbol: symbol.trim() ? symbol.trim().toUpperCase() : undefined,
+        threadId: threadId ?? undefined,
       });
       setResult(res);
+      setThreadId(res.threadId);
     } catch (e) {
       if (isPaywallError(e)) {
         goPaywall();
@@ -154,6 +157,19 @@ export function AskScreen({ route }: Props) {
         Pose une question sur un ticker (P&amp;L, activité, news) — sans conseil
         financier.
       </Body>
+
+      {threadId ? (
+        <AppButton
+          title="Nouvelle conversation"
+          variant="secondary"
+          disabled={busy || busyDisclaimer}
+          onPress={() => {
+            setThreadId(null);
+            setResult(null);
+            setError(null);
+          }}
+        />
+      ) : null}
 
       {mustAcceptDisclaimer ? (
         <View style={styles.notice}>
