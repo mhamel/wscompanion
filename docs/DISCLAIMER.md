@@ -24,4 +24,5 @@ Objectif: afficher un avertissement clair et enregistrer l’acceptation utilisa
 
 - L’acceptation est maintenant **requise** pour `POST /v1/ask` (Ask Pro).
 - En cas de non-acceptation: `403` avec `code: "DISCLAIMER_REQUIRED"` et `details.requiredVersion`.
+- Le disclaimer est **versionné**: si `RISK_DISCLAIMER_VERSION` change, l’utilisateur doit ré-accepter (le mobile compare `acceptedVersion` vs `version`).
 - Étape suivante possible: étendre le gating à d’autres features (si nécessaire).

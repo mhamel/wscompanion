@@ -117,8 +117,8 @@ export function AskScreen({ route }: Props) {
       {disclaimerRequired ? (
         <View style={styles.notice}>
           <Text style={styles.noticeText}>
-            Pour utiliser Ask, tu dois accepter l’avertissement “pas de conseil
-            financier”.
+            Pour utiliser Ask, tu dois accepter (ou ré-accepter) l’avertissement
+            “pas de conseil financier”.
           </Text>
           <AppButton
             title="Aller aux Paramètres"

@@ -44,6 +44,11 @@ export function SettingsScreen() {
     queryFn: () => api.disclaimerGet(),
   });
 
+  const disclaimer = disclaimerQuery.data;
+  const disclaimerIsAccepted =
+    Boolean(disclaimer?.acceptedAt) && disclaimer?.acceptedVersion === disclaimer?.version;
+  const disclaimerNeedsAcceptance = Boolean(disclaimer) && !disclaimerIsAccepted;
+
   React.useEffect(() => {
     if (prefsQuery.data?.baseCurrency) {
       setBaseCurrency(prefsQuery.data.baseCurrency);
@@ -119,7 +124,7 @@ export function SettingsScreen() {
     try {
       await api.disclaimerAccept();
       await queryClient.invalidateQueries({ queryKey: ["disclaimer"] });
-      Alert.alert("OK", "Avertissement accepté.");
+      Alert.alert("OK", "Avertissement enregistré.");
     } catch (e) {
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
@@ -204,11 +209,13 @@ export function SettingsScreen() {
         <Title style={styles.sectionTitle}>Confidentialité</Title>
         <Body>
           Avertissement:{" "}
-          {disclaimerQuery.data?.acceptedAt
-            ? "accepté"
-            : disclaimerQuery.isLoading
-              ? "..."
-              : "non accepté"}
+          {disclaimerQuery.isLoading
+            ? "..."
+            : disclaimerIsAccepted
+              ? `accepté (v${disclaimer?.version ?? "?"})`
+              : disclaimerQuery.data?.acceptedAt
+                ? `à revalider (v${disclaimer?.acceptedVersion ?? "?"} → v${disclaimer?.version ?? "?"})`
+                : "non accepté"}
         </Body>
         <AppButton
           title="Lire l’avertissement"
@@ -217,12 +224,20 @@ export function SettingsScreen() {
           onPress={showDisclaimer}
         />
         <AppButton
-          title={busy === "disclaimer" ? "Enregistrement…" : "Accepter"}
+          title={
+            busy === "disclaimer"
+              ? "Enregistrement…"
+              : disclaimerIsAccepted
+                ? "Accepté"
+                : disclaimerQuery.data?.acceptedAt
+                  ? "Ré-accepter"
+                  : "Accepter"
+          }
           variant="secondary"
           disabled={
             busy !== null ||
             disclaimerQuery.isLoading ||
-            Boolean(disclaimerQuery.data?.acceptedAt)
+            (Boolean(disclaimerQuery.data) && !disclaimerNeedsAcceptance)
           }
           onPress={() => void acceptDisclaimer()}
         />
