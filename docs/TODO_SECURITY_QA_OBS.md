@@ -19,7 +19,7 @@
 ## Sécurité & conformité
 
 - [x] SEC-001 — Threat model (mobile + API + worker + providers) + surfaces + mitigations. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
-- [ ] SEC-002 — Stratégie chiffrement (tokens SnapTrade, secrets) + rotation clés + redaction logs. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
+- [x] SEC-002 — Stratégie chiffrement (tokens SnapTrade, secrets) + rotation clés + redaction logs. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite), `docs/ENCRYPTION.md`.
 - [x] SEC-003 — Rate limiting (OTP, API) + anti-bruteforce + lockout progressif. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [x] SEC-004 — Audit logs (accès aux données sensibles, overrides wheel) + rétention. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite).
 - [ ] SEC-005 — Review ToS SnapTrade + providers news + disclaimers “not financial advice”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-securite), [PRODUIT.md](../PRODUIT.md#prd-top).

@@ -71,6 +71,37 @@ function getKeyring(): Keyring {
   throw new Error("APP_ENCRYPTION_KEY or APP_ENCRYPTION_KEYS is required in production");
 }
 
+export type EncryptedPayloadHeader = { version: 1; keyId: 0 } | { version: 2; keyId: number };
+
+export function getActiveEncryptionKeyId(): number {
+  return getKeyring().activeKeyId;
+}
+
+export function parseEncryptedPayloadHeader(
+  payload: Uint8Array<ArrayBuffer> | Uint8Array,
+): EncryptedPayloadHeader {
+  const buffer = Buffer.from(payload);
+  if (buffer.length < 1) {
+    throw new Error("Invalid encrypted payload");
+  }
+
+  const version = buffer.subarray(0, 1).readUInt8(0);
+  if (version === 1) {
+    return { version: 1, keyId: 0 };
+  }
+
+  if (version !== 2) {
+    throw new Error(`Unsupported encrypted payload version: ${version}`);
+  }
+
+  if (buffer.length < 2) {
+    throw new Error("Invalid encrypted payload");
+  }
+
+  const keyId = buffer.subarray(1, 2).readUInt8(0);
+  return { version: 2, keyId };
+}
+
 export function encryptStringToBytes(plaintext: string): Uint8Array<ArrayBuffer> {
   const keyring = getKeyring();
   const key = keyring.keys.get(keyring.activeKeyId);
@@ -92,7 +123,7 @@ export function encryptStringToBytes(plaintext: string): Uint8Array<ArrayBuffer>
   return new Uint8Array(arrayBuffer);
 }
 
-export function decryptStringFromBytes(payload: Uint8Array<ArrayBuffer>): string {
+export function decryptStringFromBytes(payload: Uint8Array<ArrayBuffer> | Uint8Array): string {
   const buffer = Buffer.from(payload);
 
   if (buffer.length < 1 + 12 + 16) {

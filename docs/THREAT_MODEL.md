@@ -122,11 +122,11 @@ Mitigations:
 - [x] Chiffrement tokens SnapTrade en DB (app-level)
 - [x] S3 download via URL signée
 - [x] Tracing (OTel) pour investigations: `docs/OPENTELEMETRY.md`
-- [ ] Audit logs (SEC-004) pour actions sensibles
+- [x] Audit logs (SEC-004) pour actions sensibles: `docs/AUDIT_LOGS.md`
 - [ ] Trust proxy / IP handling explicite (si déployé derrière proxy)
 
 ## 6) Prochaines étapes sécurité (recommandées)
 
 1. `SEC-004` audit logs + rétention (DB) + export minimal.
 2. `SEC-005` review ToS SnapTrade/news + disclaimers “not financial advice”.
-3. `SEC-002` rotation clés encryption + gestion KMS (staging/prod).
+3. `OBS-004` définir des SLOs MVP (API + jobs) + alerting minimal.

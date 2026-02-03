@@ -15,6 +15,7 @@
     "db:studio": "prisma studio",
     "openapi:export": "tsx src/scripts/exportOpenapi.ts",
     "sentry:upload-sourcemaps": "tsx src/scripts/uploadSentrySourcemaps.ts",
+    "crypto:rotate": "tsx src/scripts/rotateEncryptedTokens.ts",
     "test": "vitest",
     "lint": "eslint .",
     "format": "prettier --check .",
