@@ -15,6 +15,7 @@ import { ApiError } from "../api/http";
 import { useBillingEntitlementQuery } from "../billing/entitlements";
 import { isPaywallError } from "../billing/paywall";
 import { config } from "../config";
+import { isDisclaimerRequiredError } from "../disclaimer/disclaimer";
 import type { MainTabParamList } from "../navigation/MainTabs";
 import type { MainStackParamList } from "../navigation/MainStack";
 import { tokens } from "../theme/tokens";
@@ -52,6 +53,7 @@ export function AskScreen({ route }: Props) {
   const [symbol, setSymbol] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [disclaimerRequired, setDisclaimerRequired] = React.useState(false);
   const [result, setResult] = React.useState<AskResponse | null>(null);
 
   function goPaywall() {
@@ -67,6 +69,7 @@ export function AskScreen({ route }: Props) {
     setBusy(true);
     setError(null);
     setResult(null);
+    setDisclaimerRequired(false);
 
     try {
       const res = await api.ask({
@@ -77,6 +80,10 @@ export function AskScreen({ route }: Props) {
     } catch (e) {
       if (isPaywallError(e)) {
         goPaywall();
+        return;
+      }
+      if (isDisclaimerRequiredError(e)) {
+        setDisclaimerRequired(true);
         return;
       }
       if (e instanceof ApiError) {
@@ -106,6 +113,21 @@ export function AskScreen({ route }: Props) {
         Pose une question sur un ticker (P&amp;L, activité, news) — sans conseil
         financier.
       </Body>
+
+      {disclaimerRequired ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>
+            Pour utiliser Ask, tu dois accepter l’avertissement “pas de conseil
+            financier”.
+          </Text>
+          <AppButton
+            title="Aller aux Paramètres"
+            variant="secondary"
+            disabled={busy}
+            onPress={() => navigation.navigate("Settings")}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.fields}>
         <TextField
@@ -177,6 +199,14 @@ export function AskScreen({ route }: Props) {
 const styles = StyleSheet.create({
   fields: { gap: 12, marginTop: 12 },
   error: { color: tokens.colors.negative, marginTop: 12 },
+  notice: {
+    marginTop: 12,
+    backgroundColor: tokens.colors.card,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  noticeText: { color: tokens.colors.text },
   result: { paddingBottom: 40, gap: 16, marginTop: 16 },
   answer: { color: tokens.colors.text, fontSize: 16 },
   section: {

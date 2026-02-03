@@ -22,5 +22,6 @@ Objectif: afficher un avertissement clair et enregistrer l’acceptation utilisa
 
 ## Notes
 
-- L’acceptation n’est pas encore “hard-required” pour utiliser toutes les features (MVP).
-- Étape suivante possible: gating (ex: Ask) tant que disclaimer non accepté.
+- L’acceptation est maintenant **requise** pour `POST /v1/ask` (Ask Pro).
+- En cas de non-acceptation: `403` avec `code: "DISCLAIMER_REQUIRED"` et `details.requiredVersion`.
+- Étape suivante possible: étendre le gating à d’autres features (si nécessaire).

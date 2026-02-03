@@ -27,6 +27,7 @@ import { registerWheelRoutes } from "./routes/wheel";
 import type { S3ExportsClient } from "./exports/s3";
 import { captureException } from "./observability/sentry";
 import { requirePro } from "./entitlements";
+import { requireRiskDisclaimerAccepted } from "./disclaimerGate";
 
 type BuildServerOptions = {
   logger?: boolean;
@@ -291,6 +292,10 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
 
   app.decorate("requirePro", async (request: FastifyRequest) => {
     await requirePro(request);
+  });
+
+  app.decorate("requireRiskDisclaimer", async (request: FastifyRequest) => {
+    await requireRiskDisclaimerAccepted(request);
   });
 
   app.setNotFoundHandler(async (_req, reply) => {

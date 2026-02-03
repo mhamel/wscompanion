@@ -77,7 +77,7 @@ async function askHandler(req: FastifyRequest) {
 
 export function registerAskRoutes(app: FastifyInstance) {
   app.post("/ask", {
-    preHandler: [app.authenticate, app.requirePro],
+    preHandler: [app.authenticate, app.requirePro, app.requireRiskDisclaimer],
     schema: {
       security: [{ bearerAuth: [] }],
       body: {
@@ -113,6 +113,7 @@ export function registerAskRoutes(app: FastifyInstance) {
         },
         400: { $ref: "ProblemDetails#" },
         401: { $ref: "ProblemDetails#" },
+        403: { $ref: "ProblemDetails#" },
         500: { $ref: "ProblemDetails#" },
       },
     },

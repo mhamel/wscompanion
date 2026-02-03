@@ -1429,6 +1429,16 @@
               }
             }
           },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Default Response",
             "content": {

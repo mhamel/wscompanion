@@ -14,6 +14,7 @@ declare module "fastify" {
     s3Exports?: S3ExportsClient;
     authenticate: (request: FastifyRequest) => Promise<void>;
     requirePro: (request: FastifyRequest) => Promise<void>;
+    requireRiskDisclaimer: (request: FastifyRequest) => Promise<void>;
   }
 }
 
