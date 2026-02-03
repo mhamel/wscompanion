@@ -12,6 +12,7 @@ import { registerAuthRoutes } from "./routes/auth";
 import { registerAlertsRoutes } from "./routes/alerts";
 import { registerAnalyticsRoutes } from "./routes/analytics";
 import { registerAuditRoutes } from "./routes/audit";
+import { registerAskRoutes } from "./routes/ask";
 import { registerBillingRoutes } from "./routes/billing";
 import { registerConnectionRoutes } from "./routes/connections";
 import { registerDeviceRoutes } from "./routes/devices";
@@ -386,6 +387,7 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
       registerAlertsRoutes(v1);
       registerAnalyticsRoutes(v1);
       registerAuditRoutes(v1);
+      registerAskRoutes(v1);
       registerBillingRoutes(v1);
       registerConnectionRoutes(v1);
       registerDeviceRoutes(v1);

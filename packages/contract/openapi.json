@@ -1332,6 +1332,116 @@
         }
       }
     },
+    "/v1/ask": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "question": {
+                    "type": "string"
+                  },
+                  "symbol": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "question"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "answer": {
+                      "type": "string"
+                    },
+                    "sections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          },
+                          "bullets": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sources": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "bullets",
+                          "sources"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "answer",
+                    "sections"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/billing/entitlement": {
       "get": {
         "security": [
