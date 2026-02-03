@@ -117,7 +117,9 @@ function snapshotFromFixture(f: PnlFixtureSnapshot): PnlPositionSnapshotInput {
   };
 }
 
-function serializePnlResult(result: ReturnType<typeof computeTickerPnl360>): PnlFixture["expected"] {
+function serializePnlResult(
+  result: ReturnType<typeof computeTickerPnl360>,
+): PnlFixture["expected"] {
   return {
     totals: result.totals.map((row) => ({
       symbol: row.symbol,

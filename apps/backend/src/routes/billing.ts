@@ -46,7 +46,8 @@ function verifyRevenueCatWebhookAuth(req: FastifyRequest): void {
   const expected = process.env.REVENUECAT_WEBHOOK_AUTH_TOKEN?.trim();
   if (!expected) return;
 
-  const authHeader = typeof req.headers.authorization === "string" ? req.headers.authorization : undefined;
+  const authHeader =
+    typeof req.headers.authorization === "string" ? req.headers.authorization : undefined;
   const headerToken = getBearerToken(authHeader);
   const fallbackToken =
     typeof req.headers["x-revenuecat-webhook-token"] === "string"
@@ -60,9 +61,7 @@ function verifyRevenueCatWebhookAuth(req: FastifyRequest): void {
 }
 
 function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  );
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 function dateFromEpochMs(value: unknown): Date | null {
