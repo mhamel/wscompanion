@@ -54,3 +54,8 @@ Quand tu ajoutes des logs:
 2) Chercher ce `request_id` dans les logs (API) et dans Sentry (erreurs API).
 3) Si c’est un job, chercher par `queue`/`jobId`/`exportJobId` côté worker.
 
+## Tracing (OpenTelemetry)
+
+Quand tu as besoin de visualiser le chemin complet (API → DB → jobs → providers), activer OpenTelemetry et consulter Jaeger.
+
+- Setup local: `docs/OPENTELEMETRY.md`

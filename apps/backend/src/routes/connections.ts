@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { Prisma } from "@prisma/client";
 import { encryptStringToBytes } from "../crypto";
 import { AppError } from "../errors";
+import { enqueueWithTrace } from "../observability/bullmqTracing";
 
 const STATE_TTL_SECONDS = 10 * 60;
 const localStateStore = new Map<string, { userId: string; expiresAt: number }>();
@@ -151,7 +152,8 @@ async function snaptradeCallbackHandler(req: FastifyRequest) {
   }
 
   try {
-    await syncQueue.add(
+    await enqueueWithTrace(
+      syncQueue,
       "sync-initial",
       { syncRunId: syncRun.id, brokerConnectionId: brokerConnection.id, userId: req.user.sub },
       { jobId: syncRun.id, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },

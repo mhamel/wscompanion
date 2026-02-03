@@ -4,6 +4,7 @@ import swaggerUi from "@fastify/swagger-ui";
 import jwt from "@fastify/jwt";
 import type { Queue } from "bullmq";
 import { randomUUID } from "crypto";
+import { context, trace } from "@opentelemetry/api";
 import { AppError } from "./errors";
 import type { PrismaClient } from "@prisma/client";
 import type { RedisClientType } from "redis";
@@ -82,6 +83,11 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
 
   app.addHook("onRequest", async (req, reply) => {
     reply.header("x-request-id", req.id);
+
+    const span = trace.getSpan(context.active());
+    if (span) {
+      span.setAttribute("http.request_id", req.id);
+    }
   });
 
   if (options.prisma) {
@@ -259,6 +265,11 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     });
     if (!user || user.deletedAt) {
       throw new AppError({ code: "ACCOUNT_DELETED", message: "Unauthorized", statusCode: 401 });
+    }
+
+    const span = trace.getSpan(context.active());
+    if (span) {
+      span.setAttribute("enduser.id", request.user.sub);
     }
   });
 

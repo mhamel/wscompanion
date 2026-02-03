@@ -4,6 +4,7 @@ import { AppError } from "../errors";
 import { getEntitlement, requirePro } from "../entitlements";
 import { EXPORT_FORMATS, EXPORT_TYPES, isExportFormat, isExportType } from "../exports/types";
 import { signExportDownloadUrl } from "../exports/s3";
+import { enqueueWithTrace } from "../observability/bullmqTracing";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
 
 type ExportJobsCursor = { createdAt: string; id: string };
@@ -163,7 +164,8 @@ async function exportCreateHandler(req: FastifyRequest) {
   });
 
   try {
-    await exportsQueue.add(
+    await enqueueWithTrace(
+      exportsQueue,
       "export-run",
       { exportJobId: created.id },
       { jobId: created.id, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },

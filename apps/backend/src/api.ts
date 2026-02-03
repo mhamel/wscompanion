@@ -1,4 +1,5 @@
-import dotenv from "dotenv";
+import "dotenv/config";
+import "./observability/otel";
 import { PrismaClient } from "@prisma/client";
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
@@ -8,9 +9,9 @@ import { loadConfig } from "./config";
 import { loadDevSecrets } from "./devSecrets";
 import { createS3ExportsClient } from "./exports/s3";
 import { captureException, closeSentry, initSentry } from "./observability/sentry";
+import { shutdownOtel } from "./observability/otel";
 
 async function main() {
-  dotenv.config();
   loadDevSecrets();
   initSentry();
   const config = loadConfig();
@@ -50,12 +51,34 @@ async function main() {
     }
   });
 
+  const shutdown = async () => {
+    try {
+      await app.close();
+    } catch {
+      // ignore
+    }
+    await closeSentry();
+    await shutdownOtel();
+  };
+
+  process.on("SIGINT", () => {
+    shutdown().catch((err) => {
+      console.error(err);
+    });
+  });
+  process.on("SIGTERM", () => {
+    shutdown().catch((err) => {
+      console.error(err);
+    });
+  });
+
   await app.listen({ port: config.PORT, host: "0.0.0.0" });
 }
 
 main().catch(async (err) => {
   captureException(err, { tags: { component: "api", phase: "startup" } });
   await closeSentry();
+  await shutdownOtel();
   console.error(err);
   process.exit(1);
 });

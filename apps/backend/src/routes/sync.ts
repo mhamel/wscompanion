@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { AppError } from "../errors";
+import { enqueueWithTrace } from "../observability/bullmqTracing";
 
 async function connectionSyncHandler(req: FastifyRequest) {
   const prisma = req.server.prisma;
@@ -67,7 +68,8 @@ async function connectionSyncHandler(req: FastifyRequest) {
   });
 
   try {
-    await syncQueue.add(
+    await enqueueWithTrace(
+      syncQueue,
       "sync-incremental",
       { syncRunId: syncRun.id, brokerConnectionId: brokerConnection.id, userId: req.user.sub },
       { jobId: syncRun.id, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },

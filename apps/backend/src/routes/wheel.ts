@@ -3,6 +3,7 @@ import { AppError } from "../errors";
 import { parseLimit } from "../pagination";
 import { convertMinorAmount, createEnvFxRateProvider } from "../analytics/fx";
 import type { Prisma } from "@prisma/client";
+import { enqueueWithTrace } from "../observability/bullmqTracing";
 
 function normalizeSymbol(value: string): string {
   return value.trim().toUpperCase();
@@ -78,7 +79,8 @@ async function wheelDetectHandler(req: FastifyRequest) {
   }
 
   const jobId = `wheel-detect:${req.user.sub}:${symbol || "all"}`;
-  const job = await queue.add(
+  const job = await enqueueWithTrace(
+    queue,
     "wheel-detect",
     { userId: req.user.sub, ...(symbol ? { symbol } : {}) },
     { jobId, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },

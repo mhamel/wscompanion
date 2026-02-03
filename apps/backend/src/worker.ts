@@ -1,11 +1,14 @@
-import dotenv from "dotenv";
+import "dotenv/config";
+import "./observability/otel";
 import { PrismaClient } from "@prisma/client";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import pino from "pino";
 import { loadConfig } from "./config";
 import { captureException, closeSentry, initSentry } from "./observability/sentry";
+import { shutdownOtel } from "./observability/otel";
 import { trackProductEvent } from "./observability/productAnalytics";
+import { enqueueWithTrace, withJobTracing } from "./observability/bullmqTracing";
 import { ingestTransactions, toJsonValue } from "./sync/ingestTransactions";
 import { computeTickerPnl360 } from "./analytics/pnl";
 import { bumpPnlCacheVersion } from "./analytics/pnlCache";
@@ -218,7 +221,8 @@ async function handleSyncJob(
 
   if (analyticsQueue) {
     try {
-      await analyticsQueue.add(
+      await enqueueWithTrace(
+        analyticsQueue,
         "pnl-recompute",
         { userId: job.data.userId },
         {
@@ -262,7 +266,8 @@ async function handleSyncScanJob(prisma: PrismaClient, syncQueue: Queue) {
     });
 
     try {
-      await syncQueue.add(
+      await enqueueWithTrace(
+        syncQueue,
         "sync-incremental",
         { syncRunId: syncRun.id, brokerConnectionId: connection.id, userId: connection.userId },
         { jobId: syncRun.id, attempts: 3, backoff: { type: "exponential", delay: 5_000 } },
@@ -810,7 +815,6 @@ async function handleExportRunJob(
 }
 
 async function main() {
-  dotenv.config();
   loadDevSecrets();
   logger.level = process.env.LOG_LEVEL ?? "info";
   initSentry();
@@ -870,245 +874,255 @@ async function main() {
 
   const worker = new Worker(
     "sync",
-    async (job) => {
-      try {
-        if (job.name === "sync-initial") {
-          return await handleSyncJob(prisma, job as Job<SyncJob>, "initial", analyticsQueue);
-        }
+    async (job) =>
+      await withJobTracing(job, async () => {
+        try {
+          if (job.name === "sync-initial") {
+            return await handleSyncJob(prisma, job as Job<SyncJob>, "initial", analyticsQueue);
+          }
 
-        if (job.name === "sync-incremental") {
-          return await handleSyncJob(prisma, job as Job<SyncJob>, "incremental", analyticsQueue);
-        }
+          if (job.name === "sync-incremental") {
+            return await handleSyncJob(prisma, job as Job<SyncJob>, "incremental", analyticsQueue);
+          }
 
-        if (job.name === "sync-scan") {
-          return await handleSyncScanJob(prisma, syncQueue);
-        }
+          if (job.name === "sync-scan") {
+            return await handleSyncScanJob(prisma, syncQueue);
+          }
 
-        throw new Error(`Unknown job: ${job.name}`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        const attempts = job.opts.attempts ?? 1;
-        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
-
-        if (isFinalAttempt) {
-          captureException(err, {
-            tags: { component: "worker", queue: "sync", job: job.name },
-            extras: {
-              jobId: job.id ?? null,
-              attemptsMade: job.attemptsMade,
-              attempts,
-            },
-          });
-        }
-
-        if (job.name === "sync-initial" || job.name === "sync-incremental") {
-          await prisma.syncRun
-            .update({
-              where: { id: (job.data as SyncJob).syncRunId },
-              data: { status: "failed", finishedAt: new Date(), error: errorMessage },
-            })
-            .catch(() => {
-              // ignore (e.g. user purged)
-            });
+          throw new Error(`Unknown job: ${job.name}`);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
 
           if (isFinalAttempt) {
-            await dlq.add(
-              job.name,
-              { ...(job.data as SyncJob), error: errorMessage },
-              { jobId: `dlq:${job.id ?? (job.data as SyncJob).syncRunId}` },
-            );
-          }
-
-          if (job.name === "sync-initial" && isFinalAttempt) {
-            void trackProductEvent(
-              {
-                event: "sync_initial_failed",
-                distinctId: (job.data as SyncJob).userId,
-                properties: {
-                  user_id: (job.data as SyncJob).userId,
-                  sync_run_id: (job.data as SyncJob).syncRunId,
-                  reason: errorMessage,
-                  attempts_made: job.attemptsMade + 1,
-                  attempts,
-                },
+            captureException(err, {
+              tags: { component: "worker", queue: "sync", job: job.name },
+              extras: {
+                jobId: job.id ?? null,
+                attemptsMade: job.attemptsMade,
+                attempts,
               },
-              logger,
-            );
+            });
           }
-        }
 
-        throw err;
-      }
-    },
+          if (job.name === "sync-initial" || job.name === "sync-incremental") {
+            await prisma.syncRun
+              .update({
+                where: { id: (job.data as SyncJob).syncRunId },
+                data: { status: "failed", finishedAt: new Date(), error: errorMessage },
+              })
+              .catch(() => {
+                // ignore (e.g. user purged)
+              });
+
+            if (isFinalAttempt) {
+              await enqueueWithTrace(
+                dlq,
+                job.name,
+                { ...(job.data as SyncJob), error: errorMessage },
+                { jobId: `dlq:${job.id ?? (job.data as SyncJob).syncRunId}` },
+              );
+            }
+
+            if (job.name === "sync-initial" && isFinalAttempt) {
+              void trackProductEvent(
+                {
+                  event: "sync_initial_failed",
+                  distinctId: (job.data as SyncJob).userId,
+                  properties: {
+                    user_id: (job.data as SyncJob).userId,
+                    sync_run_id: (job.data as SyncJob).syncRunId,
+                    reason: errorMessage,
+                    attempts_made: job.attemptsMade + 1,
+                    attempts,
+                  },
+                },
+                logger,
+              );
+            }
+          }
+
+          throw err;
+        }
+      }),
     { connection },
   );
 
   const analyticsWorker = new Worker(
     "analytics",
-    async (job) => {
-      try {
-        if (job.name === "pnl-recompute") {
-          return await handlePnlRecomputeJob(prisma, job as Job<AnalyticsJob>, connection);
-        }
+    async (job) =>
+      await withJobTracing(job, async () => {
+        try {
+          if (job.name === "pnl-recompute") {
+            return await handlePnlRecomputeJob(prisma, job as Job<AnalyticsJob>, connection);
+          }
 
-        if (job.name === "wheel-detect") {
-          return await handleWheelDetectJob(prisma, job as Job<AnalyticsJob>);
-        }
+          if (job.name === "wheel-detect") {
+            return await handleWheelDetectJob(prisma, job as Job<AnalyticsJob>);
+          }
 
-        throw new Error(`Unknown job: ${job.name}`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
+          throw new Error(`Unknown job: ${job.name}`);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
 
-        const attempts = job.opts.attempts ?? 1;
-        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
-        if (isFinalAttempt) {
-          captureException(err, {
-            tags: { component: "worker", queue: "analytics", job: job.name },
-            extras: {
-              jobId: job.id ?? null,
-              attemptsMade: job.attemptsMade,
-              attempts,
-            },
-          });
-
-          await analyticsDlq.add(
-            job.name,
-            { ...(job.data as AnalyticsJob), error: errorMessage },
-            { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
-          );
-        }
-
-        throw err;
-      }
-    },
-    { connection },
-  );
-
-  const newsWorker = new Worker(
-    "news",
-    async (job) => {
-      try {
-        if (job.name === "news-scan") {
-          return await handleNewsScanJob(prisma, connection);
-        }
-
-        throw new Error(`Unknown job: ${job.name}`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-
-        const attempts = job.opts.attempts ?? 1;
-        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
-        if (isFinalAttempt) {
-          captureException(err, {
-            tags: { component: "worker", queue: "news", job: job.name },
-            extras: {
-              jobId: job.id ?? null,
-              attemptsMade: job.attemptsMade,
-              attempts,
-            },
-          });
-
-          await newsDlq.add(
-            job.name,
-            { error: errorMessage },
-            { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
-          );
-        }
-
-        throw err;
-      }
-    },
-    { connection },
-  );
-
-  const alertsWorker = new Worker(
-    "alerts",
-    async (job) => {
-      try {
-        if (job.name === "alerts-evaluate") {
-          return await handleAlertsEvaluateJob(prisma);
-        }
-
-        if (job.name === "alerts-deliver") {
-          return await handleAlertsDeliverJob(prisma);
-        }
-
-        throw new Error(`Unknown job: ${job.name}`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-
-        const attempts = job.opts.attempts ?? 1;
-        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
-        if (isFinalAttempt) {
-          captureException(err, {
-            tags: { component: "worker", queue: "alerts", job: job.name },
-            extras: {
-              jobId: job.id ?? null,
-              attemptsMade: job.attemptsMade,
-              attempts,
-            },
-          });
-
-          await alertsDlq.add(
-            job.name,
-            { error: errorMessage },
-            { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
-          );
-        }
-
-        throw err;
-      }
-    },
-    { connection },
-  );
-
-  const exportsWorker = new Worker(
-    "exports",
-    async (job) => {
-      try {
-        if (job.name === "export-run") {
-          return await handleExportRunJob(prisma, job as Job<ExportsJob>, s3);
-        }
-
-        throw new Error(`Unknown job: ${job.name}`);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        const attempts = job.opts.attempts ?? 1;
-        const isFinalAttempt = job.attemptsMade + 1 >= attempts;
-
-        if (job.name === "export-run") {
-          const exportJobId = (job.data as ExportsJob).exportJobId;
-          await prisma.exportJob
-            .update({
-              where: { id: exportJobId },
-              data: { status: "failed", completedAt: new Date(), error: errorMessage },
-            })
-            .catch(() => {
-              // ignore
-            });
-
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
           if (isFinalAttempt) {
             captureException(err, {
-              tags: { component: "worker", queue: "exports", job: job.name },
+              tags: { component: "worker", queue: "analytics", job: job.name },
               extras: {
                 jobId: job.id ?? null,
-                exportJobId,
                 attemptsMade: job.attemptsMade,
                 attempts,
               },
             });
 
-            await exportsDlq.add(
+            await enqueueWithTrace(
+              analyticsDlq,
               job.name,
-              { ...(job.data as ExportsJob), error: errorMessage },
-              { jobId: `dlq:${job.id ?? exportJobId}` },
+              { ...(job.data as AnalyticsJob), error: errorMessage },
+              { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
             );
           }
-        }
 
-        throw err;
-      }
-    },
+          throw err;
+        }
+      }),
+    { connection },
+  );
+
+  const newsWorker = new Worker(
+    "news",
+    async (job) =>
+      await withJobTracing(job, async () => {
+        try {
+          if (job.name === "news-scan") {
+            return await handleNewsScanJob(prisma, connection);
+          }
+
+          throw new Error(`Unknown job: ${job.name}`);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+          if (isFinalAttempt) {
+            captureException(err, {
+              tags: { component: "worker", queue: "news", job: job.name },
+              extras: {
+                jobId: job.id ?? null,
+                attemptsMade: job.attemptsMade,
+                attempts,
+              },
+            });
+
+            await enqueueWithTrace(
+              newsDlq,
+              job.name,
+              { error: errorMessage },
+              { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
+            );
+          }
+
+          throw err;
+        }
+      }),
+    { connection },
+  );
+
+  const alertsWorker = new Worker(
+    "alerts",
+    async (job) =>
+      await withJobTracing(job, async () => {
+        try {
+          if (job.name === "alerts-evaluate") {
+            return await handleAlertsEvaluateJob(prisma);
+          }
+
+          if (job.name === "alerts-deliver") {
+            return await handleAlertsDeliverJob(prisma);
+          }
+
+          throw new Error(`Unknown job: ${job.name}`);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+          if (isFinalAttempt) {
+            captureException(err, {
+              tags: { component: "worker", queue: "alerts", job: job.name },
+              extras: {
+                jobId: job.id ?? null,
+                attemptsMade: job.attemptsMade,
+                attempts,
+              },
+            });
+
+            await enqueueWithTrace(
+              alertsDlq,
+              job.name,
+              { error: errorMessage },
+              { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
+            );
+          }
+
+          throw err;
+        }
+      }),
+    { connection },
+  );
+
+  const exportsWorker = new Worker(
+    "exports",
+    async (job) =>
+      await withJobTracing(job, async () => {
+        try {
+          if (job.name === "export-run") {
+            return await handleExportRunJob(prisma, job as Job<ExportsJob>, s3);
+          }
+
+          throw new Error(`Unknown job: ${job.name}`);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+
+          if (job.name === "export-run") {
+            const exportJobId = (job.data as ExportsJob).exportJobId;
+            await prisma.exportJob
+              .update({
+                where: { id: exportJobId },
+                data: { status: "failed", completedAt: new Date(), error: errorMessage },
+              })
+              .catch(() => {
+                // ignore
+              });
+
+            if (isFinalAttempt) {
+              captureException(err, {
+                tags: { component: "worker", queue: "exports", job: job.name },
+                extras: {
+                  jobId: job.id ?? null,
+                  exportJobId,
+                  attemptsMade: job.attemptsMade,
+                  attempts,
+                },
+              });
+
+              await enqueueWithTrace(
+                exportsDlq,
+                job.name,
+                { ...(job.data as ExportsJob), error: errorMessage },
+                { jobId: `dlq:${job.id ?? exportJobId}` },
+              );
+            }
+          }
+
+          throw err;
+        }
+      }),
     { connection },
   );
 
@@ -1131,6 +1145,7 @@ async function main() {
     await connection.quit();
     await prisma.$disconnect();
     await closeSentry();
+    await shutdownOtel();
   };
 
   process.on("SIGINT", () => {
