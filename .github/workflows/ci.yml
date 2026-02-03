@@ -35,6 +35,8 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -46,6 +48,10 @@ jobs:
 
       - name: Contract check
         run: npm run api:check
+
+      - name: OpenAPI breaking check (PR)
+        if: github.event_name == 'pull_request'
+        run: npm run api:breaking
 
       - name: Backend lint
         run: npm --workspace apps/backend run lint
