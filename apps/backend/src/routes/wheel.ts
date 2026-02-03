@@ -4,6 +4,7 @@ import { parseLimit } from "../pagination";
 import { convertMinorAmount, createEnvFxRateProvider } from "../analytics/fx";
 import type { Prisma } from "@prisma/client";
 import { enqueueWithTrace } from "../observability/bullmqTracing";
+import { recordAuditEvent } from "../audit";
 
 function normalizeSymbol(value: string): string {
   return value.trim().toUpperCase();
@@ -302,6 +303,14 @@ async function wheelCycleCreateHandler(req: FastifyRequest) {
     payload: { symbol, openedAt: openedAt.toISOString(), baseCurrency, notes, tags },
   });
 
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "wheel.cycle_create",
+    entityType: "wheel_cycle",
+    entityId: cycle.id,
+    payload: { symbol },
+  });
+
   return { ok: true, id: cycle.id };
 }
 
@@ -361,6 +370,14 @@ async function wheelCyclePatchHandler(req: FastifyRequest) {
     },
   });
 
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "wheel.cycle_patch",
+    entityType: "wheel_cycle",
+    entityId: updated.id,
+    payload: { symbol: updated.symbol },
+  });
+
   return { ok: true };
 }
 
@@ -403,6 +420,14 @@ async function wheelCycleCloseHandler(req: FastifyRequest) {
     wheelCycleId: updated.id,
     action: "cycle_close",
     payload: { closedAt: closedAt.toISOString() },
+  });
+
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "wheel.cycle_close",
+    entityType: "wheel_cycle",
+    entityId: updated.id,
+    payload: { symbol: updated.symbol },
   });
 
   return { ok: true };
@@ -467,6 +492,14 @@ async function wheelCyclesMergeHandler(req: FastifyRequest) {
     });
 
     return { intoId: into.id, movedLegs: moved.count };
+  });
+
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "wheel.cycle_merge",
+    entityType: "wheel_cycle",
+    entityId: result.intoId,
+    payload: { fromCycleId },
   });
 
   return { ok: true, intoCycleId: result.intoId, movedLegs: result.movedLegs };
@@ -579,6 +612,14 @@ async function wheelCycleSplitHandler(req: FastifyRequest) {
     });
 
     return { sourceId: source.id, newId: created.id };
+  });
+
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "wheel.cycle_split",
+    entityType: "wheel_cycle",
+    entityId: result.sourceId,
+    payload: { newCycleId: result.newId },
   });
 
   return { ok: true, fromCycleId: result.sourceId, newCycleId: result.newId };

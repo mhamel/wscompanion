@@ -39,6 +39,7 @@ Redaction côté API/worker (suppression des champs dans les logs):
 
 Important: ne jamais logger de payloads SnapTrade “bruts” contenant tokens/secrets.
 Guide classification: `docs/DATA_CLASSIFICATION.md`
+Audit logs: `docs/AUDIT_LOGS.md`
 
 ## Conventions de structure (recommandations)
 

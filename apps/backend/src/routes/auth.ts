@@ -4,6 +4,7 @@ import { AppError } from "../errors";
 import nodemailer from "nodemailer";
 import { deleteExportObject } from "../exports/s3";
 import { enforceRateLimit, getRequestRateLimitStore, hashRateLimitKeyPart } from "../rateLimit";
+import { recordAuditEvent } from "../audit";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -479,6 +480,12 @@ async function authLogoutHandler(req: FastifyRequest) {
     data: { revokedAt: new Date() },
   });
 
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "auth.logout",
+    entityType: "session",
+  });
+
   return { ok: true };
 }
 
@@ -520,6 +527,13 @@ async function meDeleteHandler(req: FastifyRequest) {
     return { ok: true };
   }
 
+  await recordAuditEvent(req, {
+    userId,
+    action: "account.delete_requested",
+    entityType: "user",
+    entityId: userId,
+  });
+
   const s3 = req.server.s3Exports;
   if (s3) {
     const files = await prisma.exportFile.findMany({
@@ -542,6 +556,7 @@ async function meDeleteHandler(req: FastifyRequest) {
   const originalEmail = user.email;
 
   await prisma.$transaction(async (tx) => {
+    await tx.auditEvent.deleteMany({ where: { userId } });
     await tx.wheelAuditEvent.deleteMany({ where: { userId } });
     await tx.wheelLeg.deleteMany({ where: { wheelCycle: { userId } } });
     await tx.wheelCycle.deleteMany({ where: { userId } });

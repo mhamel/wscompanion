@@ -132,6 +132,14 @@ describe("DELETE /v1/me", () => {
         payload: { ok: true },
       },
     });
+    await prisma.auditEvent.create({
+      data: {
+        userId: user.id,
+        action: "test",
+        entityType: "test",
+        payload: { ok: true },
+      },
+    });
 
     const alertRule = await prisma.alertRule.create({
       data: {
@@ -213,6 +221,7 @@ describe("DELETE /v1/me", () => {
       await prisma.wheelLeg.findMany({ where: { wheelCycle: { userId: user.id } } }),
     ).toHaveLength(0);
     expect(await prisma.wheelAuditEvent.findMany({ where: { userId: user.id } })).toHaveLength(0);
+    expect(await prisma.auditEvent.findMany({ where: { userId: user.id } })).toHaveLength(0);
 
     expect(await prisma.alertRule.findMany({ where: { userId: user.id } })).toHaveLength(0);
     expect(

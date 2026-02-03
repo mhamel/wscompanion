@@ -5,6 +5,7 @@ import { getEntitlement, requirePro } from "../entitlements";
 import { EXPORT_FORMATS, EXPORT_TYPES, isExportFormat, isExportType } from "../exports/types";
 import { signExportDownloadUrl } from "../exports/s3";
 import { enqueueWithTrace } from "../observability/bullmqTracing";
+import { recordAuditEvent } from "../audit";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
 
 type ExportJobsCursor = { createdAt: string; id: string };
@@ -182,6 +183,14 @@ async function exportCreateHandler(req: FastifyRequest) {
       statusCode: 500,
     });
   }
+
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "exports.create",
+    entityType: "export_job",
+    entityId: created.id,
+    payload: { type: created.type, format: created.format },
+  });
 
   return { exportJobId: created.id, status: created.status };
 }

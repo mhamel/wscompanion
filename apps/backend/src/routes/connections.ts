@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { encryptStringToBytes } from "../crypto";
 import { AppError } from "../errors";
 import { enqueueWithTrace } from "../observability/bullmqTracing";
+import { recordAuditEvent } from "../audit";
 
 const STATE_TTL_SECONDS = 10 * 60;
 const localStateStore = new Map<string, { userId: string; expiresAt: number }>();
@@ -242,6 +243,14 @@ async function connectionsDisconnectHandler(req: FastifyRequest) {
       scopes: [],
       raw: Prisma.DbNull,
     },
+  });
+
+  await recordAuditEvent(req, {
+    userId: req.user.sub,
+    action: "connections.disconnect",
+    entityType: "broker_connection",
+    entityId: brokerConnection.id,
+    payload: { provider: brokerConnection.provider },
   });
 
   return { ok: true };
