@@ -92,3 +92,7 @@ Règle: OK dans logs/traces (utile pour debug), tant qu’on ne joint pas à de 
 - Est-ce que je loggue du `req.body` ou un `raw` provider? → supprimer/redacter.
 - Est-ce que j’ajoute un nouvel env secret? → s’assurer qu’il n’apparaît pas dans logs/analytics.
 - Est-ce que j’ajoute un nouvel event analytics? → vérifier qu’il ne contient pas de PII/finance brute.
+
+## 6) Threat model
+
+Pour le modèle de menaces (surfaces + mitigations), voir `docs/THREAT_MODEL.md`.
