@@ -19,6 +19,8 @@ Objectif: afficher un avertissement clair et enregistrer l’acceptation utilisa
 - Settings:
   - affiche statut accepté / non accepté
   - bouton “Lire” + “Accepter”
+- Ask (Pro):
+  - si disclaimer requis → bloc UX + acceptation inline + lien vers Paramètres
 
 ## Notes
 

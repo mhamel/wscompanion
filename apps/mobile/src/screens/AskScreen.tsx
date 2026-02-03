@@ -1,8 +1,10 @@
 import React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
+  Alert,
   Linking,
   Pressable,
   ScrollView,
@@ -49,15 +51,53 @@ export function AskScreen({ route }: Props) {
   const entitlementQuery = useBillingEntitlementQuery();
   const isPro = entitlementQuery.data?.plan === "pro";
 
+  const queryClient = useQueryClient();
+
   const [question, setQuestion] = React.useState(route.params?.q ?? "");
   const [symbol, setSymbol] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const [busyDisclaimer, setBusyDisclaimer] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [disclaimerRequired, setDisclaimerRequired] = React.useState(false);
   const [result, setResult] = React.useState<AskResponse | null>(null);
 
+  const disclaimerQuery = useQuery({
+    queryKey: ["disclaimer"],
+    queryFn: () => api.disclaimerGet(),
+  });
+
+  const disclaimer = disclaimerQuery.data;
+  const disclaimerIsAccepted =
+    Boolean(disclaimer?.acceptedAt) && disclaimer?.acceptedVersion === disclaimer?.version;
+  const disclaimerNeedsAcceptance = Boolean(disclaimer) && !disclaimerIsAccepted;
+  const mustAcceptDisclaimer = disclaimerRequired || disclaimerNeedsAcceptance;
+
   function goPaywall() {
     navigation.navigate("Paywall", { source: "ask" });
+  }
+
+  function showDisclaimer() {
+    Alert.alert("Avertissement", disclaimer?.text ?? "...");
+  }
+
+  async function acceptDisclaimer() {
+    setBusyDisclaimer(true);
+    setError(null);
+
+    try {
+      await api.disclaimerAccept();
+      await queryClient.invalidateQueries({ queryKey: ["disclaimer"] });
+      setDisclaimerRequired(false);
+      Alert.alert("OK", "Avertissement enregistré.");
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setError(e.problem?.message ?? e.message);
+      } else {
+        setError("Erreur réseau.");
+      }
+    } finally {
+      setBusyDisclaimer(false);
+    }
   }
 
   React.useEffect(() => {
@@ -84,6 +124,7 @@ export function AskScreen({ route }: Props) {
       }
       if (isDisclaimerRequiredError(e)) {
         setDisclaimerRequired(true);
+        void queryClient.invalidateQueries({ queryKey: ["disclaimer"] });
         return;
       }
       if (e instanceof ApiError) {
@@ -114,16 +155,36 @@ export function AskScreen({ route }: Props) {
         financier.
       </Body>
 
-      {disclaimerRequired ? (
+      {mustAcceptDisclaimer ? (
         <View style={styles.notice}>
           <Text style={styles.noticeText}>
             Pour utiliser Ask, tu dois accepter (ou ré-accepter) l’avertissement
             “pas de conseil financier”.
           </Text>
+          <View style={styles.noticeActions}>
+            <AppButton
+              title="Lire"
+              variant="secondary"
+              disabled={busy || busyDisclaimer || disclaimerQuery.isLoading}
+              onPress={showDisclaimer}
+            />
+            <AppButton
+              title={
+                busyDisclaimer
+                  ? "..."
+                  : disclaimer?.acceptedAt && !disclaimerIsAccepted
+                    ? "Ré-accepter"
+                    : "Accepter"
+              }
+              variant="secondary"
+              disabled={busy || busyDisclaimer || disclaimerQuery.isLoading}
+              onPress={() => void acceptDisclaimer()}
+            />
+          </View>
           <AppButton
             title="Aller aux Paramètres"
             variant="secondary"
-            disabled={busy}
+            disabled={busy || busyDisclaimer}
             onPress={() => navigation.navigate("Settings")}
           />
         </View>
@@ -143,7 +204,7 @@ export function AskScreen({ route }: Props) {
         <AppButton
           title={busy ? "..." : "Demander"}
           onPress={submit}
-          disabled={busy || !question.trim()}
+          disabled={busy || busyDisclaimer || mustAcceptDisclaimer || !question.trim()}
         />
       </View>
 
@@ -207,6 +268,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   noticeText: { color: tokens.colors.text },
+  noticeActions: { gap: 10 },
   result: { paddingBottom: 40, gap: 16, marginTop: 16 },
   answer: { color: tokens.colors.text, fontSize: 16 },
   section: {
