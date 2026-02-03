@@ -181,6 +181,13 @@ export type BillingEntitlement = {
   expiresAt?: string;
 };
 
+export type DisclaimerResponse = {
+  version: string;
+  text: string;
+  acceptedAt?: string;
+  acceptedVersion?: string;
+};
+
 export type AskSection = {
   title: string;
   bullets: string[];
@@ -439,6 +446,12 @@ export type ApiClient = {
     properties?: Record<string, unknown>;
   }): Promise<{ ok: boolean }>;
   ask(input: { question: string; symbol?: string }): Promise<AskResponse>;
+  disclaimerGet(): Promise<DisclaimerResponse>;
+  disclaimerAccept(): Promise<{
+    ok: boolean;
+    acceptedAt?: string;
+    version: string;
+  }>;
   deviceRegister(input: {
     pushToken: string;
     platform: "ios" | "android";
@@ -696,6 +709,26 @@ export function createApiClient(input: {
       return withAuth((accessToken) =>
         client.POST("/v1/ask", {
           body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    disclaimerGet: async (): Promise<DisclaimerResponse> => {
+      return withAuth((accessToken) =>
+        client.GET("/v1/disclaimer", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    disclaimerAccept: async (): Promise<{
+      ok: boolean;
+      acceptedAt?: string;
+      version: string;
+    }> => {
+      return withAuth((accessToken) =>
+        client.POST("/v1/disclaimer/accept", {
           headers: { Authorization: bearer(accessToken) },
         }),
       );

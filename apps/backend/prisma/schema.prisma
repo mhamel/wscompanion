@@ -73,6 +73,8 @@ model UserPreferences {
   userId       String   @id @db.Uuid
   user         User     @relation(fields: [userId], references: [id])
   baseCurrency String   @default("USD")
+  riskDisclaimerAcceptedAt DateTime?
+  riskDisclaimerVersionAccepted String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

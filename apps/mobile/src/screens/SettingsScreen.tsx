@@ -1,17 +1,17 @@
-import React from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Linking, StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { createApiClient } from '../api/client';
-import { ApiError } from '../api/http';
-import { useBillingEntitlementQuery } from '../billing/entitlements';
-import { config } from '../config';
-import { useAuthStore } from '../auth/authStore';
-import { tokens } from '../theme/tokens';
-import { AppButton } from '../ui/AppButton';
-import { Screen } from '../ui/Screen';
-import { TextField } from '../ui/TextField';
-import { Body, Title } from '../ui/Typography';
+import React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, Linking, StyleSheet, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { createApiClient } from "../api/client";
+import { ApiError } from "../api/http";
+import { useBillingEntitlementQuery } from "../billing/entitlements";
+import { config } from "../config";
+import { useAuthStore } from "../auth/authStore";
+import { tokens } from "../theme/tokens";
+import { AppButton } from "../ui/AppButton";
+import { Screen } from "../ui/Screen";
+import { TextField } from "../ui/TextField";
+import { Body, Title } from "../ui/Typography";
 
 function normalizeCurrency(input: string): string {
   return input.trim().toUpperCase();
@@ -19,20 +19,29 @@ function normalizeCurrency(input: string): string {
 
 export function SettingsScreen() {
   const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
+    () =>
+      createApiClient({
+        baseUrl: config.apiBaseUrl,
+        timeoutMs: config.apiTimeoutMs,
+      }),
     [],
   );
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const entitlementQuery = useBillingEntitlementQuery();
 
-  const [baseCurrency, setBaseCurrency] = React.useState('USD');
+  const [baseCurrency, setBaseCurrency] = React.useState("USD");
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const prefsQuery = useQuery({
-    queryKey: ['preferences'],
+    queryKey: ["preferences"],
     queryFn: () => api.preferencesGet(),
+  });
+
+  const disclaimerQuery = useQuery({
+    queryKey: ["disclaimer"],
+    queryFn: () => api.disclaimerGet(),
   });
 
   React.useEffect(() => {
@@ -42,17 +51,17 @@ export function SettingsScreen() {
   }, [prefsQuery.data?.baseCurrency]);
 
   async function savePreferences() {
-    setBusy('prefs');
+    setBusy("prefs");
     setError(null);
     try {
       const next = normalizeCurrency(baseCurrency);
       await api.preferencesPut({ baseCurrency: next });
-      await queryClient.invalidateQueries({ queryKey: ['preferences'] });
+      await queryClient.invalidateQueries({ queryKey: ["preferences"] });
     } catch (e) {
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
       } else {
-        setError('Erreur réseau.');
+        setError("Erreur réseau.");
       }
     } finally {
       setBusy(null);
@@ -60,16 +69,20 @@ export function SettingsScreen() {
   }
 
   async function exportMyData() {
-    setBusy('export');
+    setBusy("export");
     setError(null);
     try {
-      await api.exportsCreate({ type: 'user_data', format: 'json', params: {} });
-      navigation.navigate('Exports');
+      await api.exportsCreate({
+        type: "user_data",
+        format: "json",
+        params: {},
+      });
+      navigation.navigate("Exports");
     } catch (e) {
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
       } else {
-        setError('Erreur réseau.');
+        setError("Erreur réseau.");
       }
     } finally {
       setBusy(null);
@@ -77,7 +90,7 @@ export function SettingsScreen() {
   }
 
   async function deleteAccount() {
-    setBusy('delete');
+    setBusy("delete");
     setError(null);
 
     try {
@@ -88,7 +101,30 @@ export function SettingsScreen() {
       if (e instanceof ApiError) {
         setError(e.problem?.message ?? e.message);
       } else {
-        setError('Erreur réseau.');
+        setError("Erreur réseau.");
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function showDisclaimer() {
+    const text = disclaimerQuery.data?.text ?? "...";
+    Alert.alert("Avertissement", text);
+  }
+
+  async function acceptDisclaimer() {
+    setBusy("disclaimer");
+    setError(null);
+    try {
+      await api.disclaimerAccept();
+      await queryClient.invalidateQueries({ queryKey: ["disclaimer"] });
+      Alert.alert("OK", "Avertissement accepté.");
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setError(e.problem?.message ?? e.message);
+      } else {
+        setError("Erreur réseau.");
       }
     } finally {
       setBusy(null);
@@ -97,11 +133,15 @@ export function SettingsScreen() {
 
   function confirmDelete() {
     Alert.alert(
-      'Supprimer le compte',
-      'Cette action supprime tes données (local + serveur). Tu pourras te reconnecter plus tard, mais ce sera un nouveau compte.',
+      "Supprimer le compte",
+      "Cette action supprime tes données (local + serveur). Tu pourras te reconnecter plus tard, mais ce sera un nouveau compte.",
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => void deleteAccount() },
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: () => void deleteAccount(),
+        },
       ],
     );
   }
@@ -114,18 +154,20 @@ export function SettingsScreen() {
       <View style={styles.card}>
         <Title style={styles.sectionTitle}>Abonnement</Title>
         <Body>
-          Statut:{' '}
-          {entitlementQuery.data?.plan === 'pro'
-            ? 'Pro'
+          Statut:{" "}
+          {entitlementQuery.data?.plan === "pro"
+            ? "Pro"
             : entitlementQuery.data
-              ? 'Gratuit'
-              : '...'}
+              ? "Gratuit"
+              : "..."}
         </Body>
         <AppButton
-          title={entitlementQuery.data?.plan === 'pro' ? 'Gérer Pro' : 'Passer Pro'}
+          title={
+            entitlementQuery.data?.plan === "pro" ? "Gérer Pro" : "Passer Pro"
+          }
           variant="secondary"
           disabled={busy !== null}
-          onPress={() => navigation.navigate('Paywall', { source: 'settings' })}
+          onPress={() => navigation.navigate("Paywall", { source: "settings" })}
         />
       </View>
 
@@ -139,7 +181,7 @@ export function SettingsScreen() {
           autoCapitalize="characters"
         />
         <AppButton
-          title={busy === 'prefs' ? 'Enregistrement…' : 'Enregistrer'}
+          title={busy === "prefs" ? "Enregistrement…" : "Enregistrer"}
           disabled={busy !== null || prefsQuery.isLoading}
           onPress={() => void savePreferences()}
         />
@@ -149,7 +191,9 @@ export function SettingsScreen() {
         <Title style={styles.sectionTitle}>Données</Title>
         <Body>Exporter une copie JSON de tes données.</Body>
         <AppButton
-          title={busy === 'export' ? 'Préparation…' : 'Exporter mes données (JSON)'}
+          title={
+            busy === "export" ? "Préparation…" : "Exporter mes données (JSON)"
+          }
           variant="secondary"
           disabled={busy !== null}
           onPress={() => void exportMyData()}
@@ -158,14 +202,38 @@ export function SettingsScreen() {
 
       <View style={styles.card}>
         <Title style={styles.sectionTitle}>Confidentialité</Title>
+        <Body>
+          Avertissement:{" "}
+          {disclaimerQuery.data?.acceptedAt
+            ? "accepté"
+            : disclaimerQuery.isLoading
+              ? "..."
+              : "non accepté"}
+        </Body>
+        <AppButton
+          title="Lire l’avertissement"
+          variant="secondary"
+          disabled={busy !== null || disclaimerQuery.isLoading}
+          onPress={showDisclaimer}
+        />
+        <AppButton
+          title={busy === "disclaimer" ? "Enregistrement…" : "Accepter"}
+          variant="secondary"
+          disabled={
+            busy !== null ||
+            disclaimerQuery.isLoading ||
+            Boolean(disclaimerQuery.data?.acceptedAt)
+          }
+          onPress={() => void acceptDisclaimer()}
+        />
         <AppButton
           title="Connexions SnapTrade"
           variant="secondary"
           disabled={busy !== null}
-          onPress={() => navigation.navigate('Connections')}
+          onPress={() => navigation.navigate("Connections")}
         />
         <AppButton
-          title={busy === 'delete' ? 'Suppression…' : 'Supprimer mon compte'}
+          title={busy === "delete" ? "Suppression…" : "Supprimer mon compte"}
           disabled={busy !== null}
           onPress={confirmDelete}
         />
@@ -177,7 +245,9 @@ export function SettingsScreen() {
           title="Contacter"
           variant="secondary"
           disabled={busy !== null}
-          onPress={() => void Linking.openURL('mailto:support@justlovethestocks.local')}
+          onPress={() =>
+            void Linking.openURL("mailto:support@justlovethestocks.local")
+          }
         />
       </View>
     </Screen>
