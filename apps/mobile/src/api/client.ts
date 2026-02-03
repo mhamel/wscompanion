@@ -1,9 +1,9 @@
-import createClient from 'openapi-fetch';
-import { useAuthStore, type AuthTokens } from '../auth/authStore';
-import type { paths } from './schema';
-import { ApiError } from './http';
-import type { ProblemDetails } from './types';
-import type { AnalyticsEventName } from '../analytics/analytics';
+import createClient from "openapi-fetch";
+import { useAuthStore, type AuthTokens } from "../auth/authStore";
+import type { paths } from "./schema";
+import { ApiError } from "./http";
+import type { ProblemDetails } from "./types";
+import type { AnalyticsEventName } from "../analytics/analytics";
 
 export type AuthVerifyResponse = AuthTokens & { isNewUser: boolean };
 
@@ -12,13 +12,18 @@ class TimeoutError extends Error {
 
   constructor(timeoutMs: number) {
     super(`Request timed out after ${timeoutMs}ms`);
-    this.name = 'TimeoutError';
+    this.name = "TimeoutError";
     this.timeoutMs = timeoutMs;
   }
 }
 
 function isAbortError(err: unknown): boolean {
-  return Boolean(err && typeof err === 'object' && 'name' in err && (err as any).name === 'AbortError');
+  return Boolean(
+    err &&
+    typeof err === "object" &&
+    "name" in err &&
+    (err as any).name === "AbortError",
+  );
 }
 
 function toApiErrorFromUnknown(err: unknown): ApiError {
@@ -27,8 +32,8 @@ function toApiErrorFromUnknown(err: unknown): ApiError {
   if (err instanceof TimeoutError || isAbortError(err)) {
     return new ApiError({
       status: 0,
-      message: 'La requête a expiré.',
-      problem: { code: 'TIMEOUT', message: 'La requête a expiré. Réessaie.' },
+      message: "La requête a expiré.",
+      problem: { code: "TIMEOUT", message: "La requête a expiré. Réessaie." },
     });
   }
 
@@ -42,25 +47,31 @@ function toApiErrorFromUnknown(err: unknown): ApiError {
   if (looksLikeNetwork) {
     return new ApiError({
       status: 0,
-      message: 'Erreur réseau.',
-      problem: { code: 'NETWORK_ERROR', message: 'Erreur réseau. Vérifie ta connexion.' },
+      message: "Erreur réseau.",
+      problem: {
+        code: "NETWORK_ERROR",
+        message: "Erreur réseau. Vérifie ta connexion.",
+      },
     });
   }
 
   return new ApiError({
     status: 0,
-    message: 'Erreur inattendue.',
+    message: "Erreur inattendue.",
     problem: {
-      code: 'UNKNOWN_ERROR',
-      message: 'Erreur inattendue.',
+      code: "UNKNOWN_ERROR",
+      message: "Erreur inattendue.",
       details:
-        err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : { error: err },
+        err instanceof Error
+          ? { name: err.name, message: err.message, stack: err.stack }
+          : { error: err },
     },
   });
 }
 
 function createTimeoutFetch(timeoutMs: number): typeof fetch {
-  const safeTimeoutMs = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 0;
+  const safeTimeoutMs =
+    Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : 0;
   const baseFetch = globalThis.fetch.bind(globalThis);
 
   return async (request, init) => {
@@ -68,10 +79,13 @@ function createTimeoutFetch(timeoutMs: number): typeof fetch {
 
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     const timeoutPromise = new Promise<Response>((_resolve, reject) => {
-      timeoutHandle = setTimeout(() => reject(new TimeoutError(safeTimeoutMs)), safeTimeoutMs);
+      timeoutHandle = setTimeout(
+        () => reject(new TimeoutError(safeTimeoutMs)),
+        safeTimeoutMs,
+      );
     });
 
-    if (typeof AbortController === 'undefined') {
+    if (typeof AbortController === "undefined") {
       try {
         return await Promise.race([baseFetch(request, init), timeoutPromise]);
       } finally {
@@ -81,8 +95,13 @@ function createTimeoutFetch(timeoutMs: number): typeof fetch {
 
     const controller = new AbortController();
     const initSignal = init?.signal;
-    const anyFn = (AbortSignal as any)?.any as ((signals: AbortSignal[]) => AbortSignal) | undefined;
-    const signal = initSignal && typeof anyFn === 'function' ? anyFn([initSignal, controller.signal]) : controller.signal;
+    const anyFn = (AbortSignal as any)?.any as
+      | ((signals: AbortSignal[]) => AbortSignal)
+      | undefined;
+    const signal =
+      initSignal && typeof anyFn === "function"
+        ? anyFn([initSignal, controller.signal])
+        : controller.signal;
 
     const abortHandle = setTimeout(() => controller.abort(), safeTimeoutMs);
     try {
@@ -158,8 +177,19 @@ export type NewsItem = {
 };
 
 export type BillingEntitlement = {
-  plan: 'free' | 'pro';
+  plan: "free" | "pro";
   expiresAt?: string;
+};
+
+export type AskSection = {
+  title: string;
+  bullets: string[];
+  sources: unknown[];
+};
+
+export type AskResponse = {
+  answer: string;
+  sections: AskSection[];
 };
 
 export type TickerNewsResponse = {
@@ -381,8 +411,8 @@ export type ExportDownloadResponse = {
 };
 
 export type ExportCreateBody = {
-  type: 'pnl_realized_by_ticker' | 'option_premiums_by_year' | 'user_data';
-  format: 'csv' | 'json';
+  type: "pnl_realized_by_ticker" | "option_premiums_by_year" | "user_data";
+  format: "csv" | "json";
   params?: Record<string, unknown>;
 };
 
@@ -393,7 +423,10 @@ export type UserPreferences = {
 export type ApiClient = {
   health(): Promise<{ ok: boolean }>;
   authStart(input: { email: string }): Promise<{ ok: boolean }>;
-  authVerify(input: { email: string; code: string }): Promise<AuthVerifyResponse>;
+  authVerify(input: {
+    email: string;
+    code: string;
+  }): Promise<AuthVerifyResponse>;
   authRefresh(input: { refreshToken: string }): Promise<AuthTokens>;
   authLogout(input: { refreshToken: string }): Promise<{ ok: boolean }>;
   me(): Promise<{ id: string; email: string }>;
@@ -401,12 +434,23 @@ export type ApiClient = {
   preferencesGet(): Promise<UserPreferences>;
   preferencesPut(input: UserPreferences): Promise<UserPreferences>;
   billingEntitlement(): Promise<BillingEntitlement>;
-  analyticsTrack(input: { event: AnalyticsEventName; properties?: Record<string, unknown> }): Promise<{ ok: boolean }>;
-  deviceRegister(input: { pushToken: string; platform: 'ios' | 'android' }): Promise<{ id: string }>;
+  analyticsTrack(input: {
+    event: AnalyticsEventName;
+    properties?: Record<string, unknown>;
+  }): Promise<{ ok: boolean }>;
+  ask(input: { question: string; symbol?: string }): Promise<AskResponse>;
+  deviceRegister(input: {
+    pushToken: string;
+    platform: "ios" | "android";
+  }): Promise<{ id: string }>;
   deviceDelete(input: { id: string }): Promise<{ ok: boolean }>;
   tickers(input?: { limit?: number }): Promise<TickersResponse>;
   tickerSummary(input: { symbol: string }): Promise<TickerSummaryResponse>;
-  tickerNews(input: { symbol: string; cursor?: string; limit?: number }): Promise<TickerNewsResponse>;
+  tickerNews(input: {
+    symbol: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<TickerNewsResponse>;
   tickerTimeline(input: { symbol: string }): Promise<TickerTimelineResponse>;
   transactions(input: {
     accountId?: string;
@@ -418,32 +462,60 @@ export type ApiClient = {
     limit?: number;
   }): Promise<TransactionsResponse>;
   wheelDetect(input?: { symbol?: string }): Promise<WheelDetectResponse>;
-  wheelCycles(input?: { symbol?: string; status?: 'open' | 'closed'; limit?: number }): Promise<WheelCyclesResponse>;
+  wheelCycles(input?: {
+    symbol?: string;
+    status?: "open" | "closed";
+    limit?: number;
+  }): Promise<WheelCyclesResponse>;
   wheelCycle(input: { id: string }): Promise<WheelCycleDetail>;
-  wheelCyclePatch(input: { id: string; notes?: string; tags?: string[] }): Promise<{ ok: boolean }>;
+  wheelCyclePatch(input: {
+    id: string;
+    notes?: string;
+    tags?: string[];
+  }): Promise<{ ok: boolean }>;
   alertTemplates(): Promise<AlertTemplatesResponse>;
   alerts(input?: { limit?: number }): Promise<AlertRulesResponse>;
-  alertEvents(input?: { cursor?: string; limit?: number }): Promise<AlertEventsResponse>;
-  alertCreate(input: { type: string; symbol?: string; config: Record<string, unknown>; enabled?: boolean }): Promise<AlertCreateResponse>;
+  alertEvents(input?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<AlertEventsResponse>;
+  alertCreate(input: {
+    type: string;
+    symbol?: string;
+    config: Record<string, unknown>;
+    enabled?: boolean;
+  }): Promise<AlertCreateResponse>;
   syncStatus(): Promise<SyncStatusResponse>;
-  syncConnection(input: { id: string }): Promise<{ syncRunId: string; status: string }>;
+  syncConnection(input: {
+    id: string;
+  }): Promise<{ syncRunId: string; status: string }>;
   connectionDisconnect(input: { id: string }): Promise<{ ok: boolean }>;
   snaptradeStart(): Promise<SnaptradeStartResponse>;
-  snaptradeCallback(input: SnaptradeCallbackBody): Promise<SnaptradeCallbackResponse>;
-  exportsList(input?: { cursor?: string; limit?: number }): Promise<ExportsListResponse>;
+  snaptradeCallback(
+    input: SnaptradeCallbackBody,
+  ): Promise<SnaptradeCallbackResponse>;
+  exportsList(input?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<ExportsListResponse>;
   exportsCreate(input: ExportCreateBody): Promise<ExportCreateResponse>;
   exportDownload(input: { id: string }): Promise<ExportDownloadResponse>;
   logout(): Promise<void>;
 };
 
-export function createApiClient(input: { baseUrl: string; timeoutMs?: number }): ApiClient {
+export function createApiClient(input: {
+  baseUrl: string;
+  timeoutMs?: number;
+}): ApiClient {
   const client = createClient<paths>({
     baseUrl: input.baseUrl,
     fetch: createTimeoutFetch(input.timeoutMs ?? 15_000),
   });
   let refreshInFlight: Promise<AuthTokens> | null = null;
 
-  async function safeCall<T>(p: Promise<{ data?: T; error?: unknown; response: Response }>) {
+  async function safeCall<T>(
+    p: Promise<{ data?: T; error?: unknown; response: Response }>,
+  ) {
     try {
       return await p;
     } catch (e) {
@@ -452,18 +524,26 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
   }
 
   function toProblemDetails(error: unknown): ProblemDetails | undefined {
-    if (!error || typeof error !== 'object') return undefined;
-    const raw = error as { code?: unknown; message?: unknown; details?: unknown };
-    if (typeof raw.code !== 'string' || typeof raw.message !== 'string') return undefined;
+    if (!error || typeof error !== "object") return undefined;
+    const raw = error as {
+      code?: unknown;
+      message?: unknown;
+      details?: unknown;
+    };
+    if (typeof raw.code !== "string" || typeof raw.message !== "string")
+      return undefined;
     return { code: raw.code, message: raw.message, details: raw.details };
   }
 
-  function unwrap<T>(res: { data?: T; error?: unknown; response: Response }, fallback?: T): T {
+  function unwrap<T>(
+    res: { data?: T; error?: unknown; response: Response },
+    fallback?: T,
+  ): T {
     if (res.error) {
       const problem = toProblemDetails(res.error);
       throw new ApiError({
         status: res.response.status,
-        message: problem?.message ?? 'API error',
+        message: problem?.message ?? "API error",
         problem,
       });
     }
@@ -472,7 +552,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
       if (fallback !== undefined) return fallback;
       throw new ApiError({
         status: res.response.status,
-        message: 'Invalid response from server',
+        message: "Invalid response from server",
       });
     }
 
@@ -488,12 +568,16 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     const { refreshToken, setTokens } = useAuthStore.getState();
     if (!refreshToken) {
-      throw new ApiError({ status: 401, message: 'Not authenticated' });
+      throw new ApiError({ status: 401, message: "Not authenticated" });
     }
 
     refreshInFlight = (async () => {
       try {
-        const tokens = unwrap(await safeCall(client.POST('/v1/auth/refresh', { body: { refreshToken } })));
+        const tokens = unwrap(
+          await safeCall(
+            client.POST("/v1/auth/refresh", { body: { refreshToken } }),
+          ),
+        );
         await setTokens(tokens);
         return tokens;
       } catch (e) {
@@ -508,7 +592,9 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
   }
 
   async function withAuth<T>(
-    makeRequest: (accessToken: string) => Promise<{ data?: T; error?: unknown; response: Response }>,
+    makeRequest: (
+      accessToken: string,
+    ) => Promise<{ data?: T; error?: unknown; response: Response }>,
   ): Promise<T> {
     const { accessToken } = useAuthStore.getState();
 
@@ -529,69 +615,95 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
   return {
     health: async () => {
-      const res = await safeCall(client.GET('/v1/health'));
+      const res = await safeCall(client.GET("/v1/health"));
       return unwrap(res, { ok: false });
     },
 
     authStart: async (body) => {
-      const res = await safeCall(client.POST('/v1/auth/start', { body }));
+      const res = await safeCall(client.POST("/v1/auth/start", { body }));
       return unwrap(res);
     },
 
     authVerify: async (body) => {
-      const res = await safeCall(client.POST('/v1/auth/verify', { body }));
+      const res = await safeCall(client.POST("/v1/auth/verify", { body }));
       return unwrap(res);
     },
 
     authRefresh: async (body) => {
-      const res = await safeCall(client.POST('/v1/auth/refresh', { body }));
+      const res = await safeCall(client.POST("/v1/auth/refresh", { body }));
       return unwrap(res);
     },
 
     authLogout: async (body) => {
-      const res = await safeCall(client.POST('/v1/auth/logout', { body }));
+      const res = await safeCall(client.POST("/v1/auth/logout", { body }));
       return unwrap(res);
     },
 
     me: async () => {
       return withAuth((accessToken) =>
-        client.GET('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+        client.GET("/v1/me", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     meDelete: async () => {
       return withAuth((accessToken) =>
-        client.DELETE('/v1/me', { headers: { Authorization: bearer(accessToken) } }),
+        client.DELETE("/v1/me", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     preferencesGet: async () => {
       return withAuth((accessToken) =>
-        client.GET('/v1/preferences', { headers: { Authorization: bearer(accessToken) } }),
+        client.GET("/v1/preferences", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     preferencesPut: async (body) => {
       return withAuth((accessToken) =>
-        client.PUT('/v1/preferences', { body, headers: { Authorization: bearer(accessToken) } }),
+        client.PUT("/v1/preferences", {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     billingEntitlement: async (): Promise<BillingEntitlement> => {
       return withAuth((accessToken) =>
-        client.GET('/v1/billing/entitlement', { headers: { Authorization: bearer(accessToken) } }),
+        client.GET("/v1/billing/entitlement", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     analyticsTrack: async (body) => {
       return withAuth((accessToken) =>
-        client.POST('/v1/analytics/event', { body, headers: { Authorization: bearer(accessToken) } }),
+        client.POST("/v1/analytics/event", {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
+      );
+    },
+
+    ask: async (body: {
+      question: string;
+      symbol?: string;
+    }): Promise<AskResponse> => {
+      return withAuth((accessToken) =>
+        client.POST("/v1/ask", {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     deviceRegister: async (body) => {
       return withAuth((accessToken) =>
-        client.POST('/v1/devices/register', {
+        client.POST("/v1/devices/register", {
           body,
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -600,7 +712,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     deviceDelete: async (input) => {
       return withAuth((accessToken) =>
-        client.DELETE('/v1/devices/{id}', {
+        client.DELETE("/v1/devices/{id}", {
           params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -611,7 +723,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
       const limit = input?.limit ? String(input.limit) : undefined;
 
       return withAuth((accessToken) =>
-        client.GET('/v1/tickers', {
+        client.GET("/v1/tickers", {
           params: { query: { limit } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -620,7 +732,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     tickerSummary: async (input) => {
       return withAuth((accessToken) =>
-        client.GET('/v1/tickers/{symbol}/summary', {
+        client.GET("/v1/tickers/{symbol}/summary", {
           params: { path: { symbol: input.symbol } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -632,7 +744,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
       const cursor = input.cursor ? input.cursor : undefined;
 
       return withAuth((accessToken) =>
-        client.GET('/v1/tickers/{symbol}/news', {
+        client.GET("/v1/tickers/{symbol}/news", {
           params: { path: { symbol: input.symbol }, query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -641,7 +753,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     tickerTimeline: async (input) => {
       return withAuth((accessToken) =>
-        client.GET('/v1/tickers/{symbol}/timeline', {
+        client.GET("/v1/tickers/{symbol}/timeline", {
           params: { path: { symbol: input.symbol } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -650,7 +762,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     transactions: async (input) => {
       return withAuth((accessToken) =>
-        client.GET('/v1/transactions', {
+        client.GET("/v1/transactions", {
           params: {
             query: {
               accountId: input.accountId,
@@ -670,7 +782,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
     wheelDetect: async (input) => {
       const body = input?.symbol ? { symbol: input.symbol } : undefined;
       return withAuth((accessToken) =>
-        client.POST('/v1/wheel/detect', {
+        client.POST("/v1/wheel/detect", {
           body,
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -680,8 +792,10 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
     wheelCycles: async (input) => {
       const limit = input?.limit ? String(input.limit) : undefined;
       return withAuth((accessToken) =>
-        client.GET('/v1/wheel/cycles', {
-          params: { query: { symbol: input?.symbol, status: input?.status, limit } },
+        client.GET("/v1/wheel/cycles", {
+          params: {
+            query: { symbol: input?.symbol, status: input?.status, limit },
+          },
           headers: { Authorization: bearer(accessToken) },
         }),
       );
@@ -689,7 +803,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     wheelCycle: async (input) => {
       return withAuth((accessToken) =>
-        client.GET('/v1/wheel/cycles/{id}', {
+        client.GET("/v1/wheel/cycles/{id}", {
           params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -698,7 +812,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     wheelCyclePatch: async (input) => {
       return withAuth((accessToken) =>
-        client.PATCH('/v1/wheel/cycles/{id}', {
+        client.PATCH("/v1/wheel/cycles/{id}", {
           params: { path: { id: input.id } },
           body: { notes: input.notes, tags: input.tags },
           headers: { Authorization: bearer(accessToken) },
@@ -708,14 +822,16 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     alertTemplates: async () => {
       return withAuth((accessToken) =>
-        client.GET('/v1/alerts/templates', { headers: { Authorization: bearer(accessToken) } }),
+        client.GET("/v1/alerts/templates", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     alerts: async (input) => {
       const limit = input?.limit ? String(input.limit) : undefined;
       return withAuth((accessToken) =>
-        client.GET('/v1/alerts', {
+        client.GET("/v1/alerts", {
           params: { query: { limit } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -727,7 +843,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
       const cursor = input?.cursor ? input.cursor : undefined;
 
       return withAuth((accessToken) =>
-        client.GET('/v1/alerts/events', {
+        client.GET("/v1/alerts/events", {
           params: { query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -736,19 +852,24 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     alertCreate: async (body) => {
       return withAuth((accessToken) =>
-        client.POST('/v1/alerts', { body, headers: { Authorization: bearer(accessToken) } }),
+        client.POST("/v1/alerts", {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     syncStatus: async () => {
       return withAuth((accessToken) =>
-        client.GET('/v1/sync/status', { headers: { Authorization: bearer(accessToken) } }),
+        client.GET("/v1/sync/status", {
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     syncConnection: async (input) => {
       return withAuth((accessToken) =>
-        client.POST('/v1/connections/{id}/sync', {
+        client.POST("/v1/connections/{id}/sync", {
           params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -757,7 +878,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     connectionDisconnect: async (input) => {
       return withAuth((accessToken) =>
-        client.DELETE('/v1/connections/{id}', {
+        client.DELETE("/v1/connections/{id}", {
           params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -766,7 +887,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     snaptradeStart: async () => {
       return withAuth((accessToken) =>
-        client.POST('/v1/connections/snaptrade/start', {
+        client.POST("/v1/connections/snaptrade/start", {
           headers: { Authorization: bearer(accessToken) },
         }),
       );
@@ -774,7 +895,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     snaptradeCallback: async (body) => {
       return withAuth((accessToken) =>
-        client.POST('/v1/connections/snaptrade/callback', {
+        client.POST("/v1/connections/snaptrade/callback", {
           body,
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -786,7 +907,7 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
       const cursor = input?.cursor ? input.cursor : undefined;
 
       return withAuth((accessToken) =>
-        client.GET('/v1/exports', {
+        client.GET("/v1/exports", {
           params: { query: { limit, cursor } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -795,13 +916,16 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
     exportsCreate: async (body) => {
       return withAuth((accessToken) =>
-        client.POST('/v1/exports', { body, headers: { Authorization: bearer(accessToken) } }),
+        client.POST("/v1/exports", {
+          body,
+          headers: { Authorization: bearer(accessToken) },
+        }),
       );
     },
 
     exportDownload: async (input) => {
       return withAuth((accessToken) =>
-        client.GET('/v1/exports/{id}/download', {
+        client.GET("/v1/exports/{id}/download", {
           params: { path: { id: input.id } },
           headers: { Authorization: bearer(accessToken) },
         }),
@@ -813,7 +937,11 @@ export function createApiClient(input: { baseUrl: string; timeoutMs?: number }):
 
       try {
         if (refreshToken) {
-          await unwrap(await safeCall(client.POST('/v1/auth/logout', { body: { refreshToken } })));
+          await unwrap(
+            await safeCall(
+              client.POST("/v1/auth/logout", { body: { refreshToken } }),
+            ),
+          );
         }
       } finally {
         await setTokens(null);

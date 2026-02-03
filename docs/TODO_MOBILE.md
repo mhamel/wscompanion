@@ -1,4 +1,5 @@
 <a id="todo-mobile-top"></a>
+
 # TODO Frontend Mobile — React Native (Expo) + TypeScript
 
 ## Références
@@ -13,6 +14,7 @@
 - UX cible: **search-first**, “sources partout”, empty states utiles. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="fe-foundations"></a>
+
 ## Foundations (app, navigation, data layer)
 
 - [x] FE-001 — Bootstrap app Expo + TS + React Navigation (tabs + stacks) + structure feature-first. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-stack-mobile).
@@ -21,6 +23,7 @@
 - [x] FE-004 — Design system MVP (tokens couleurs/typo) + dark mode par défaut. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-designsystem).
 
 <a id="fe-auth"></a>
+
 ## Auth + onboarding SnapTrade
 
 - [x] FE-010 — Écrans login/signup OTP + erreurs + rate-limit friendly messaging. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-auth), [PRODUIT.md](../PRODUIT.md#prd-confiance).
@@ -28,18 +31,21 @@
 - [x] FE-012 — Flow “Connecter Wealthsimple (via SnapTrade)” via in-app browser + deep link callback + état “sync en cours”. Réf: [PRODUIT.md](../PRODUIT.md#prd-connexion), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
 
 <a id="fe-home"></a>
+
 ## Home / Dashboard (time-to-wow)
 
 - [x] FE-020 — HomeScreen: top tickers P&L + cartes insights + skeleton loaders. Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-home).
 - [x] FE-021 — Pull-to-refresh + feedback de sync + gestion “zéro data” (CTA connecter/sync). Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="fe-search"></a>
+
 ## Search-first (unifiée)
 
 - [x] FE-030 — SearchBar centrale + suggestions (tickers) + historique local + “Ask” shortcut. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 - [x] FE-031 — Résultats: tickers + questions (si assistant activé) + navigation rapide. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask).
 
 <a id="fe-ticker"></a>
+
 ## Ticker (P&L 360° + sources)
 
 - [x] FE-040 — TickerScreen: summary (P&L total, primes, dividendes, fees) + tabs (Trades/News/Wheel/Insights). Réf: [PRODUIT.md](../PRODUIT.md#prd-pnl360), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-ticker).
@@ -47,18 +53,21 @@
 - [x] FE-042 — TransactionsFilterScreen: filtres (symbol/type/date) + pagination cursor + export/share. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-portfolio).
 
 <a id="fe-wheel"></a>
+
 ## Wheel / Covered Calls
 
 - [x] FE-050 — WheelScreen: liste cycles par ticker (open/closed) + prochaine expiration + net cycle. Réf: [PRODUIT.md](../PRODUIT.md#prd-wheel), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-wheel).
 - [x] FE-051 — WheelCycleDetailScreen: timeline legs + bouton “Corriger” (override) + confirmation. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-wheel).
 
 <a id="fe-news"></a>
+
 ## News
 
 - [x] FE-060 — Onglet News sur Ticker: liste paginée, sources cliquables (web) + états empty/loading. Réf: [PRODUIT.md](../PRODUIT.md#prd-news), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-news).
 - [x] FE-061 — NewsDetail (si nécessaire): contenu, meta, “related tickers”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-news).
 
 <a id="fe-alerts"></a>
+
 ## Alerts
 
 - [x] FE-070 — AlertsScreen: règles + events récents + CTA “Créer une alerte”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-alerts).
@@ -66,24 +75,28 @@
 - [x] FE-072 — Push opt-in flow + settings notifications. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-devices).
 
 <a id="fe-exports"></a>
+
 ## Exports
 
 - [x] FE-080 — ExportsScreen: liste jobs, statut, download/share. Réf: [PRODUIT.md](../PRODUIT.md#prd-exports), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-exports).
 - [x] FE-081 — “Préparer mon année” CTA + sélection période + feedback (job en cours). Réf: [PRODUIT.md](../PRODUIT.md#prd-exports).
 
 <a id="fe-ask"></a>
+
 ## Ask (option premium)
 
-- [ ] FE-090 — AskScreen: champ question + réponses structurées + citations cliquables. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask).
+- [x] FE-090 — AskScreen: champ question + réponses structurées + citations cliquables. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask).
 - [ ] FE-091 — ConversationScreen: historique, états streaming, retry, feedback “utile/pas utile”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-assistant).
 
 <a id="fe-paywall"></a>
+
 ## Paywall / Entitlements
 
 - [x] FE-100 — Intégration RevenueCat SDK + état entitlements + gates UI (teaser). Réf: [PRODUIT.md](../PRODUIT.md#prd-monetisation), [ARCHITECTURE.md](../ARCHITECTURE.md#arch-monetisation).
 - [x] FE-101 — PaywallScreen: bénéfices Pro + previews + parcours upgrade non intrusif. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-mobile-patterns).
 
 <a id="fe-settings"></a>
+
 ## Settings, confiance, privacy
 
 - [x] FE-110 — ConnectionsScreen: statut SnapTrade, “sync now”, disconnect. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-onboarding).
