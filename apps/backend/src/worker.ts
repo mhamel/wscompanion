@@ -21,6 +21,7 @@ import { loadDevSecrets } from "./devSecrets";
 import { getNewsScheduleEverySeconds, loadNewsRssFeeds } from "./news/config";
 import { ingestNewsRssFeed } from "./news/ingest";
 import { sendExpoPushMessages, type ExpoPushMessage } from "./notifications/expoPush";
+import { computeAskRetentionCutoff, getAskRetentionDays } from "./assistant/askRetention";
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? "info",
@@ -53,6 +54,7 @@ type AnalyticsJob = {
 type NewsJob = Record<string, never>;
 type AlertsJob = Record<string, never>;
 type ExportsJob = { exportJobId: string; error?: string };
+type MaintenanceJob = Record<string, never>;
 
 type MockTransaction = {
   externalId: string;
@@ -284,6 +286,25 @@ async function handleSyncScanJob(prisma: PrismaClient, syncQueue: Queue) {
   }
 
   return { ok: true, scanned: connections.length, enqueued };
+}
+
+async function handleAskPruneJob(prisma: PrismaClient) {
+  const retentionDays = getAskRetentionDays(process.env);
+  const cutoff = computeAskRetentionCutoff(new Date(), retentionDays);
+  if (!cutoff) {
+    return { ok: true, skipped: true };
+  }
+
+  const deleted = await prisma.askThread.deleteMany({
+    where: { lastMessageAt: { lt: cutoff } },
+  });
+
+  return {
+    ok: true,
+    retentionDays,
+    cutoff: cutoff.toISOString(),
+    deletedThreads: deleted.count,
+  };
 }
 
 async function handlePnlRecomputeJob(
@@ -835,6 +856,8 @@ async function main() {
   const alertsDlq = new Queue("alerts-dlq", { connection });
   const exportsQueue = new Queue<ExportsJob>("exports", { connection });
   const exportsDlq = new Queue("exports-dlq", { connection });
+  const maintenanceQueue = new Queue<MaintenanceJob>("maintenance", { connection });
+  const maintenanceDlq = new Queue("maintenance-dlq", { connection });
 
   const scheduleEverySeconds = Number(process.env.SYNC_SCHEDULE_EVERY_SECONDS ?? "3600");
   if (Number.isFinite(scheduleEverySeconds) && scheduleEverySeconds > 0) {
@@ -871,6 +894,15 @@ async function main() {
       "alerts-deliver",
       {},
       { repeat: { every: alertsDeliveryEverySeconds * 1000 }, jobId: "alerts-deliver" },
+    );
+  }
+
+  const askPruneEverySeconds = Number(process.env.ASK_PRUNE_SCHEDULE_EVERY_SECONDS ?? "86400");
+  if (Number.isFinite(askPruneEverySeconds) && askPruneEverySeconds > 0) {
+    await maintenanceQueue.add(
+      "ask-prune",
+      {},
+      { repeat: { every: askPruneEverySeconds * 1000 }, jobId: "ask-prune" },
     );
   }
 
@@ -1128,7 +1160,47 @@ async function main() {
     { connection },
   );
 
+  const maintenanceWorker = new Worker(
+    "maintenance",
+    async (job) =>
+      await withJobTracing(job, async () => {
+        try {
+          if (job.name === "ask-prune") {
+            return await handleAskPruneJob(prisma);
+          }
+
+          throw new Error(`Unknown job: ${job.name}`);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+
+          const attempts = job.opts.attempts ?? 1;
+          const isFinalAttempt = job.attemptsMade + 1 >= attempts;
+          if (isFinalAttempt) {
+            captureException(err, {
+              tags: { component: "worker", queue: "maintenance", job: job.name },
+              extras: {
+                jobId: job.id ?? null,
+                attemptsMade: job.attemptsMade,
+                attempts,
+              },
+            });
+
+            await enqueueWithTrace(
+              maintenanceDlq,
+              job.name,
+              { error: errorMessage },
+              { jobId: `dlq:${job.id ?? job.name}:${Date.now()}` },
+            );
+          }
+
+          throw err;
+        }
+      }),
+    { connection },
+  );
+
   const shutdown = async () => {
+    await maintenanceWorker.close();
     await exportsWorker.close();
     await alertsWorker.close();
     await newsWorker.close();
@@ -1144,6 +1216,8 @@ async function main() {
     await alertsDlq.close();
     await exportsQueue.close();
     await exportsDlq.close();
+    await maintenanceQueue.close();
+    await maintenanceDlq.close();
     await connection.quit();
     await prisma.$disconnect();
     await closeSentry();

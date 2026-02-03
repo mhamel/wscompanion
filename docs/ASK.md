@@ -37,6 +37,10 @@ Quota/rate limit:
 - env `ASK_RATE_WINDOW_SECONDS` + `ASK_RATE_MAX`
 - erreur `429` avec `code: "ASK_RATE_LIMITED"`
 
+Rétention:
+- env `ASK_RETENTION_DAYS` (défaut 180, `0` = désactiver)
+- worker: job `ask-prune` (queue `maintenance`) via `ASK_PRUNE_SCHEDULE_EVERY_SECONDS` (défaut daily)
+
 ## Mobile
 
 - Ask consomme `POST /v1/ask` (et ré-utilise `threadId` pour poursuivre la conversation).
