@@ -2,10 +2,10 @@ import React from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { createApiClient, type AlertEvent, type AlertRule } from '../api/client';
+import { type AlertEvent, type AlertRule } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
-import { config } from '../config';
 import { useNotificationsStore } from '../notifications/notificationsStore';
 import {
   getExpoPushToken,
@@ -19,10 +19,7 @@ import { Screen } from '../ui/Screen';
 import { Body, Title } from '../ui/Typography';
 
 export function AlertsScreen() {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const navigation = useNavigation<any>();
   const entitlementQuery = useBillingEntitlementQuery();
   const isPro = entitlementQuery.data?.plan === 'pro';

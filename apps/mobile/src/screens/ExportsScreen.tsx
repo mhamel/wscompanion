@@ -2,11 +2,11 @@ import React from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Share, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { createApiClient, type ExportJob } from '../api/client';
+import { type ExportJob } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { isPaywallError } from '../billing/paywall';
-import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -52,10 +52,7 @@ function ExportRow(props: { job: ExportJob; onShare: () => void; sharing: boolea
 }
 
 export function ExportsScreen() {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const navigation = useNavigation<any>();
   const entitlementQuery = useBillingEntitlementQuery();
   const isPro = entitlementQuery.data?.plan === 'pro';

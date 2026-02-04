@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { createApiClient } from '../api/client';
+import { getEffectiveApiBaseUrl } from '../api/apiHooks';
 import { config } from '../config';
 
 export const ANALYTICS_EVENT_NAMES = [
@@ -36,7 +37,7 @@ let connectCompletedAtCache: number | null = null;
 
 function getApi() {
   if (!apiClient) {
-    apiClient = createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs });
+    apiClient = createApiClient({ baseUrl: getEffectiveApiBaseUrl(), timeoutMs: config.apiTimeoutMs });
   }
   return apiClient;
 }

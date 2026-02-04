@@ -12,11 +12,11 @@ import {
   Text,
   View,
 } from "react-native";
-import { createApiClient, type AskResponse } from "../api/client";
+import { type AskResponse } from "../api/client";
+import { useApiClient } from "../api/apiHooks";
 import { ApiError } from "../api/http";
 import { useBillingEntitlementQuery } from "../billing/entitlements";
 import { isPaywallError } from "../billing/paywall";
-import { config } from "../config";
 import { isDisclaimerRequiredError } from "../disclaimer/disclaimer";
 import type { MainTabParamList } from "../navigation/MainTabs";
 import type { MainStackParamList } from "../navigation/MainStack";
@@ -75,14 +75,7 @@ function isStoredAskResponseData(value: unknown): value is StoredAskResponseData
 }
 
 export function AskScreen({ route }: Props) {
-  const api = React.useMemo(
-    () =>
-      createApiClient({
-        baseUrl: config.apiBaseUrl,
-        timeoutMs: config.apiTimeoutMs,
-      }),
-    [],
-  );
+  const api = useApiClient();
 
   const navigation =
     useNavigation<NativeStackNavigationProp<MainStackParamList>>();

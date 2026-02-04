@@ -1,12 +1,11 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createApiClient } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { trackEvent } from '../analytics/analytics';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { isRevenueCatAvailable, purchasePro, restoreRevenueCatPurchases } from '../billing/revenuecat';
-import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -23,10 +22,7 @@ function formatPlanLabel(plan: 'free' | 'pro' | undefined): string {
 }
 
 export function PaywallScreen({ route }: Props) {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const queryClient = useQueryClient();
   const source = route.params?.source ?? 'unknown';
 

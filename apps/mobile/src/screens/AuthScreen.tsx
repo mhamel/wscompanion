@@ -1,10 +1,9 @@
 import React from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { ApiError } from '../api/http';
-import { createApiClient } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { useAuthStore } from '../auth/authStore';
 import { trackEvent } from '../analytics/analytics';
-import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -34,10 +33,7 @@ function formatAuthError(error: unknown): string {
 
 export function AuthScreen() {
   const setTokens = useAuthStore((s) => s.setTokens);
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
 
   const [step, setStep] = React.useState<Step>('email');
   const [email, setEmail] = React.useState('');

@@ -2,11 +2,12 @@ import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Linking, StyleSheet, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { createApiClient } from "../api/client";
+import { useApiBaseUrl, useApiClient } from "../api/apiHooks";
 import { ApiError } from "../api/http";
 import { useBillingEntitlementQuery } from "../billing/entitlements";
 import { config } from "../config";
 import { useAuthStore } from "../auth/authStore";
+import { useDevSettingsStore } from "../dev/devSettingsStore";
 import { tokens } from "../theme/tokens";
 import { AppButton } from "../ui/AppButton";
 import { Screen } from "../ui/Screen";
@@ -18,14 +19,8 @@ function normalizeCurrency(input: string): string {
 }
 
 export function SettingsScreen() {
-  const api = React.useMemo(
-    () =>
-      createApiClient({
-        baseUrl: config.apiBaseUrl,
-        timeoutMs: config.apiTimeoutMs,
-      }),
-    [],
-  );
+  const api = useApiClient();
+  const apiBaseUrl = useApiBaseUrl();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const entitlementQuery = useBillingEntitlementQuery();
@@ -33,6 +28,14 @@ export function SettingsScreen() {
   const [baseCurrency, setBaseCurrency] = React.useState("USD");
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [apiBaseUrlInput, setApiBaseUrlInput] = React.useState("");
+
+  const apiBaseUrlOverride = useDevSettingsStore((s) => s.apiBaseUrlOverride);
+  const setApiBaseUrlOverride = useDevSettingsStore((s) => s.setApiBaseUrlOverride);
+
+  React.useEffect(() => {
+    setApiBaseUrlInput(apiBaseUrlOverride ?? "");
+  }, [apiBaseUrlOverride]);
 
   const prefsQuery = useQuery({
     queryKey: ["preferences"],
@@ -269,8 +272,59 @@ export function SettingsScreen() {
       {__DEV__ ? (
         <View style={styles.card}>
           <Title style={styles.sectionTitle}>Dev</Title>
-          <Body>API: {config.apiBaseUrl}</Body>
+          <Body>API: {apiBaseUrl}</Body>
           <Body>Env: {config.appEnv}</Body>
+          <TextField
+            placeholder="Override API baseUrl (ex: http://10.0.2.2:3000)"
+            value={apiBaseUrlInput}
+            onChangeText={setApiBaseUrlInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <View style={styles.row}>
+            <View style={styles.rowItem}>
+              <AppButton
+                title={busy === "api_apply" ? "…" : "Appliquer"}
+                variant="secondary"
+                disabled={busy !== null}
+                onPress={() => {
+                  setBusy("api_apply");
+                  setError(null);
+                  void (async () => {
+                    try {
+                      await setApiBaseUrlOverride(apiBaseUrlInput);
+                      await queryClient.clear();
+                      Alert.alert("OK", "API baseUrl mis à jour.");
+                    } catch {
+                      setError("Impossible d’enregistrer ce baseUrl.");
+                    } finally {
+                      setBusy(null);
+                    }
+                  })();
+                }}
+              />
+            </View>
+            <View style={styles.rowItem}>
+              <AppButton
+                title={busy === "api_reset" ? "…" : "Reset"}
+                variant="secondary"
+                disabled={busy !== null}
+                onPress={() => {
+                  setBusy("api_reset");
+                  setError(null);
+                  void (async () => {
+                    try {
+                      await setApiBaseUrlOverride(null);
+                      await queryClient.clear();
+                      Alert.alert("OK", "API baseUrl reset.");
+                    } finally {
+                      setBusy(null);
+                    }
+                  })();
+                }}
+              />
+            </View>
+          </View>
           <AppButton
             title={busy === "api_test" ? "Test…" : "Tester /health"}
             variant="secondary"
@@ -281,7 +335,7 @@ export function SettingsScreen() {
 
               void (async () => {
                 try {
-                  const res = await fetch(`${config.apiBaseUrl}/health`);
+                  const res = await fetch(`${apiBaseUrl}/health`);
                   const text = await res.text();
                   Alert.alert(
                     "API",
@@ -301,7 +355,7 @@ export function SettingsScreen() {
             title="Ouvrir /health"
             variant="secondary"
             disabled={busy !== null}
-            onPress={() => void Linking.openURL(`${config.apiBaseUrl}/health`)}
+            onPress={() => void Linking.openURL(`${apiBaseUrl}/health`)}
           />
         </View>
       ) : null}
@@ -322,4 +376,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
   },
+  row: { flexDirection: "row", gap: 10 },
+  rowItem: { flex: 1 },
 });

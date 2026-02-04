@@ -1,12 +1,12 @@
 import React from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { createApiClient, type Money, type NewsItem, type TickerSummaryResponse } from '../api/client';
+import { type Money, type NewsItem, type TickerSummaryResponse } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { trackWowFirstPnlViewedOnce } from '../analytics/analytics';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { isPaywallError } from '../billing/paywall';
-import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -114,10 +114,7 @@ function NewsRow(props: { item: NewsItem; onPress: () => void }) {
 }
 
 export function TickerScreen({ route, navigation }: Props) {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const symbol = route.params.symbol;
   const [tab, setTab] = React.useState<Tab>(route.params.tab ?? 'Trades');
   const [wheelStatus, setWheelStatus] = React.useState<'open' | 'closed'>('open');

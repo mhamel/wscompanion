@@ -1,9 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { createApiClient, type Money, type WheelCycleDetail, type WheelLeg } from '../api/client';
+import { type Money, type WheelCycleDetail, type WheelLeg } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
-import { config } from '../config';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -111,10 +111,7 @@ function CycleHeader(props: { cycle: WheelCycleDetail }) {
 }
 
 export function WheelCycleDetailScreen({ route }: Props) {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const id = route.params.id;
 
   const [editing, setEditing] = React.useState(false);

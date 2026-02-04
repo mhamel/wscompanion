@@ -3,10 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, StyleSheet, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { createApiClient, type SnaptradeCallbackBody, type SyncStatusItem } from '../api/client';
+import { type SnaptradeCallbackBody, type SyncStatusItem } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { markConnectCompletedNow, trackEvent } from '../analytics/analytics';
-import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -80,10 +80,7 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 }
 
 export function ConnectionsScreen() {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 

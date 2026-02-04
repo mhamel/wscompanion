@@ -2,9 +2,9 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';
-import { createApiClient, type SyncStatusItem } from '../api/client';
+import { type SyncStatusItem } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
-import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
 import { Screen } from '../ui/Screen';
@@ -24,10 +24,7 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 }
 
 export function PortfolioScreen() {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const navigation = useNavigation<any>();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

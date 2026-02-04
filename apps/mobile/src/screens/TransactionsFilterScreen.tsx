@@ -1,9 +1,9 @@
 import React from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import { createApiClient, type Money, type TransactionItem } from '../api/client';
+import { type Money, type TransactionItem } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
-import { config } from '../config';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -70,10 +70,7 @@ function TxRow(props: { tx: TransactionItem }) {
 }
 
 export function TransactionsFilterScreen({ route }: Props) {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
 
   const initialSymbol = route.params.symbol ?? '';
   const initialType = route.params.type ?? '';

@@ -1,6 +1,7 @@
 import React, { type PropsWithChildren } from 'react';
 import { Platform, SafeAreaView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { config } from '../config';
+import { useApiBaseUrl } from '../api/apiHooks';
 import { useIsOffline } from '../network/useIsOffline';
 import { tokens } from '../theme/tokens';
 import { Body } from './Typography';
@@ -22,13 +23,14 @@ function isLocalhostUrl(url: string): boolean {
 
 export function Screen(props: ScreenProps) {
   const isOffline = useIsOffline();
+  const apiBaseUrl = useApiBaseUrl();
   const showApiBaseUrlWarning =
-    __DEV__ && Platform.OS !== 'web' && isLocalhostUrl(config.apiBaseUrl);
+    __DEV__ && Platform.OS !== 'web' && isLocalhostUrl(apiBaseUrl);
 
   const apiBaseUrlWarningText =
     Platform.OS === 'android'
-      ? `API: ${config.apiBaseUrl} — sur Android emulator, utilise http://10.0.2.2:3000 (et sur device: IP LAN de ton PC).`
-      : `API: ${config.apiBaseUrl} — sur device, utilise l’IP LAN de ton PC (pas localhost).`;
+      ? `API: ${apiBaseUrl} — sur Android emulator, utilise http://10.0.2.2:3000 (et sur device: IP LAN de ton PC).`
+      : `API: ${apiBaseUrl} — sur device, utilise l’IP LAN de ton PC (pas localhost).`;
 
   return (
     <SafeAreaView style={styles.safeArea}>

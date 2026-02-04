@@ -2,11 +2,11 @@ import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { createApiClient, type AlertTemplate } from '../api/client';
+import { type AlertTemplate } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
 import { isPaywallError } from '../billing/paywall';
-import { config } from '../config';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -27,10 +27,7 @@ function TemplateCard(props: { template: AlertTemplate; onPress: () => void }) {
 }
 
 export function CreateAlertScreen({ navigation }: Props) {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const queryClient = useQueryClient();
   const entitlementQuery = useBillingEntitlementQuery();
   const isPro = entitlementQuery.data?.plan === 'pro';

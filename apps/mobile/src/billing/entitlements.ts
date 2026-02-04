@@ -1,14 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { createApiClient } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { useAuthStore } from '../auth/authStore';
-import { config } from '../config';
 
 export function useBillingEntitlementQuery() {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const isAuthed = useAuthStore((s) => Boolean(s.accessToken));
 
   return useQuery({
@@ -23,4 +19,3 @@ export function useIsPro(): boolean {
   const entitlementQuery = useBillingEntitlementQuery();
   return entitlementQuery.data?.plan === 'pro';
 }
-

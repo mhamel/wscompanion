@@ -11,10 +11,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { createApiClient, type SyncStatusItem } from '../api/client';
+import { type SyncStatusItem } from '../api/client';
+import { useApiClient } from '../api/apiHooks';
 import { ApiError } from '../api/http';
 import { trackWowFirstPnlViewedOnce } from '../analytics/analytics';
-import { config } from '../config';
 import type { MainTabParamList } from '../navigation/MainTabs';
 import { loadSearchHistory, pushSearchHistory, saveSearchHistory } from '../search/history';
 import { tokens } from '../theme/tokens';
@@ -61,10 +61,7 @@ function formatSyncLabel(item: SyncStatusItem | undefined): string {
 }
 
 export function HomeScreen() {
-  const api = React.useMemo(
-    () => createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs: config.apiTimeoutMs }),
-    [],
-  );
+  const api = useApiClient();
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const [syncBusy, setSyncBusy] = React.useState(false);
   const [syncError, setSyncError] = React.useState<string | null>(null);
