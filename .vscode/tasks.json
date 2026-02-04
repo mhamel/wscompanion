@@ -128,6 +128,35 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Prisma generate",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/backend", "run", "db:generate"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: DB migrate (dev)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/backend", "run", "db:migrate"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Setup DB (generate + migrate)",
+      "dependsOn": ["Backend: Prisma generate", "Backend: DB migrate (dev)"],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Backend: Worker (dev)",
       "type": "shell",
       "command": "npm",
@@ -144,6 +173,18 @@
       "type": "shell",
       "command": "npm",
       "args": ["run", "api:generate"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Check OpenAPI is up-to-date",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "api:check"],
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",

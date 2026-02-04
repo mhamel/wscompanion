@@ -20,8 +20,11 @@ L’app mobile consomme l’API Fastify.
 
 2) Configurer l’API:
 - Copier `apps/backend/.env.example` -> `apps/backend/.env`
-- `npm --workspace apps/backend run db:generate`
-- `npm --workspace apps/backend run db:migrate`
+- `npm --workspace apps/backend run db:generate` (ou task `Backend: Prisma generate`)
+- `npm --workspace apps/backend run db:migrate` (ou task `Backend: DB migrate (dev)`)
+
+Raccourci (VS Code):
+- task `Backend: Setup DB (generate + migrate)`
 
 3) Lancer l’API:
 - `npm --workspace apps/backend run dev`
