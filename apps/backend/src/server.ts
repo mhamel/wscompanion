@@ -364,6 +364,52 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     return { ok: true };
   });
 
+  // Readiness endpoint (infra)
+  app.get("/ready", async (_req, reply) => {
+    const prisma = app.prisma;
+    const redis = app.redis;
+
+    const checks: {
+      database: { ok: boolean; error?: string };
+      redis: { ok: boolean; error?: string };
+    } = {
+      database: { ok: false },
+      redis: { ok: false },
+    };
+
+    if (!prisma) {
+      checks.database = { ok: false, error: "not_configured" };
+    } else {
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+        checks.database = { ok: true };
+      } catch (e) {
+        checks.database = {
+          ok: false,
+          error: e instanceof Error ? e.message : "database_unreachable",
+        };
+      }
+    }
+
+    if (!redis) {
+      checks.redis = { ok: false, error: "not_configured" };
+    } else {
+      try {
+        const pong = await redis.ping();
+        checks.redis = { ok: pong === "PONG" };
+      } catch (e) {
+        checks.redis = {
+          ok: false,
+          error: e instanceof Error ? e.message : "redis_unreachable",
+        };
+      }
+    }
+
+    const ok = checks.database.ok && checks.redis.ok;
+    if (!ok) return reply.status(503).send({ ok: false, checks });
+    return { ok: true };
+  });
+
   // Versioned API routes
   app.register(
     async (v1) => {
@@ -385,6 +431,102 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
           },
         },
         async () => {
+          return { ok: true };
+        },
+      );
+
+      v1.get(
+        "/ready",
+        {
+          schema: {
+            response: {
+              200: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  ok: { type: "boolean" },
+                },
+                required: ["ok"],
+              },
+              503: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  ok: { type: "boolean" },
+                  checks: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      database: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          ok: { type: "boolean" },
+                          error: { type: "string" },
+                        },
+                        required: ["ok"],
+                      },
+                      redis: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          ok: { type: "boolean" },
+                          error: { type: "string" },
+                        },
+                        required: ["ok"],
+                      },
+                    },
+                    required: ["database", "redis"],
+                  },
+                },
+                required: ["ok", "checks"],
+              },
+              default: { $ref: "ProblemDetails#" },
+            },
+          },
+        },
+        async (_req, reply) => {
+          const prisma = v1.prisma;
+          const redis = v1.redis;
+
+          const checks: {
+            database: { ok: boolean; error?: string };
+            redis: { ok: boolean; error?: string };
+          } = {
+            database: { ok: false },
+            redis: { ok: false },
+          };
+
+          if (!prisma) {
+            checks.database = { ok: false, error: "not_configured" };
+          } else {
+            try {
+              await prisma.$queryRaw`SELECT 1`;
+              checks.database = { ok: true };
+            } catch (e) {
+              checks.database = {
+                ok: false,
+                error: e instanceof Error ? e.message : "database_unreachable",
+              };
+            }
+          }
+
+          if (!redis) {
+            checks.redis = { ok: false, error: "not_configured" };
+          } else {
+            try {
+              const pong = await redis.ping();
+              checks.redis = { ok: pong === "PONG" };
+            } catch (e) {
+              checks.redis = {
+                ok: false,
+                error: e instanceof Error ? e.message : "redis_unreachable",
+              };
+            }
+          }
+
+          const ok = checks.database.ok && checks.redis.ok;
+          if (!ok) return reply.status(503).send({ ok: false, checks });
           return { ok: true };
         },
       );

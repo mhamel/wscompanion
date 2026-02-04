@@ -65,6 +65,10 @@ Raccourcis:
 
 ## 6) Commandes utiles
 
+- Health endpoints:
+  - Liveness: `GET /health` (infra) ou `GET /v1/health` (API)
+  - Readiness: `GET /ready` (infra) ou `GET /v1/ready` (API) — retourne `503` si DB/Redis non prêts
+
 - Export OpenAPI: `npm --workspace apps/backend run openapi:export`
 - Regénérer le client mobile (OpenAPI): `npm run api:generate`
 - Vérifier que l’OpenAPI est à jour: `npm run api:check`
@@ -90,4 +94,3 @@ Raccourcis:
   - Android emulator: `http://10.0.2.2:3000`
   - iPhone/device: IP LAN de ton PC (même Wi‑Fi)
   - Dans l’app (dev): `Paramètres` -> `Dev` -> `Override API baseUrl`
-

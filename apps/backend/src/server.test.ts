@@ -45,6 +45,27 @@ describe("health", () => {
   }, 15_000);
 });
 
+describe("ready", () => {
+  it("returns 503 with checks when dependencies are not configured", async () => {
+    const app = buildServer({ logger: false });
+    await app.ready();
+    try {
+      const res = await app.inject({ method: "GET", url: "/v1/ready" });
+      expect(res.statusCode).toBe(503);
+      expect(res.headers["x-request-id"]).toBeTruthy();
+      expect(res.json()).toEqual({
+        ok: false,
+        checks: {
+          database: { ok: false, error: "not_configured" },
+          redis: { ok: false, error: "not_configured" },
+        },
+      });
+    } finally {
+      await app.close();
+    }
+  }, 15_000);
+});
+
 describe("trustProxy", () => {
   it("uses x-forwarded-for for req.ip when TRUST_PROXY=true", async () => {
     const previous = process.env.TRUST_PROXY;
