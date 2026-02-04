@@ -1,5 +1,4 @@
 param(
-  [Parameter(Mandatory = $true)]
   [string]$AvdName
 )
 
@@ -28,10 +27,16 @@ if (-not $avds -or $avds.Count -eq 0) {
   throw "No AVDs found. Create one in Android Studio (Device Manager) first."
 }
 
-if ($avds -notcontains $AvdName) {
-  Write-Host "AVD '$AvdName' not found. Available AVDs:" -ForegroundColor Yellow
-  $avds | ForEach-Object { Write-Host "  - $_" }
-  exit 1
+if (-not $AvdName -or -not $AvdName.Trim()) {
+  $AvdName = $avds[0]
+  Write-Host "No AVD provided. Using first available AVD: $AvdName" -ForegroundColor Yellow
+} else {
+  $AvdName = $AvdName.Trim()
+  if ($avds -notcontains $AvdName) {
+    Write-Host "AVD '$AvdName' not found. Available AVDs:" -ForegroundColor Yellow
+    $avds | ForEach-Object { Write-Host "  - $_" }
+    exit 1
+  }
 }
 
 Write-Host "Starting emulator: $AvdName"
@@ -45,4 +50,3 @@ $proc = Start-Process -FilePath $emulatorExe -ArgumentList @(
 ) -PassThru
 
 Write-Host "Emulator process started (PID $($proc.Id))."
-

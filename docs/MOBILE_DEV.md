@@ -60,7 +60,9 @@ Avec un emulateur Android operationnel (Android Studio):
 - (debug) `Mobile: Android (Expo, Clear Cache)`
 - (optionnel) `Android: List AVDs` (voir les emulateurs dispo)
 - (optionnel) `Android: Start Emulator (prompt AVD)` (demarre un emulateur)
+- (optionnel) `Android: Start Emulator (first AVD)` (demarre le premier AVD trouvé, sans prompt)
 - (optionnel) `Mobile: Android (Start Emulator + Expo)` (demarre l’emulateur + lance Expo Android)
+- (optionnel) `Mobile: Android (Start First Emulator + Expo)` (idem, sans prompt)
 - ou CLI: `npm --workspace apps/mobile run android`
 
 Note importante (Android emulator):

@@ -80,8 +80,25 @@
       "problemMatcher": []
     },
     {
+      "label": "Android: Start Emulator (first AVD)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/android/start-emulator.ps1"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: Android (Start Emulator + Expo)",
       "dependsOn": ["Android: Start Emulator (prompt AVD)", "Mobile: Android (Expo)"],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Mobile: Android (Start First Emulator + Expo)",
+      "dependsOn": ["Android: Start Emulator (first AVD)", "Mobile: Android (Expo)"],
       "dependsOrder": "sequence"
     },
     {
