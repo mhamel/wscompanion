@@ -43,6 +43,17 @@ export function SettingsScreen() {
     setApiBaseUrlInput(apiBaseUrlOverride ?? "");
   }, [apiBaseUrlOverride]);
 
+  async function applyApiBaseUrlOverride(next: string | null) {
+    try {
+      await setApiBaseUrlOverride(next);
+      await queryClient.clear();
+      setApiBaseUrlInput(next ?? "");
+      Alert.alert("OK", next ? `API baseUrl mis à jour.\n\n${next}` : "API baseUrl reset.");
+    } catch {
+      setError("Impossible d’enregistrer ce baseUrl.");
+    }
+  }
+
   const prefsQuery = useQuery({
     queryKey: ["preferences"],
     queryFn: () => api.preferencesGet(),
@@ -290,6 +301,44 @@ export function SettingsScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <AppButton
+                title={busy === "api_preset_android" ? "…" : "Preset Android (10.0.2.2)"}
+                variant="secondary"
+                disabled={busy !== null}
+                onPress={() => {
+                  setBusy("api_preset_android");
+                  setError(null);
+                  void (async () => {
+                    try {
+                      await applyApiBaseUrlOverride("http://10.0.2.2:3000");
+                    } finally {
+                      setBusy(null);
+                    }
+                  })();
+                }}
+              />
+            </View>
+            <View style={styles.rowItem}>
+              <AppButton
+                title={busy === "api_preset_localhost" ? "…" : "Preset localhost"}
+                variant="secondary"
+                disabled={busy !== null}
+                onPress={() => {
+                  setBusy("api_preset_localhost");
+                  setError(null);
+                  void (async () => {
+                    try {
+                      await applyApiBaseUrlOverride("http://localhost:3000");
+                    } finally {
+                      setBusy(null);
+                    }
+                  })();
+                }}
+              />
+            </View>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.rowItem}>
+              <AppButton
                 title={busy === "api_apply" ? "…" : "Appliquer"}
                 variant="secondary"
                 disabled={busy !== null}
@@ -298,11 +347,9 @@ export function SettingsScreen() {
                   setError(null);
                   void (async () => {
                     try {
-                      await setApiBaseUrlOverride(apiBaseUrlInput);
-                      await queryClient.clear();
-                      Alert.alert("OK", "API baseUrl mis à jour.");
+                      await applyApiBaseUrlOverride(apiBaseUrlInput);
                     } catch {
-                      setError("Impossible d’enregistrer ce baseUrl.");
+                      // handled by helper
                     } finally {
                       setBusy(null);
                     }
@@ -320,9 +367,7 @@ export function SettingsScreen() {
                   setError(null);
                   void (async () => {
                     try {
-                      await setApiBaseUrlOverride(null);
-                      await queryClient.clear();
-                      Alert.alert("OK", "API baseUrl reset.");
+                      await applyApiBaseUrlOverride(null);
                     } finally {
                       setBusy(null);
                     }
