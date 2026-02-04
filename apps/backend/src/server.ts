@@ -531,6 +531,36 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
         },
       );
 
+      v1.get(
+        "/version",
+        {
+          schema: {
+            response: {
+              200: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  ok: { type: "boolean" },
+                  nodeEnv: { type: "string" },
+                  gitSha: { type: "string" },
+                  release: { type: "string" },
+                },
+                required: ["ok", "nodeEnv"],
+              },
+              default: { $ref: "ProblemDetails#" },
+            },
+          },
+        },
+        async () => {
+          return {
+            ok: true,
+            nodeEnv: process.env.NODE_ENV ?? "development",
+            gitSha: process.env.GIT_SHA ?? process.env.SENTRY_RELEASE ?? undefined,
+            release: process.env.APP_RELEASE ?? process.env.SENTRY_RELEASE ?? undefined,
+          };
+        },
+      );
+
       registerAuthRoutes(v1);
       registerAlertsRoutes(v1);
       registerAnalyticsRoutes(v1);

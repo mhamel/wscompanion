@@ -241,6 +241,51 @@
         }
       }
     },
+    "/v1/version": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "nodeEnv": {
+                      "type": "string"
+                    },
+                    "gitSha": {
+                      "type": "string"
+                    },
+                    "release": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "nodeEnv"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/def-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/auth/start": {
       "post": {
         "requestBody": {

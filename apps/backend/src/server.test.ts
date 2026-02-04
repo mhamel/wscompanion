@@ -66,6 +66,21 @@ describe("ready", () => {
   }, 15_000);
 });
 
+describe("version", () => {
+  it("returns ok and includes nodeEnv", async () => {
+    const app = buildServer({ logger: false });
+    await app.ready();
+    try {
+      const res = await app.inject({ method: "GET", url: "/v1/version" });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["x-request-id"]).toBeTruthy();
+      expect(res.json()).toMatchObject({ ok: true, nodeEnv: expect.any(String) });
+    } finally {
+      await app.close();
+    }
+  }, 15_000);
+});
+
 describe("trustProxy", () => {
   it("uses x-forwarded-for for req.ip when TRUST_PROXY=true", async () => {
     const previous = process.env.TRUST_PROXY;
