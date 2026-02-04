@@ -654,6 +654,14 @@
       "dependsOrder": "parallel"
     },
     {
+      "label": "Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)",
+      "dependsOn": [
+        "Infra: Open All UIs (Mailhog + Jaeger + MinIO)",
+        "Backend: Open Swagger UI (/docs)"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
       "label": "Dev: Bootstrap DB (Infra + Prisma)",
       "dependsOn": ["Infra: Up (docker compose)", "Backend: Setup DB (generate + migrate)"],
       "dependsOrder": "sequence"
@@ -699,6 +707,22 @@
         "Dev: Run stack (Backend + Mobile)"
       ],
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Full stack (Seed Prompt + Dashboards)",
+      "dependsOn": [
+        "Dev: Fresh clone (Bootstrap + Seed Prompt + Run)",
+        "Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)",
+      "dependsOn": [
+        "Dev: Fresh clone (Bootstrap + Seed Prompt pro+disclaimer + Run)",
+        "Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)"
+      ],
+      "dependsOrder": "parallel"
     },
     {
       "label": "Dev: Reset DB (DANGEROUS) + Run",
