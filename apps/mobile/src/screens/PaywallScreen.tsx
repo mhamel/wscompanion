@@ -1,11 +1,11 @@
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api/client';
 import { ApiError } from '../api/http';
 import { trackEvent } from '../analytics/analytics';
 import { useBillingEntitlementQuery } from '../billing/entitlements';
-import { purchasePro, restoreRevenueCatPurchases } from '../billing/revenuecat';
+import { isRevenueCatAvailable, purchasePro, restoreRevenueCatPurchases } from '../billing/revenuecat';
 import { config } from '../config';
 import { tokens } from '../theme/tokens';
 import { AppButton } from '../ui/AppButton';
@@ -44,7 +44,7 @@ export function PaywallScreen({ route }: Props) {
   const expiresAt = entitlementQuery.data?.expiresAt;
   const userId = meQuery.data?.id;
 
-  const canUseRevenueCat = Platform.OS !== 'web';
+  const canUseRevenueCat = isRevenueCatAvailable();
 
   React.useEffect(() => {
     void trackEvent('paywall_shown', { source });
@@ -140,7 +140,7 @@ export function PaywallScreen({ route }: Props) {
       <View style={styles.card}>
         {!canUseRevenueCat ? (
           <Body style={styles.muted}>
-            RevenueCat n’est pas supporté sur web. Utilise iOS/Android.
+            RevenueCat n’est pas disponible dans Expo Go (ou sur web). Pour tester les achats, utilise un dev build (EAS) ou une build App Store/TestFlight.
           </Body>
         ) : null}
 

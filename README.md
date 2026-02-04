@@ -2,6 +2,11 @@
 
 Companion Wealthsimple (via SnapTrade) — vision produit: `PRODUIT.md`, architecture: `ARCHITECTURE.md`.
 
+## Dev quickstart
+
+- Mobile (Expo, Android emulator + iOS device): `docs/MOBILE_DEV.md`
+- Backlog: `docs/TODO_INDEX.md`
+
 ## Backlog
 
 - Point d’entrée: `docs/TODO_INDEX.md`

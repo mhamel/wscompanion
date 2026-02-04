@@ -29,10 +29,35 @@
       "problemMatcher": []
     },
     {
+      "label": "Mobile: Android (Expo, Clear Cache)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "android", "--", "--clear"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: Metro (Expo)",
       "type": "shell",
       "command": "npm",
       "args": ["--workspace", "apps/mobile", "run", "start"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: Metro (Expo, Clear Cache)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "start", "--", "--clear"],
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",

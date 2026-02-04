@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { config } from '../config';
 
 type PurchasesModule = typeof import('react-native-purchases');
@@ -6,9 +6,20 @@ type PurchasesModule = typeof import('react-native-purchases');
 let purchasesModulePromise: Promise<PurchasesModule> | null = null;
 let configuredForUserId: string | null = null;
 
+export function isRevenueCatAvailable(): boolean {
+  if (Platform.OS === 'web') return false;
+  return Boolean((NativeModules as any).RNPurchases);
+}
+
 async function loadPurchasesModule(): Promise<PurchasesModule> {
   if (Platform.OS === 'web') {
     throw new Error('RevenueCat is not supported on web.');
+  }
+
+  if (!isRevenueCatAvailable()) {
+    throw new Error(
+      'RevenueCat n’est pas disponible dans Expo Go (module natif manquant). Utilise un dev build (EAS) ou une build App Store/TestFlight.',
+    );
   }
 
   if (!purchasesModulePromise) {
@@ -62,4 +73,3 @@ export async function restoreRevenueCatPurchases(userId: string): Promise<void> 
   await configureRevenueCat(userId);
   await Purchases.restorePurchases();
 }
-
