@@ -54,6 +54,50 @@ export function SettingsScreen() {
     }
   }
 
+  async function fetchForDiagnostics(url: string) {
+    const startedAt = Date.now();
+    const res = await fetch(url);
+    const text = await res.text();
+    const ms = Date.now() - startedAt;
+
+    let body: unknown = text;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      // ignore
+    }
+
+    return { res, text, body, ms };
+  }
+
+  async function runApiDiagnostics() {
+    const base = apiBaseUrl.replace(/\/+$/, "");
+    const targets = [
+      { name: "/v1/health", url: `${base}/v1/health` },
+      { name: "/v1/ready", url: `${base}/v1/ready` },
+      { name: "/v1/version", url: `${base}/v1/version` },
+    ];
+
+    const lines: string[] = [];
+    for (const t of targets) {
+      const r = await fetchForDiagnostics(t.url);
+      const statusLine = `${t.name}: ${r.res.status} ${r.res.ok ? "OK" : "ERROR"} (${r.ms}ms)`;
+
+      if (t.name === "/v1/version" && r.body && typeof r.body === "object") {
+        const obj = r.body as Record<string, unknown>;
+        const nodeEnv = typeof obj.nodeEnv === "string" ? obj.nodeEnv : null;
+        const gitSha = typeof obj.gitSha === "string" ? obj.gitSha : null;
+        const release = typeof obj.release === "string" ? obj.release : null;
+        const meta = [nodeEnv, gitSha, release].filter((v): v is string => Boolean(v)).join(" / ");
+        lines.push(meta ? `${statusLine}\n  ${meta}` : statusLine);
+      } else {
+        lines.push(statusLine);
+      }
+    }
+
+    Alert.alert("API diagnostics", lines.join("\n"));
+  }
+
   const prefsQuery = useQuery({
     queryKey: ["preferences"],
     queryFn: () => api.preferencesGet(),
@@ -376,6 +420,27 @@ export function SettingsScreen() {
               />
             </View>
           </View>
+          <AppButton
+            title={busy === "api_diag" ? "Test…" : "Diagnostics API (health + ready + version)"}
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => {
+              setBusy("api_diag");
+              setError(null);
+
+              void (async () => {
+                try {
+                  await runApiDiagnostics();
+                } catch {
+                  setError(
+                    "Impossible de joindre l’API. Vérifie EXPO_PUBLIC_API_BASE_URL (10.0.2.2 sur Android emulator / IP LAN sur device).",
+                  );
+                } finally {
+                  setBusy(null);
+                }
+              })();
+            }}
+          />
           <AppButton
             title={busy === "api_test" ? "Test…" : "Tester /v1/health"}
             variant="secondary"
