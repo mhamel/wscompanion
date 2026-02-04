@@ -12,6 +12,7 @@
     "start:worker": "node dist/worker.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "openapi:export": "tsx src/scripts/exportOpenapi.ts",
     "sentry:upload-sourcemaps": "tsx src/scripts/uploadSentrySourcemaps.ts",

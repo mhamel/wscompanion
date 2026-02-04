@@ -164,6 +164,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: DB reset (DANGEROUS)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/backend", "run", "db:reset"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Backend: Setup DB (generate + migrate)",
       "dependsOn": ["Backend: Prisma generate", "Backend: DB migrate (dev)"],
       "dependsOrder": "sequence"

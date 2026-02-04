@@ -45,6 +45,10 @@ Appliquer les migrations (dev):
 - CLI: `npm --workspace apps/backend run db:migrate`
 - VS Code: `Backend: DB migrate (dev)`
 
+Reset DB (DANGEREUX: supprime les données locales):
+- CLI: `npm --workspace apps/backend run db:reset`
+- VS Code: `Backend: DB reset (DANGEROUS)`
+
 Raccourci:
 - VS Code: `Backend: Setup DB (generate + migrate)`
 
