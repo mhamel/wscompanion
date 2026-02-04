@@ -127,6 +127,86 @@
       "problemMatcher": []
     },
     {
+      "label": "Dev: Set Mobile API baseUrl (prompt)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/set-mobile-api-baseurl.ps1",
+        "-Url",
+        "${input:mobileApiBaseUrl}"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Set Mobile API baseUrl (localhost)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/set-mobile-api-baseurl.ps1",
+        "-Preset",
+        "localhost"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Set Mobile API baseUrl (Android emulator 10.0.2.2)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/set-mobile-api-baseurl.ps1",
+        "-Preset",
+        "android"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Set Mobile API baseUrl (LAN IP first)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/set-mobile-api-baseurl.ps1",
+        "-Preset",
+        "lan-first"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Android: Start Emulator (prompt AVD)",
       "type": "shell",
       "command": "powershell",
@@ -845,6 +925,12 @@
       "type": "promptString",
       "description": "Email to seed data for (backend dev seed script will upsert user)",
       "default": "demo@justlovethestocks.local"
+    },
+    {
+      "id": "mobileApiBaseUrl",
+      "type": "promptString",
+      "description": "apps/mobile/.env EXPO_PUBLIC_API_BASE_URL value (e.g. http://10.0.2.2:3000 or http://192.168.0.123:3000)",
+      "default": "http://localhost:3000"
     }
   ]
 }

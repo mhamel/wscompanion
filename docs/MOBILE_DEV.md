@@ -39,6 +39,7 @@ Optionnel (jobs/queues):
 1) Configurer l’app:
 - Copier `apps/mobile/.env.example` -> `apps/mobile/.env`
   - Ou VS Code: `Dev: Bootstrap env (.env from .env.example)`
+  - Et ensuite: `Dev: Set Mobile API baseUrl (...)` pour éviter d’éditer à la main.
 
 2) Lancer Metro / Expo:
 - `npm --workspace apps/mobile run start`
@@ -80,6 +81,7 @@ Avec un emulateur Android operationnel (Android Studio):
 Note importante (Android emulator):
 - `localhost` pointe vers l’emulateur lui-meme, pas ton PC.
 - Mets `EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000` pour joindre l’API qui tourne sur ton PC.
+  - Ou VS Code: `Dev: Set Mobile API baseUrl (Android emulator 10.0.2.2)`
 
 ## 5) iOS (premier device cible)
 
@@ -93,6 +95,7 @@ Important: sur un device physique, `EXPO_PUBLIC_API_BASE_URL` doit pointer vers 
 Ex:
 - `EXPO_PUBLIC_API_BASE_URL=http://192.168.0.123:3000`
 Astuce (Windows): VS Code task `Dev: Show LAN IP (for iOS device)` pour afficher tes IPs LAN.
+Et VS Code: `Dev: Set Mobile API baseUrl (LAN IP first)` (prend la 1ere IP LAN détectée).
 
 Astuce: en mode dev, tu peux aussi le changer directement dans l’app: `Paramètres` -> `Dev` -> `Override API baseUrl` (inclut des presets `10.0.2.2` et `localhost`). Il y a aussi:
 - un bouton `Diagnostics API` (health + ready + version)
