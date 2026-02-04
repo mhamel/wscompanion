@@ -17,6 +17,7 @@ Request:
 - `question` (string, required)
 - `symbol` (string, optional) — sinon extraction simple depuis la question (MVP)
 - `threadId` (string, optional) — continuer une conversation existante
+  - si `symbol` est absent et qu’une `threadId` est fournie, le backend peut réutiliser le dernier symbole connu de la conversation (MVP).
 
 Response:
 - `answer` (string)

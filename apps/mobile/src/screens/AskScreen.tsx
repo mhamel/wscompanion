@@ -36,6 +36,27 @@ function isAskSource(value: unknown): value is AskSource {
   return typeof obj.type === "string";
 }
 
+type StoredAskSection = { title: string; bullets: string[]; sources: unknown[] };
+type StoredAskResponseData = { answer: string; sections: StoredAskSection[] };
+
+function isStoredAskResponseData(value: unknown): value is StoredAskResponseData {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const obj = value as Record<string, unknown>;
+  if (typeof obj.answer !== "string") return false;
+  if (!Array.isArray(obj.sections)) return false;
+
+  return obj.sections.every((s) => {
+    if (!s || typeof s !== "object" || Array.isArray(s)) return false;
+    const section = s as Record<string, unknown>;
+    if (typeof section.title !== "string") return false;
+    if (!Array.isArray(section.bullets) || !section.bullets.every((b) => typeof b === "string")) {
+      return false;
+    }
+    if (!Array.isArray(section.sources)) return false;
+    return true;
+  });
+}
+
 export function AskScreen({ route }: Props) {
   const api = React.useMemo(
     () =>
@@ -60,7 +81,6 @@ export function AskScreen({ route }: Props) {
   const [busyDisclaimer, setBusyDisclaimer] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [disclaimerRequired, setDisclaimerRequired] = React.useState(false);
-  const [result, setResult] = React.useState<AskResponse | null>(null);
 
   const disclaimerQuery = useQuery({
     queryKey: ["disclaimer"],
@@ -121,7 +141,6 @@ export function AskScreen({ route }: Props) {
   async function submit() {
     setBusy(true);
     setError(null);
-    setResult(null);
     setDisclaimerRequired(false);
 
     try {
@@ -130,7 +149,6 @@ export function AskScreen({ route }: Props) {
         symbol: symbol.trim() ? symbol.trim().toUpperCase() : undefined,
         threadId: threadId ?? undefined,
       });
-      setResult(res);
       setThreadId(res.threadId);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["askThreads"] }),
@@ -172,7 +190,6 @@ export function AskScreen({ route }: Props) {
     try {
       await api.askThreadDelete({ id });
       setThreadId(null);
-      setResult(null);
       await queryClient.invalidateQueries({ queryKey: ["askThreads"] });
     } catch (e) {
       if (e instanceof ApiError) {
@@ -200,7 +217,6 @@ export function AskScreen({ route }: Props) {
           disabled={busy || busyDisclaimer}
           onPress={() => {
             setThreadId(null);
-            setResult(null);
             setError(null);
           }}
         />
@@ -214,7 +230,6 @@ export function AskScreen({ route }: Props) {
               key={t.id}
               onPress={() => {
                 setThreadId(t.id);
-                setResult(null);
                 setError(null);
               }}
               style={({ pressed }) => [styles.threadRow, pressed ? styles.pressed : null]}
@@ -315,66 +330,72 @@ export function AskScreen({ route }: Props) {
             {threadQuery.data.items
               .slice()
               .reverse()
-              .map((m) => (
-                <View
-                  key={m.id}
-                  style={[
-                    styles.messageBubble,
-                    m.role === "user"
-                      ? styles.messageUser
-                      : styles.messageAssistant,
-                  ]}
-                >
-                  <Text style={styles.messageText}>{m.content}</Text>
-                </View>
-              ))}
+              .map((m) => {
+                const structured =
+                  m.role !== "user" && isStoredAskResponseData(m.data) ? m.data : null;
+
+                return (
+                  <View
+                    key={m.id}
+                    style={[
+                      styles.messageBubble,
+                      m.role === "user"
+                        ? styles.messageUser
+                        : styles.messageAssistant,
+                    ]}
+                  >
+                    {structured ? (
+                      <View>
+                        <Text style={styles.answer}>{structured.answer}</Text>
+                        {structured.sections.map((s, idx) => (
+                          <View key={`${m.id}-sec-${idx}`} style={styles.section}>
+                            <Text style={styles.sectionTitle}>{s.title}</Text>
+                            {s.bullets.map((b, j) => (
+                              <Text key={`${m.id}-${idx}-${j}`} style={styles.bullet}>
+                                • {b}
+                              </Text>
+                            ))}
+
+                            <View style={styles.sources}>
+                              {s.sources.filter(isAskSource).map((src, k) => {
+                                if (src.type === "news" && typeof src.url === "string") {
+                                  const url = src.url;
+                                  return (
+                                    <Pressable
+                                      key={`${m.id}-src-${idx}-${k}`}
+                                      onPress={() => Linking.openURL(url)}
+                                      style={({ pressed }) => [
+                                        styles.sourceChip,
+                                        pressed ? styles.pressed : null,
+                                      ]}
+                                    >
+                                      <Text style={styles.sourceText}>Source</Text>
+                                    </Pressable>
+                                  );
+                                }
+
+                                return (
+                                  <View key={`${m.id}-src-${idx}-${k}`} style={styles.sourceChip}>
+                                    <Text style={styles.sourceText}>
+                                      {String(src.type ?? "source")}
+                                    </Text>
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text style={styles.messageText}>{m.content}</Text>
+                    )}
+                  </View>
+                );
+              })}
           </ScrollView>
         </View>
       ) : null}
 
-      {result ? (
-        <ScrollView contentContainerStyle={styles.result}>
-          <Text style={styles.answer}>{result.answer}</Text>
-          {result.sections.map((s, idx) => (
-            <View key={`${s.title}-${idx}`} style={styles.section}>
-              <Text style={styles.sectionTitle}>{s.title}</Text>
-              {s.bullets.map((b, j) => (
-                <Text key={`${idx}-${j}`} style={styles.bullet}>
-                  • {b}
-                </Text>
-              ))}
-
-              <View style={styles.sources}>
-                {s.sources.filter(isAskSource).map((src, k) => {
-                  if (src.type === "news" && typeof src.url === "string") {
-                    const url = src.url;
-                    return (
-                      <Pressable
-                        key={`${idx}-src-${k}`}
-                        onPress={() => Linking.openURL(url)}
-                        style={({ pressed }) => [
-                          styles.sourceChip,
-                          pressed ? styles.pressed : null,
-                        ]}
-                      >
-                        <Text style={styles.sourceText}>Source</Text>
-                      </Pressable>
-                    );
-                  }
-
-                  return (
-                    <View key={`${idx}-src-${k}`} style={styles.sourceChip}>
-                      <Text style={styles.sourceText}>
-                        {String(src.type ?? "source")}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      ) : null}
     </Screen>
   );
 }
@@ -441,7 +462,6 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.border,
   },
   messageText: { color: tokens.colors.text },
-  result: { paddingBottom: 40, gap: 16, marginTop: 16 },
   answer: { color: tokens.colors.text, fontSize: 16 },
   section: {
     backgroundColor: tokens.colors.card,

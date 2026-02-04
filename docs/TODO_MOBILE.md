@@ -86,7 +86,7 @@
 ## Ask (option premium)
 
 - [x] FE-090 — AskScreen: champ question + réponses structurées + citations cliquables. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-flux-ask).
-- [ ] FE-091 — ConversationScreen: historique, états streaming, retry, feedback “utile/pas utile”. Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-assistant).
+- [ ] FE-091 — ConversationScreen: historique, états streaming, retry, feedback “utile/pas utile”. (MVP partiel: historique threads/messages + delete via AskScreen.) Réf: [ARCHITECTURE.md](../ARCHITECTURE.md#arch-api-assistant).
 
 <a id="fe-paywall"></a>
 

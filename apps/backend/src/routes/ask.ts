@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { AppError } from "../errors";
 import { buildAskResponse, extractSymbolFromQuestion, normalizeSymbol } from "../assistant/ask";
+import { inferSymbolFromThreadMessages } from "../assistant/askContext";
 import { enforceAskQuota } from "../assistant/askQuota";
 import { redactUserText } from "../assistant/redaction";
 import { decodeCursor, encodeCursor, parseLimit } from "../pagination";
@@ -59,12 +60,33 @@ async function askHandler(req: FastifyRequest) {
 
   await enforceAskQuota(req);
 
+  const threadId = threadIdRaw || null;
+  if (threadId) {
+    const existing = await prisma.askThread.findFirst({
+      where: { id: threadId, userId: req.user.sub },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new AppError({ code: "NOT_FOUND", message: "Ask thread not found", statusCode: 404 });
+    }
+  }
+
   const symbolFromQuestion = extractSymbolFromQuestion(question);
-  const symbol = symbolRaw
+  let symbol = symbolRaw
     ? normalizeSymbol(symbolRaw)
     : symbolFromQuestion
       ? normalizeSymbol(symbolFromQuestion)
       : null;
+
+  if (!symbol && threadId) {
+    const recent = await prisma.askMessage.findMany({
+      where: { threadId, role: "user" },
+      select: { data: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 25,
+    });
+    symbol = inferSymbolFromThreadMessages(recent);
+  }
 
   const preferences = await prisma.userPreferences.findUnique({ where: { userId: req.user.sub } });
   const baseCurrency = preferences?.baseCurrency ?? "USD";
@@ -110,7 +132,6 @@ async function askHandler(req: FastifyRequest) {
   });
 
   const now = new Date();
-  const threadId = threadIdRaw || null;
 
   const thread = await prisma.$transaction(async (tx) => {
     const existing = threadId
