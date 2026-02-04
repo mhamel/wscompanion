@@ -252,6 +252,21 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Check /v1/version",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "-e",
+        "fetch('http://localhost:3000/v1/version').then(async r=>{const t=await r.text(); console.log(r.status, r.ok?'OK':'ERROR'); console.log(t);}).catch(e=>{console.error(e); process.exit(1);});"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: EAS init",
       "type": "shell",
       "command": "npx",

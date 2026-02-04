@@ -393,6 +393,43 @@ export function SettingsScreen() {
             }}
           />
           <AppButton
+            title={busy === "api_version" ? "Test…" : "Tester /v1/version"}
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => {
+              setBusy("api_version");
+              setError(null);
+
+              void (async () => {
+                try {
+                  const url = `${apiBaseUrl.replace(/\/+$/, "")}/v1/version`;
+                  const res = await fetch(url);
+                  const text = await res.text();
+
+                  let body: unknown = text;
+                  try {
+                    body = JSON.parse(text);
+                  } catch {
+                    // ignore
+                  }
+
+                  const msg =
+                    typeof body === "string"
+                      ? body.slice(0, 400)
+                      : JSON.stringify(body, null, 2).slice(0, 800);
+
+                  Alert.alert("API", `${res.status} ${res.ok ? "OK" : "ERROR"}\n\n${msg}`);
+                } catch {
+                  setError(
+                    "Impossible de joindre l’API. Vérifie EXPO_PUBLIC_API_BASE_URL (10.0.2.2 sur Android emulator / IP LAN sur device).",
+                  );
+                } finally {
+                  setBusy(null);
+                }
+              })();
+            }}
+          />
+          <AppButton
             title="Ouvrir /v1/health"
             variant="secondary"
             disabled={busy !== null}
@@ -403,6 +440,12 @@ export function SettingsScreen() {
             variant="secondary"
             disabled={busy !== null}
             onPress={() => void Linking.openURL(`${apiBaseUrl.replace(/\/+$/, "")}/v1/ready`)}
+          />
+          <AppButton
+            title="Ouvrir /v1/version"
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => void Linking.openURL(`${apiBaseUrl.replace(/\/+$/, "")}/v1/version`)}
           />
 
           <AppButton

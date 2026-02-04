@@ -70,12 +70,14 @@ Raccourcis:
 Checks (VS Code tasks):
 - `Backend: Check /v1/health`
 - `Backend: Check /v1/ready`
+- `Backend: Check /v1/version`
 
 ## 6) Commandes utiles
 
 - Health endpoints:
   - Liveness: `GET /health` (infra) ou `GET /v1/health` (API)
   - Readiness: `GET /ready` (infra) ou `GET /v1/ready` (API) — retourne `503` si DB/Redis non prêts
+  - Version: `GET /v1/version` (API) — retourne `nodeEnv` et, si configurés, `gitSha` / `release`
 
 - Export OpenAPI: `npm --workspace apps/backend run openapi:export`
 - Regénérer le client mobile (OpenAPI): `npm run api:generate`
