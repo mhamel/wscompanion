@@ -50,6 +50,10 @@ Avec un emulateur Android operationnel (Android Studio):
 - (debug) `Mobile: Android (Expo, Clear Cache)`
 - ou CLI: `npm --workspace apps/mobile run android`
 
+Note importante (Android emulator):
+- `localhost` pointe vers l’emulateur lui-meme, pas ton PC.
+- Mets `EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000` pour joindre l’API qui tourne sur ton PC.
+
 ## 5) iOS (premier device cible)
 
 Sur Windows, tu ne peux pas lancer le simulateur iOS. Pour voir l’app sur iPhone:
@@ -62,6 +66,9 @@ Important: sur un device physique, `EXPO_PUBLIC_API_BASE_URL` doit pointer vers 
 Ex:
 - `EXPO_PUBLIC_API_BASE_URL=http://192.168.0.123:3000`
 
+Option (macOS):
+- VS Code task: `Mobile: iOS (Expo)` (ouvre le simulateur iOS)
+
 ## 6) Expo Go — ce qui n’est pas supporte ici
 
 Expo Go n’embarque pas tous les modules natifs.
@@ -72,3 +79,4 @@ Expo Go n’embarque pas tous les modules natifs.
 
 Notes:
 - Les push notifications iOS requierent un device physique; le simulateur iOS ne recoit pas de push APNs.
+- En mode dev, l’app affiche un petit banner si `EXPO_PUBLIC_API_BASE_URL` est sur `localhost` (aide a corriger emulator/device).

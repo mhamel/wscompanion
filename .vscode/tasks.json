@@ -42,6 +42,32 @@
       "problemMatcher": []
     },
     {
+      "label": "Mobile: iOS (Expo)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "ios"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: iOS (Expo, Clear Cache)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "ios", "--", "--clear"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: Metro (Expo)",
       "type": "shell",
       "command": "npm",
