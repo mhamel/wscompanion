@@ -293,6 +293,21 @@
         "Mobile: Metro (Expo)"
       ],
       "dependsOrder": "parallel"
+    },
+    {
+      "label": "Dev: Bootstrap DB (Infra + Prisma)",
+      "dependsOn": ["Infra: Up (docker compose)", "Backend: Setup DB (generate + migrate)"],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Run stack (Backend + Mobile)",
+      "dependsOn": ["Backend: API (dev)", "Backend: Worker (dev)", "Mobile: Metro (Expo)"],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Dev: Fresh clone (Bootstrap + Run)",
+      "dependsOn": ["Dev: Bootstrap DB (Infra + Prisma)", "Dev: Run stack (Backend + Mobile)"],
+      "dependsOrder": "sequence"
     }
   ]
 }

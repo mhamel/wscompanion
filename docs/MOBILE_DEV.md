@@ -47,6 +47,7 @@ Astuce: si Metro est "stuck", utiliser `Mobile: Metro (Expo, Clear Cache)`.
 
 Raccourci (VS Code):
 - task `Dev: Full stack (Infra + Backend + Mobile)` (lance plusieurs tasks en parallèle)
+- Premier setup (fresh clone): task `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
 
 ## 4) Android emulator
 
