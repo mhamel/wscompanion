@@ -78,7 +78,7 @@ export function SettingsScreen() {
       { name: "/v1/version", url: `${base}/v1/version` },
     ];
 
-    const lines: string[] = [];
+    const lines: string[] = [`Base URL: ${base}`];
     for (const t of targets) {
       const r = await fetchForDiagnostics(t.url);
       const statusLine = `${t.name}: ${r.res.status} ${r.res.ok ? "OK" : "ERROR"} (${r.ms}ms)`;
@@ -89,7 +89,47 @@ export function SettingsScreen() {
         const gitSha = typeof obj.gitSha === "string" ? obj.gitSha : null;
         const release = typeof obj.release === "string" ? obj.release : null;
         const meta = [nodeEnv, gitSha, release].filter((v): v is string => Boolean(v)).join(" / ");
-        lines.push(meta ? `${statusLine}\n  ${meta}` : statusLine);
+        const details = meta ? `\n  ${meta}` : "";
+        const snippet =
+          !r.res.ok && r.body
+            ? `\n  ${(
+                typeof r.body === "string" ? r.body : JSON.stringify(r.body, null, 2)
+              ).slice(0, 400)}`
+            : "";
+        lines.push(`${statusLine}${details}${snippet}`);
+        continue;
+      }
+
+      if (t.name === "/v1/ready" && r.body && typeof r.body === "object") {
+        const obj = r.body as Record<string, unknown>;
+        const checks = obj.checks && typeof obj.checks === "object" ? (obj.checks as Record<string, unknown>) : null;
+        const meta = checks
+          ? Object.entries(checks)
+              .map(([k, v]) => {
+                if (v && typeof v === "object") {
+                  const ok = (v as Record<string, unknown>).ok;
+                  return `${k}:${ok === true ? "ok" : ok === false ? "fail" : "?"}`;
+                }
+                return `${k}:?`;
+              })
+              .join(", ")
+          : "";
+        const snippet =
+          !r.res.ok && r.body
+            ? `\n  ${(
+                typeof r.body === "string" ? r.body : JSON.stringify(r.body, null, 2)
+              ).slice(0, 400)}`
+            : "";
+        lines.push(meta ? `${statusLine}\n  ${meta}${snippet}` : `${statusLine}${snippet}`);
+        continue;
+      }
+
+      if (!r.res.ok && r.body) {
+        lines.push(
+          `${statusLine}\n  ${(
+            typeof r.body === "string" ? r.body : JSON.stringify(r.body, null, 2)
+          ).slice(0, 400)}`,
+        );
       } else {
         lines.push(statusLine);
       }
