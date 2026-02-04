@@ -265,6 +265,46 @@ export function SettingsScreen() {
           }
         />
       </View>
+
+      {__DEV__ ? (
+        <View style={styles.card}>
+          <Title style={styles.sectionTitle}>Dev</Title>
+          <Body>API: {config.apiBaseUrl}</Body>
+          <Body>Env: {config.appEnv}</Body>
+          <AppButton
+            title={busy === "api_test" ? "Test…" : "Tester /health"}
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => {
+              setBusy("api_test");
+              setError(null);
+
+              void (async () => {
+                try {
+                  const res = await fetch(`${config.apiBaseUrl}/health`);
+                  const text = await res.text();
+                  Alert.alert(
+                    "API",
+                    `${res.status} ${res.ok ? "OK" : "ERROR"}\n\n${text.slice(0, 400)}`,
+                  );
+                } catch {
+                  setError(
+                    "Impossible de joindre l’API. Vérifie EXPO_PUBLIC_API_BASE_URL (10.0.2.2 sur Android emulator / IP LAN sur device).",
+                  );
+                } finally {
+                  setBusy(null);
+                }
+              })();
+            }}
+          />
+          <AppButton
+            title="Ouvrir /health"
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => void Linking.openURL(`${config.apiBaseUrl}/health`)}
+          />
+        </View>
+      ) : null}
     </Screen>
   );
 }
