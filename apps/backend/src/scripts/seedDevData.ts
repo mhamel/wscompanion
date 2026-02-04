@@ -1,5 +1,8 @@
+import "dotenv/config";
 import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
+import { createClient } from "redis";
+import { bumpPnlCacheVersion } from "../analytics/pnlCache";
 
 type Args = {
   email: string;
@@ -7,6 +10,7 @@ type Args = {
   days: number;
   reset: boolean;
   symbols: string[];
+  bumpCache: boolean;
 };
 
 function normalizeCurrency(value: string): string {
@@ -28,6 +32,10 @@ function parseArgs(argv: string[]): Args {
     }
     if (a === "--reset") {
       args.reset = true;
+      continue;
+    }
+    if (a === "--noBumpCache") {
+      args.bumpCache = false;
       continue;
     }
     if (a === "--email") {
@@ -79,6 +87,7 @@ function parseArgs(argv: string[]): Args {
     days,
     reset: Boolean(args.reset),
     symbols: effectiveSymbols,
+    bumpCache: args.bumpCache !== false,
   };
 }
 
@@ -95,6 +104,7 @@ function usage() {
   console.log("  --baseCurrency <ccy>     Default: USD");
   console.log("  --days <n>               Default: 60 (timeline rows per symbol)");
   console.log("  --reset                  Delete existing PnL rows for these symbols first");
+  console.log("  --noBumpCache             Do not bump Redis pnl cache version key");
   console.log("  --symbol <SYM>           Repeatable");
   console.log("  --symbols AAPL,TSLA,...  Comma-separated list");
 }
@@ -326,6 +336,26 @@ async function main() {
       }
     });
 
+    let bumpedVersion: number | null | "skipped" = "skipped";
+    if (args.bumpCache) {
+      const redisUrl = process.env.REDIS_URL;
+      if (redisUrl && redisUrl.trim()) {
+        const redis = createClient({ url: redisUrl });
+        try {
+          await redis.connect();
+          bumpedVersion = await bumpPnlCacheVersion(redis, user.id, args.baseCurrency);
+        } catch {
+          bumpedVersion = null;
+        } finally {
+          try {
+            await redis.quit();
+          } catch {
+            // ignore quit errors
+          }
+        }
+      }
+    }
+
     console.log("Seed OK");
     console.log(`User: ${user.email}`);
     console.log(`Base currency: ${args.baseCurrency}`);
@@ -333,6 +363,11 @@ async function main() {
     console.log(`PnL totals: ${totalRows.length}`);
     console.log(`PnL daily rows: ${dailyRows.length} (${args.days} days per symbol)`);
     console.log(`News items: ${newsUpserts.length}`);
+    console.log(
+      `Redis pnl cache version: ${
+        bumpedVersion === "skipped" ? "skipped" : bumpedVersion === null ? "failed" : `bumped to ${bumpedVersion}`
+      }`,
+    );
   } finally {
     await prisma.$disconnect();
   }

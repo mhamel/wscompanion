@@ -56,6 +56,7 @@ Seed data (dev, optionnel):
 - CLI: `npm --workspace apps/backend run seed:dev -- --email demo@justlovethestocks.local --reset`
 - VS Code: `Backend: Seed dev data (demo user)`
 - VS Code: `Backend: Seed dev data (prompt email)` (permet de seed ton user)
+Note: le seed tente de bump la “cache version” PnL dans Redis (si `REDIS_URL` est configuré) pour refléter les changements immédiatement; option `--noBumpCache` pour désactiver.
 
 ## 5) Lancer l’API + le worker
 
