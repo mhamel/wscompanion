@@ -906,6 +906,26 @@
       "dependsOrder": "parallel"
     },
     {
+      "label": "Dev: iOS device (LAN IP first + Full stack pro+disclaimer + Dashboards)",
+      "dependsOn": [
+        "Dev: Bootstrap env (.env from .env.example)",
+        "Dev: Show LAN IP (for iOS device)",
+        "Dev: Set Mobile API baseUrl (LAN IP first)",
+        "Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: iOS device (LAN prompt + Full stack pro+disclaimer + Dashboards)",
+      "dependsOn": [
+        "Dev: Bootstrap env (.env from .env.example)",
+        "Dev: Show LAN IP (for iOS device)",
+        "Dev: Set Mobile API baseUrl (prompt)",
+        "Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Dev: Reset DB (DANGEROUS) + Run",
       "dependsOn": [
         "Infra: Up (docker compose)",

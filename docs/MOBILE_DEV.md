@@ -54,6 +54,7 @@ Raccourci (VS Code):
 - task `Dev: Doctor (preflight checks)` (check rapide: node/npm, docker, ports, .env, etc.)
 - task `Dev: Onboarding (Doctor + Env + Full stack pro+disclaimer + Dashboards)` (one task: checks + env + stack + seed + unlock + dashboards)
 - task `Dev: Android emulator (Full + Dashboards)` (Windows friendly: set baseUrl 10.0.2.2 + start AVD + seed+unlock + backend + open dashboards + open app)
+- task `Dev: iOS device (LAN IP first + Full stack pro+disclaimer + Dashboards)` (Windows: démarre tout + configure baseUrl LAN; ensuite scanner QR dans Expo Go)
 - Premier setup (fresh clone):
   - `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
   - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data pour éviter un UI vide)
@@ -91,6 +92,11 @@ Sur Windows, tu ne peux pas lancer le simulateur iOS. Pour voir l’app sur iPho
 1) Installer **Expo Go** sur l’iPhone.
 2) Lancer Metro: `npm --workspace apps/mobile run start`
 3) Scanner le QR code depuis Expo Go.
+
+Alternative (VS Code, “one task”):
+- `Dev: iOS device (LAN IP first + Full stack pro+disclaimer + Dashboards)`
+  - Te demande ton email (seed) et ouvre les dashboards.
+  - Ensuite: scanner le QR code dans Expo Go.
 
 Important: sur un device physique, `EXPO_PUBLIC_API_BASE_URL` doit pointer vers l’IP de ta machine sur le meme reseau (pas `localhost`).
 Ex:
