@@ -280,6 +280,15 @@
       "problemMatcher": []
     },
     {
+      "label": "Infra: Open All UIs (Mailhog + Jaeger + MinIO)",
+      "dependsOn": [
+        "Infra: Open Mailhog (8025)",
+        "Infra: Open Jaeger (16686)",
+        "Infra: Open MinIO Console (9001)"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
       "label": "Backend: API (dev)",
       "type": "shell",
       "command": "npm",
@@ -516,6 +525,42 @@
       "type": "shell",
       "command": "powershell",
       "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:3000/docs'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Open Health (/v1/health)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:3000/v1/health'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Open Ready (/v1/ready)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:3000/v1/ready'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Open Version (/v1/version)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:3000/v1/version'"],
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",

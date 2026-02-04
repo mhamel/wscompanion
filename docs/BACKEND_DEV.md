@@ -23,6 +23,7 @@ UIs (dans ton navigateur):
 - Mailhog: `http://localhost:8025` (VS Code: `Infra: Open Mailhog (8025)`)
 - Jaeger: `http://localhost:16686` (VS Code: `Infra: Open Jaeger (16686)`)
 - MinIO Console: `http://localhost:9001` (VS Code: `Infra: Open MinIO Console (9001)`)
+- Raccourci: `Infra: Open All UIs (Mailhog + Jaeger + MinIO)`
 
 Lancer:
 - CLI: `docker compose up -d`
@@ -97,6 +98,9 @@ Checks (VS Code tasks):
 - `Backend: Check /v1/ready`
 - `Backend: Check /v1/version`
 - `Backend: Open Swagger UI (/docs)`
+- `Backend: Open Health (/v1/health)`
+- `Backend: Open Ready (/v1/ready)`
+- `Backend: Open Version (/v1/version)`
 
 ## 6) Commandes utiles
 
