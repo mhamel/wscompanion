@@ -91,6 +91,7 @@ Raccourcis:
 - `Dev: Backend (API + Worker)`
 - `Dev: Full stack (Infra + Backend + Mobile)` (si tu veux aussi Metro)
 - `Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)`
+- `Dev: Onboarding (Doctor + Env + Full stack pro+disclaimer + Dashboards)` (checks + env + stack + seed + unlock + dashboards)
 - `Dev: Fresh clone (Bootstrap + Run)` (infra + migrate puis watchers)
 - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data)
 - `Dev: Fresh clone (Bootstrap + Seed Prompt + Run)` (idem + seed pour ton email)
@@ -101,6 +102,8 @@ Raccourcis:
 - `Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Run` (reset DB + seed pour ton email + watchers)
 - `Dev: Reset DB (DANGEROUS) + Seed + Run` (reset DB locale + seed + watchers)
 - `Dev: Reset DB (DANGEROUS) + Seed Prompt + Run` (reset DB + seed pour ton email + watchers)
+- `Dev: Reset DB (DANGEROUS) + Seed Prompt + Dashboards`
+- `Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Dashboards`
 
 Checks (VS Code tasks):
 - `Backend: Check /v1/health`

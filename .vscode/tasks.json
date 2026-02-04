@@ -761,6 +761,39 @@
       "dependsOrder": "parallel"
     },
     {
+      "label": "Dev: Reset DB (DANGEROUS) + Seed Prompt + Dashboards",
+      "dependsOn": [
+        "Dev: Reset DB (DANGEROUS) + Seed Prompt + Run",
+        "Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Dashboards",
+      "dependsOn": [
+        "Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Run",
+        "Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Dev: Onboarding (Doctor + Env + Full stack pro+disclaimer + Dashboards)",
+      "dependsOn": [
+        "Dev: Doctor (preflight checks)",
+        "Dev: Bootstrap env (.env from .env.example)",
+        "Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Onboarding (Env + Full stack pro+disclaimer + Dashboards)",
+      "dependsOn": [
+        "Dev: Bootstrap env (.env from .env.example)",
+        "Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Dev: Reset DB (DANGEROUS) + Run",
       "dependsOn": [
         "Infra: Up (docker compose)",

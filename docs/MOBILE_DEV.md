@@ -51,6 +51,7 @@ Raccourci (VS Code):
 - task `Dev: Full stack (Infra + Backend + Mobile)` (lance plusieurs tasks en parallèle)
 - task `Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)` (stack + UIs + seed + unlock Pro/Ask)
 - task `Dev: Doctor (preflight checks)` (check rapide: node/npm, docker, ports, .env, etc.)
+- task `Dev: Onboarding (Doctor + Env + Full stack pro+disclaimer + Dashboards)` (one task: checks + env + stack + seed + unlock + dashboards)
 - Premier setup (fresh clone):
   - `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
   - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data pour éviter un UI vide)
@@ -60,6 +61,8 @@ Raccourci (VS Code):
   - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed + Run`
   - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed Prompt + Run`
   - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Run`
+  - (reset + dashboards) `Dev: Reset DB (DANGEROUS) + Seed Prompt + Dashboards`
+  - (reset + dashboards + unlock) `Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Dashboards`
 
 ## 4) Android emulator
 
