@@ -7,7 +7,10 @@ import { ApiError } from "../api/http";
 import { useBillingEntitlementQuery } from "../billing/entitlements";
 import { config } from "../config";
 import { useAuthStore } from "../auth/authStore";
+import { resetAnalyticsLocalState } from "../analytics/analytics";
 import { useDevSettingsStore } from "../dev/devSettingsStore";
+import { useNotificationsStore } from "../notifications/notificationsStore";
+import { clearSearchHistory } from "../search/history";
 import { tokens } from "../theme/tokens";
 import { AppButton } from "../ui/AppButton";
 import { Screen } from "../ui/Screen";
@@ -24,6 +27,9 @@ export function SettingsScreen() {
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const entitlementQuery = useBillingEntitlementQuery();
+  const setTokens = useAuthStore((s) => s.setTokens);
+  const registration = useNotificationsStore((s) => s.registration);
+  const setRegistration = useNotificationsStore((s) => s.setRegistration);
 
   const [baseCurrency, setBaseCurrency] = React.useState("USD");
   const [busy, setBusy] = React.useState<string | null>(null);
@@ -397,6 +403,56 @@ export function SettingsScreen() {
             variant="secondary"
             disabled={busy !== null}
             onPress={() => void Linking.openURL(`${apiBaseUrl.replace(/\/+$/, "")}/v1/ready`)}
+          />
+
+          <AppButton
+            title={busy === "dev_reset" ? "Reset…" : "Reset local state (dev)"}
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() =>
+              Alert.alert(
+                "Reset local state",
+                "Cette action efface les données locales (tokens auth, override API, notifications, analytics flags, historique de recherche).",
+                [
+                  { text: "Annuler", style: "cancel" },
+                  {
+                    text: "Reset",
+                    style: "destructive",
+                    onPress: () => {
+                      setBusy("dev_reset");
+                      setError(null);
+
+                      void (async () => {
+                        try {
+                          if (registration?.deviceId) {
+                            try {
+                              await api.deviceDelete({ id: registration.deviceId });
+                            } catch {
+                              // ignore server cleanup failures
+                            }
+                          }
+
+                          await Promise.all([
+                            setRegistration(null),
+                            setTokens(null),
+                            setApiBaseUrlOverride(null),
+                            resetAnalyticsLocalState(),
+                            clearSearchHistory(),
+                          ]);
+
+                          await queryClient.clear();
+                          Alert.alert("OK", "Local state reset.");
+                        } catch {
+                          setError("Échec du reset local.");
+                        } finally {
+                          setBusy(null);
+                        }
+                      })();
+                    },
+                  },
+                ],
+              )
+            }
           />
         </View>
       ) : null}

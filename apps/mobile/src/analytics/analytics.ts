@@ -52,6 +52,21 @@ export async function markConnectCompletedNow(): Promise<void> {
   }
 }
 
+export async function resetAnalyticsLocalState(): Promise<void> {
+  apiClient = null;
+  wowSentCache = null;
+  connectCompletedAtCache = null;
+
+  try {
+    await Promise.all([
+      SecureStore.deleteItemAsync(CONNECT_COMPLETED_AT_KEY),
+      SecureStore.deleteItemAsync(WOW_FIRST_PNL_SENT_KEY),
+    ]);
+  } catch {
+    // ignore persistence errors
+  }
+}
+
 async function getConnectCompletedAtMs(): Promise<number | null> {
   if (connectCompletedAtCache !== null) return connectCompletedAtCache;
   try {

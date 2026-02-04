@@ -29,3 +29,10 @@ export async function saveSearchHistory(history: string[]): Promise<void> {
   await SecureStore.setItemAsync(HISTORY_KEY, JSON.stringify(safe));
 }
 
+export async function clearSearchHistory(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(HISTORY_KEY);
+  } catch {
+    // ignore persistence errors
+  }
+}
