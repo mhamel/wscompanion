@@ -23,7 +23,8 @@ web-build/
 .DS_Store
 Thumbs.db
 .idea/
-.vscode/
+.vscode/*
+!.vscode/tasks.json
 
 # Misc
 *.tsbuildinfo

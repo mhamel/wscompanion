@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Launch Codex with Bypass",
+      "type": "shell",
+      "command": "codex",
+      "args": ["--dangerously-bypass-approvals-and-sandbox"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Mobile: Android (Expo)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "android"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: Metro (Expo)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "start"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
