@@ -512,6 +512,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Open Swagger UI (/docs)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:3000/docs'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: EAS init",
       "type": "shell",
       "command": "npx",

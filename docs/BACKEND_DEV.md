@@ -96,6 +96,7 @@ Checks (VS Code tasks):
 - `Backend: Check /v1/health`
 - `Backend: Check /v1/ready`
 - `Backend: Check /v1/version`
+- `Backend: Open Swagger UI (/docs)`
 
 ## 6) Commandes utiles
 
@@ -105,6 +106,7 @@ Checks (VS Code tasks):
   - Version: `GET /v1/version` (API) — retourne `nodeEnv` et, si configurés, `gitSha` / `release`
 
 - Export OpenAPI: `npm --workspace apps/backend run openapi:export`
+- Swagger UI (navigateur): `http://localhost:3000/docs`
 - Regénérer le client mobile (OpenAPI): `npm run api:generate`
 - Vérifier que l’OpenAPI est à jour: `npm run api:check`
 - Tests: `npm --workspace apps/backend test`
