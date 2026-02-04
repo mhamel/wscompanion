@@ -72,6 +72,8 @@ Important: sur un device physique, `EXPO_PUBLIC_API_BASE_URL` doit pointer vers 
 Ex:
 - `EXPO_PUBLIC_API_BASE_URL=http://192.168.0.123:3000`
 
+Astuce: en mode dev, tu peux aussi le changer directement dans l’app: `Paramètres` -> `Dev` -> `Override API baseUrl`.
+
 Option (macOS):
 - VS Code task: `Mobile: iOS (Expo)` (ouvre le simulateur iOS)
 

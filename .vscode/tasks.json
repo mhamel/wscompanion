@@ -225,10 +225,55 @@
       "problemMatcher": []
     },
     {
+      "label": "Mobile: EAS login",
+      "type": "shell",
+      "command": "npx",
+      "args": ["eas-cli", "login"],
+      "options": {
+        "cwd": "apps/mobile"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: EAS whoami",
+      "type": "shell",
+      "command": "npx",
+      "args": ["eas-cli", "whoami"],
+      "options": {
+        "cwd": "apps/mobile"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: EAS build iOS (development)",
       "type": "shell",
       "command": "npx",
       "args": ["eas-cli", "build", "--profile", "development", "--platform", "ios"],
+      "options": {
+        "cwd": "apps/mobile"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: EAS build Android (development)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["eas-cli", "build", "--profile", "development", "--platform", "android"],
       "options": {
         "cwd": "apps/mobile"
       },
