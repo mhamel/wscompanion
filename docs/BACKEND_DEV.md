@@ -63,6 +63,10 @@ Seed data (dev, optionnel):
 - VS Code: `Backend: Seed dev data (demo user)`
 - VS Code: `Backend: Seed dev data (prompt email)` (permet de seed ton user)
 Note: le seed tente de bump la “cache version” PnL dans Redis (si `REDIS_URL` est configuré) pour refléter les changements immédiatement; option `--noBumpCache` pour désactiver.
+Option dev (pour tester features gatees sans RevenueCat):
+- `--pro` (seed un entitlement Pro local)
+- `--acceptDisclaimer` (marque le risk disclaimer comme accepte)
+- VS Code: `Backend: Seed dev data (demo user, pro+disclaimer)` / `Backend: Seed dev data (prompt email, pro+disclaimer)`
 
 ## 5) Lancer l’API + le worker
 

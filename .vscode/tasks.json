@@ -321,6 +321,29 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Seed dev data (demo user, pro+disclaimer)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "--workspace",
+        "apps/backend",
+        "run",
+        "seed:dev",
+        "--",
+        "--email",
+        "demo@justlovethestocks.local",
+        "--reset",
+        "--pro",
+        "--acceptDisclaimer"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Backend: Seed dev data (prompt email)",
       "type": "shell",
       "command": "npm",
@@ -333,6 +356,29 @@
         "--email",
         "${input:seedEmail}",
         "--reset"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Seed dev data (prompt email, pro+disclaimer)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "--workspace",
+        "apps/backend",
+        "run",
+        "seed:dev",
+        "--",
+        "--email",
+        "${input:seedEmail}",
+        "--reset",
+        "--pro",
+        "--acceptDisclaimer"
       ],
       "presentation": {
         "reveal": "always",

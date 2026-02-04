@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { createClient } from "redis";
 import { bumpPnlCacheVersion } from "../analytics/pnlCache";
+import { RISK_DISCLAIMER_VERSION } from "../disclaimer";
 
 type Args = {
   email: string;
@@ -11,6 +12,8 @@ type Args = {
   reset: boolean;
   symbols: string[];
   bumpCache: boolean;
+  seedPro: boolean;
+  acceptDisclaimer: boolean;
 };
 
 function normalizeCurrency(value: string): string {
@@ -36,6 +39,14 @@ function parseArgs(argv: string[]): Args {
     }
     if (a === "--noBumpCache") {
       args.bumpCache = false;
+      continue;
+    }
+    if (a === "--pro") {
+      args.seedPro = true;
+      continue;
+    }
+    if (a === "--acceptDisclaimer") {
+      args.acceptDisclaimer = true;
       continue;
     }
     if (a === "--email") {
@@ -88,6 +99,8 @@ function parseArgs(argv: string[]): Args {
     reset: Boolean(args.reset),
     symbols: effectiveSymbols,
     bumpCache: args.bumpCache !== false,
+    seedPro: Boolean(args.seedPro),
+    acceptDisclaimer: Boolean(args.acceptDisclaimer),
   };
 }
 
@@ -105,6 +118,8 @@ function usage() {
   console.log("  --days <n>               Default: 60 (timeline rows per symbol)");
   console.log("  --reset                  Delete existing PnL rows for these symbols first");
   console.log("  --noBumpCache             Do not bump Redis pnl cache version key");
+  console.log("  --pro                    Seed a local Pro entitlement for the user");
+  console.log("  --acceptDisclaimer       Mark the risk disclaimer as accepted for the user");
   console.log("  --symbol <SYM>           Repeatable");
   console.log("  --symbols AAPL,TSLA,...  Comma-separated list");
 }
@@ -288,11 +303,40 @@ async function main() {
     }));
 
     await prisma.$transaction(async (tx) => {
+      const disclaimerData = args.acceptDisclaimer
+        ? { riskDisclaimerAcceptedAt: now, riskDisclaimerVersionAccepted: RISK_DISCLAIMER_VERSION }
+        : {};
+
       await tx.userPreferences.upsert({
         where: { userId: user.id },
-        update: { baseCurrency: args.baseCurrency },
-        create: { userId: user.id, baseCurrency: args.baseCurrency },
+        update: { baseCurrency: args.baseCurrency, ...disclaimerData },
+        create: { userId: user.id, baseCurrency: args.baseCurrency, ...disclaimerData },
       });
+
+      if (args.seedPro) {
+        const existing = await tx.entitlement.findFirst({
+          where: {
+            userId: user.id,
+            type: "pro",
+            status: "active",
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
+        });
+
+        if (!existing) {
+          await tx.entitlement.create({
+            data: {
+              userId: user.id,
+              type: "pro",
+              status: "active",
+              startedAt: now,
+              expiresAt: null,
+            },
+          });
+        }
+      }
 
       if (args.reset) {
         await tx.tickerPnlDaily.deleteMany({
@@ -337,21 +381,36 @@ async function main() {
     });
 
     let bumpedVersion: number | null | "skipped" = "skipped";
-    if (args.bumpCache) {
-      const redisUrl = process.env.REDIS_URL;
-      if (redisUrl && redisUrl.trim()) {
-        const redis = createClient({ url: redisUrl });
-        try {
-          await redis.connect();
+    let entitlementCacheCleared: boolean | null | "skipped" = "skipped";
+
+    const redisUrl = process.env.REDIS_URL;
+    const shouldTouchRedis = Boolean(redisUrl && redisUrl.trim() && (args.bumpCache || args.seedPro));
+    if (shouldTouchRedis) {
+      const redis = createClient({ url: redisUrl });
+      try {
+        await redis.connect();
+
+        if (args.bumpCache) {
           bumpedVersion = await bumpPnlCacheVersion(redis, user.id, args.baseCurrency);
-        } catch {
-          bumpedVersion = null;
-        } finally {
+        }
+
+        if (args.seedPro) {
           try {
-            await redis.quit();
+            const key = `entitlement:plan:${user.id}`;
+            await redis.del(key);
+            entitlementCacheCleared = true;
           } catch {
-            // ignore quit errors
+            entitlementCacheCleared = false;
           }
+        }
+      } catch {
+        if (args.bumpCache) bumpedVersion = null;
+        if (args.seedPro) entitlementCacheCleared = false;
+      } finally {
+        try {
+          await redis.quit();
+        } catch {
+          // ignore quit errors
         }
       }
     }
@@ -363,9 +422,20 @@ async function main() {
     console.log(`PnL totals: ${totalRows.length}`);
     console.log(`PnL daily rows: ${dailyRows.length} (${args.days} days per symbol)`);
     console.log(`News items: ${newsUpserts.length}`);
+    console.log(`Pro entitlement: ${args.seedPro ? "seeded" : "no"}`);
+    console.log(`Risk disclaimer accepted: ${args.acceptDisclaimer ? "yes" : "no"}`);
     console.log(
       `Redis pnl cache version: ${
         bumpedVersion === "skipped" ? "skipped" : bumpedVersion === null ? "failed" : `bumped to ${bumpedVersion}`
+      }`,
+    );
+    console.log(
+      `Redis entitlement cache: ${
+        entitlementCacheCleared === "skipped"
+          ? "skipped"
+          : entitlementCacheCleared === true
+            ? "cleared"
+            : "failed"
       }`,
     );
   } finally {
