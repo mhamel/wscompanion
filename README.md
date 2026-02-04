@@ -8,7 +8,10 @@ Companion Wealthsimple (via SnapTrade) — vision produit: `PRODUIT.md`, archite
 - Backend (API + worker): `docs/BACKEND_DEV.md`
 - Backlog: `docs/TODO_INDEX.md`
 
-Tip: dans VS Code, `Run Task...` -> `Dev: Full stack (Infra + Backend + Mobile)` pour démarrer rapidement (infra + API + worker + Metro).
+Tips (VS Code):
+- Démarrer vite: `Run Task...` -> `Dev: Full stack (Infra + Backend + Mobile)` (infra + API + worker + Metro).
+- Premier setup (DB + seed): `Dev: Fresh clone (Bootstrap + Seed + Run)` (évite un UI vide sur mobile).
+- Repartir clean (DB cassée): `Dev: Reset DB (DANGEROUS) + Seed + Run`.
 
 ## Backlog
 
