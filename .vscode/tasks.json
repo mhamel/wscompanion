@@ -241,6 +241,11 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "Backend: Setup DB + Seed (demo user)",
+      "dependsOn": ["Backend: Setup DB (generate + migrate)", "Backend: Seed dev data (demo user)"],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Backend: Seed dev data (demo user)",
       "type": "shell",
       "command": "npm",
@@ -456,6 +461,11 @@
     {
       "label": "Dev: Bootstrap DB (Infra + Prisma)",
       "dependsOn": ["Infra: Up (docker compose)", "Backend: Setup DB (generate + migrate)"],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Bootstrap DB + Seed (Infra + Prisma + Seed)",
+      "dependsOn": ["Dev: Bootstrap DB (Infra + Prisma)", "Backend: Seed dev data (demo user)"],
       "dependsOrder": "sequence"
     },
     {

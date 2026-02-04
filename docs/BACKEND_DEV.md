@@ -51,6 +51,7 @@ Reset DB (DANGEREUX: supprime les données locales):
 
 Raccourci:
 - VS Code: `Backend: Setup DB (generate + migrate)`
+- VS Code: `Backend: Setup DB + Seed (demo user)`
 
 Seed data (dev, optionnel):
 - CLI: `npm --workspace apps/backend run seed:dev -- --email demo@justlovethestocks.local --reset`
@@ -73,6 +74,7 @@ Raccourcis:
 - `Dev: Full stack (Infra + Backend + Mobile)` (si tu veux aussi Metro)
 - `Dev: Fresh clone (Bootstrap + Run)` (infra + migrate puis watchers)
 - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data)
+- `Dev: Bootstrap DB + Seed (Infra + Prisma + Seed)` (infra + migrations + seed, sans lancer les watchers)
 - `Dev: Reset DB (DANGEROUS) + Seed + Run` (reset DB locale + seed + watchers)
 
 Checks (VS Code tasks):
