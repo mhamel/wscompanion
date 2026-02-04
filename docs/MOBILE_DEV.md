@@ -81,6 +81,7 @@ Sur Windows, tu ne peux pas lancer le simulateur iOS. Pour voir l’app sur iPho
 Important: sur un device physique, `EXPO_PUBLIC_API_BASE_URL` doit pointer vers l’IP de ta machine sur le meme reseau (pas `localhost`).
 Ex:
 - `EXPO_PUBLIC_API_BASE_URL=http://192.168.0.123:3000`
+Astuce (Windows): VS Code task `Dev: Show LAN IP (for iOS device)` pour afficher tes IPs LAN.
 
 Astuce: en mode dev, tu peux aussi le changer directement dans l’app: `Paramètres` -> `Dev` -> `Override API baseUrl` (inclut des presets `10.0.2.2` et `localhost`). Il y a aussi un bouton `Diagnostics API` (health + ready + version).
 

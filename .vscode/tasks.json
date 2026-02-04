@@ -60,6 +60,24 @@
       "problemMatcher": []
     },
     {
+      "label": "Dev: Show LAN IP (for iOS device)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/show-lan-ip.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Android: Start Emulator (prompt AVD)",
       "type": "shell",
       "command": "powershell",
