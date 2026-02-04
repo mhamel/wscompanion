@@ -721,6 +721,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Probe (health + ready + version)",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/dev/probe-backend.js", "http://localhost:3000"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Backend: Open Swagger UI (/docs)",
       "type": "shell",
       "command": "powershell",

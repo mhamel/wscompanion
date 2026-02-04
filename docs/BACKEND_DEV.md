@@ -114,6 +114,7 @@ Checks (VS Code tasks):
 - `Backend: Check /v1/health`
 - `Backend: Check /v1/ready`
 - `Backend: Check /v1/version`
+- `Backend: Probe (health + ready + version)`
 - `Backend: Open Swagger UI (/docs)`
 - `Backend: Open Health (/v1/health)`
 - `Backend: Open Ready (/v1/ready)`
