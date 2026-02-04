@@ -38,6 +38,7 @@ Optionnel (jobs/queues):
 
 1) Configurer l’app:
 - Copier `apps/mobile/.env.example` -> `apps/mobile/.env`
+  - Ou VS Code: `Dev: Bootstrap env (.env from .env.example)`
 
 2) Lancer Metro / Expo:
 - `npm --workspace apps/mobile run start`

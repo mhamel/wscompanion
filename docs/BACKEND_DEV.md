@@ -39,6 +39,7 @@ Arrêter:
 ## 3) Config `.env`
 
 - Copier `apps/backend/.env.example` -> `apps/backend/.env`
+  - Ou VS Code: `Dev: Bootstrap env (.env from .env.example)`
 - Valeurs importantes:
   - `DATABASE_URL` (Postgres)
   - `REDIS_URL` (Redis)

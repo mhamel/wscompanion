@@ -109,6 +109,24 @@
       "problemMatcher": []
     },
     {
+      "label": "Dev: Bootstrap env (.env from .env.example)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/bootstrap-env.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Android: Start Emulator (prompt AVD)",
       "type": "shell",
       "command": "powershell",
