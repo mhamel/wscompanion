@@ -788,8 +788,21 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "Dev: Bootstrap DB + Seed Prompt pro+disclaimer (Infra + Prisma + Seed)",
+      "dependsOn": [
+        "Dev: Bootstrap DB (Infra + Prisma)",
+        "Backend: Seed dev data (prompt email, pro+disclaimer)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Dev: Run stack (Backend + Mobile)",
       "dependsOn": ["Backend: API (dev)", "Backend: Worker (dev)", "Mobile: Metro (Expo)"],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Dev: Run stack (Backend + Android)",
+      "dependsOn": ["Backend: API (dev)", "Backend: Worker (dev)", "Mobile: Android (Expo)"],
       "dependsOrder": "parallel"
     },
     {
@@ -872,6 +885,25 @@
         "Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)"
       ],
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Android emulator (Bootstrap + Seed Prompt pro+disclaimer + Run)",
+      "dependsOn": [
+        "Dev: Bootstrap env (.env from .env.example)",
+        "Dev: Set Mobile API baseUrl (Android emulator 10.0.2.2)",
+        "Android: Start Emulator (first AVD)",
+        "Dev: Bootstrap DB + Seed Prompt pro+disclaimer (Infra + Prisma + Seed)",
+        "Dev: Run stack (Backend + Android)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Android emulator (Full + Dashboards)",
+      "dependsOn": [
+        "Dev: Android emulator (Bootstrap + Seed Prompt pro+disclaimer + Run)",
+        "Dev: Open Dashboards (Mailhog + Jaeger + MinIO + Swagger)"
+      ],
+      "dependsOrder": "parallel"
     },
     {
       "label": "Dev: Reset DB (DANGEROUS) + Run",

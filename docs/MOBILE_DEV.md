@@ -53,6 +53,7 @@ Raccourci (VS Code):
 - task `Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)` (stack + UIs + seed + unlock Pro/Ask)
 - task `Dev: Doctor (preflight checks)` (check rapide: node/npm, docker, ports, .env, etc.)
 - task `Dev: Onboarding (Doctor + Env + Full stack pro+disclaimer + Dashboards)` (one task: checks + env + stack + seed + unlock + dashboards)
+- task `Dev: Android emulator (Full + Dashboards)` (Windows friendly: set baseUrl 10.0.2.2 + start AVD + seed+unlock + backend + open dashboards + open app)
 - Premier setup (fresh clone):
   - `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
   - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data pour éviter un UI vide)
