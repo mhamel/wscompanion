@@ -55,6 +55,9 @@ Avec un emulateur Android operationnel (Android Studio):
 
 - VS Code task: `Mobile: Android (Expo)`
 - (debug) `Mobile: Android (Expo, Clear Cache)`
+- (optionnel) `Android: List AVDs` (voir les emulateurs dispo)
+- (optionnel) `Android: Start Emulator (prompt AVD)` (demarre un emulateur)
+- (optionnel) `Mobile: Android (Start Emulator + Expo)` (demarre l’emulateur + lance Expo Android)
 - ou CLI: `npm --workspace apps/mobile run android`
 
 Note importante (Android emulator):

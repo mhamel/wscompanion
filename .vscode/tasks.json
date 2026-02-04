@@ -42,6 +42,49 @@
       "problemMatcher": []
     },
     {
+      "label": "Android: List AVDs",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/android/list-avds.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Start Emulator (prompt AVD)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/android/start-emulator.ps1",
+        "-AvdName",
+        "${input:androidAvdName}"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: Android (Start Emulator + Expo)",
+      "dependsOn": ["Android: Start Emulator (prompt AVD)", "Mobile: Android (Expo)"],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Mobile: iOS (Expo)",
       "type": "shell",
       "command": "npm",
@@ -386,6 +429,14 @@
       "label": "Dev: Fresh clone (Bootstrap + Run)",
       "dependsOn": ["Dev: Bootstrap DB (Infra + Prisma)", "Dev: Run stack (Backend + Mobile)"],
       "dependsOrder": "sequence"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "androidAvdName",
+      "type": "promptString",
+      "description": "Android AVD name to start (run 'Android: List AVDs' to see available names)",
+      "default": "Pixel_5_API_34"
     }
   ]
 }
