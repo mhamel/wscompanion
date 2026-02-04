@@ -35,7 +35,7 @@ function ExportRow(props: { job: ExportJob; onShare: () => void; sharing: boolea
 
       {props.job.file ? (
         <Body>
-          {props.job.file.fileName} â€¢ {props.job.file.sizeBytes} bytes
+          {props.job.file.fileName} • {props.job.file.sizeBytes} bytes
         </Body>
       ) : null}
 
