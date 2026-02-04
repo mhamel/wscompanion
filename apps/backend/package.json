@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
+    "seed:dev": "tsx src/scripts/seedDevData.ts",
     "openapi:export": "tsx src/scripts/exportOpenapi.ts",
     "sentry:upload-sourcemaps": "tsx src/scripts/uploadSentrySourcemaps.ts",
     "crypto:rotate": "tsx src/scripts/rotateEncryptedTokens.ts",

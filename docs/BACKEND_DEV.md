@@ -52,6 +52,10 @@ Reset DB (DANGEREUX: supprime les données locales):
 Raccourci:
 - VS Code: `Backend: Setup DB (generate + migrate)`
 
+Seed data (dev, optionnel):
+- CLI: `npm --workspace apps/backend run seed:dev -- --email demo@justlovethestocks.local --reset`
+- VS Code: `Backend: Seed dev data (demo user)`
+
 ## 5) Lancer l’API + le worker
 
 API (Fastify):

@@ -181,6 +181,27 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "Backend: Seed dev data (demo user)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "--workspace",
+        "apps/backend",
+        "run",
+        "seed:dev",
+        "--",
+        "--email",
+        "demo@justlovethestocks.local",
+        "--reset"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Dev: Backend (API + Worker)",
       "dependsOn": ["Backend: API (dev)", "Backend: Worker (dev)"],
       "dependsOrder": "parallel"
