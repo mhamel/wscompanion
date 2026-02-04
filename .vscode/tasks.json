@@ -92,6 +92,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Mobile: Metro (Dev Client)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "start", "--", "--dev-client"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Infra: Up (docker compose)",
       "type": "shell",
       "command": "docker",
@@ -185,6 +197,36 @@
       "type": "shell",
       "command": "npm",
       "args": ["run", "api:check"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: EAS init",
+      "type": "shell",
+      "command": "npx",
+      "args": ["eas-cli", "init"],
+      "options": {
+        "cwd": "apps/mobile"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: EAS build iOS (development)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["eas-cli", "build", "--profile", "development", "--platform", "ios"],
+      "options": {
+        "cwd": "apps/mobile"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",

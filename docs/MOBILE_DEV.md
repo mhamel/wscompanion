@@ -78,7 +78,7 @@ Expo Go n’embarque pas tous les modules natifs.
 
 - **RevenueCat (`react-native-purchases`)**: non disponible dans Expo Go (module natif `RNPurchases` absent).
   - L’app detecte ce cas et affiche un message dans le Paywall.
-  - Pour tester les achats, utiliser un **dev build (EAS)** ou une build App Store/TestFlight.
+  - Pour tester les achats, utiliser un **dev build (EAS)** ou une build App Store/TestFlight. Voir `docs/EAS_DEV_BUILD.md`.
 
 Notes:
 - Les push notifications iOS requierent un device physique; le simulateur iOS ne recoit pas de push APNs.
