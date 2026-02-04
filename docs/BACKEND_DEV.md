@@ -74,8 +74,10 @@ Raccourcis:
 - `Dev: Full stack (Infra + Backend + Mobile)` (si tu veux aussi Metro)
 - `Dev: Fresh clone (Bootstrap + Run)` (infra + migrate puis watchers)
 - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data)
+- `Dev: Fresh clone (Bootstrap + Seed Prompt + Run)` (idem + seed pour ton email)
 - `Dev: Bootstrap DB + Seed (Infra + Prisma + Seed)` (infra + migrations + seed, sans lancer les watchers)
 - `Dev: Reset DB (DANGEROUS) + Seed + Run` (reset DB locale + seed + watchers)
+- `Dev: Reset DB (DANGEROUS) + Seed Prompt + Run` (reset DB + seed pour ton email + watchers)
 
 Checks (VS Code tasks):
 - `Backend: Check /v1/health`
