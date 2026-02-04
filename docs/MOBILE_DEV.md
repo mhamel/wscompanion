@@ -91,6 +91,7 @@ Astuce (Windows): VS Code task `Dev: Show LAN IP (for iOS device)` pour afficher
 Astuce: en mode dev, tu peux aussi le changer directement dans l’app: `Paramètres` -> `Dev` -> `Override API baseUrl` (inclut des presets `10.0.2.2` et `localhost`). Il y a aussi:
 - un bouton `Diagnostics API` (health + ready + version)
 - un statut `Backend:` qui affiche la version courante (via `/v1/version`)
+- un status `Entitlement:` et `Disclaimer:` (pratique pour comprendre pourquoi certaines routes/features sont bloquées)
 
 Option (macOS):
 - VS Code task: `Mobile: iOS (Expo)` (ouvre le simulateur iOS)

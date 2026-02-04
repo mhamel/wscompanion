@@ -427,6 +427,26 @@ export function SettingsScreen() {
                     .join(" / ") || "(unknown)"
                 : "(unavailable)"}
           </Body>
+          <Body>
+            Entitlement:{" "}
+            {entitlementQuery.isLoading
+              ? "…"
+              : entitlementQuery.data?.plan === "pro"
+                ? "Pro"
+                : entitlementQuery.data
+                  ? "Free"
+                  : "(unknown)"}
+          </Body>
+          <Body>
+            Disclaimer:{" "}
+            {disclaimerQuery.isLoading
+              ? "…"
+              : disclaimerIsAccepted
+                ? `accepted (v${disclaimer?.version ?? "?"})`
+                : disclaimerQuery.data?.acceptedAt
+                  ? `revalidate (v${disclaimer?.acceptedVersion ?? "?"} → v${disclaimer?.version ?? "?"})`
+                  : "not accepted"}
+          </Body>
           <AppButton
             title={busy === "api_version_refresh" ? "…" : "Rafraîchir /v1/version"}
             variant="secondary"
@@ -439,6 +459,22 @@ export function SettingsScreen() {
                   await versionQuery.refetch();
                 } catch {
                   // ignore
+                } finally {
+                  setBusy(null);
+                }
+              })();
+            }}
+          />
+          <AppButton
+            title={busy === "dev_status_refresh" ? "…" : "Rafraîchir status (entitlement + disclaimer)"}
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => {
+              setBusy("dev_status_refresh");
+              setError(null);
+              void (async () => {
+                try {
+                  await Promise.all([entitlementQuery.refetch(), disclaimerQuery.refetch()]);
                 } finally {
                   setBusy(null);
                 }
