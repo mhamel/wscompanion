@@ -55,6 +55,7 @@ Raccourci:
 Seed data (dev, optionnel):
 - CLI: `npm --workspace apps/backend run seed:dev -- --email demo@justlovethestocks.local --reset`
 - VS Code: `Backend: Seed dev data (demo user)`
+- VS Code: `Backend: Seed dev data (prompt email)` (permet de seed ton user)
 
 ## 5) Lancer l’API + le worker
 
@@ -70,6 +71,8 @@ Raccourcis:
 - `Dev: Backend (API + Worker)`
 - `Dev: Full stack (Infra + Backend + Mobile)` (si tu veux aussi Metro)
 - `Dev: Fresh clone (Bootstrap + Run)` (infra + migrate puis watchers)
+- `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data)
+- `Dev: Reset DB (DANGEROUS) + Seed + Run` (reset DB locale + seed + watchers)
 
 Checks (VS Code tasks):
 - `Backend: Check /v1/health`

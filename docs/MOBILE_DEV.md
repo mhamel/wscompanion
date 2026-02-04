@@ -50,6 +50,7 @@ Raccourci (VS Code):
 - Premier setup (fresh clone):
   - `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
   - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data pour éviter un UI vide)
+  - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed + Run`
 
 ## 4) Android emulator
 

@@ -245,6 +245,27 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Seed dev data (prompt email)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "--workspace",
+        "apps/backend",
+        "run",
+        "seed:dev",
+        "--",
+        "--email",
+        "${input:seedEmail}",
+        "--reset"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Dev: Backend (API + Worker)",
       "dependsOn": ["Backend: API (dev)", "Backend: Worker (dev)"],
       "dependsOrder": "parallel"
@@ -438,6 +459,25 @@
         "Dev: Run stack (Backend + Mobile)"
       ],
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Reset DB (DANGEROUS) + Run",
+      "dependsOn": [
+        "Infra: Up (docker compose)",
+        "Backend: DB reset (DANGEROUS)",
+        "Dev: Run stack (Backend + Mobile)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Reset DB (DANGEROUS) + Seed + Run",
+      "dependsOn": [
+        "Infra: Up (docker compose)",
+        "Backend: DB reset (DANGEROUS)",
+        "Backend: Seed dev data (demo user)",
+        "Dev: Run stack (Backend + Mobile)"
+      ],
+      "dependsOrder": "sequence"
     }
   ],
   "inputs": [
@@ -446,6 +486,12 @@
       "type": "promptString",
       "description": "Android AVD name to start (run 'Android: List AVDs' to see available names)",
       "default": "Pixel_5_API_34"
+    },
+    {
+      "id": "seedEmail",
+      "type": "promptString",
+      "description": "Email to seed data for (backend dev seed script will upsert user)",
+      "default": "demo@justlovethestocks.local"
     }
   ]
 }
