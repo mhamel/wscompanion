@@ -348,6 +348,90 @@
       "problemMatcher": []
     },
     {
+      "label": "Infra: Status (docker compose ps)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "ps"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Logs (docker compose)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "--tail", "200"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Logs (postgres)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "--tail", "200", "postgres"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Logs (redis)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "--tail", "200", "redis"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Logs (minio)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "--tail", "200", "minio"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Logs (mailhog)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "--tail", "200", "mailhog"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Logs (jaeger)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "--tail", "200", "jaeger"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Infra: Down (docker compose)",
       "type": "shell",
       "command": "docker",

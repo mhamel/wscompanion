@@ -36,6 +36,11 @@ Arrêter:
 - CLI: `docker compose down`
 - VS Code: `Infra: Down (docker compose)`
 
+Logs / statut (VS Code):
+- `Infra: Status (docker compose ps)`
+- `Infra: Logs (docker compose)`
+- `Infra: Logs (postgres)` / `Infra: Logs (redis)` / `Infra: Logs (minio)` / `Infra: Logs (mailhog)` / `Infra: Logs (jaeger)`
+
 ## 3) Config `.env`
 
 - Copier `apps/backend/.env.example` -> `apps/backend/.env`
