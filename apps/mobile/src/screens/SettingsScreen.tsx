@@ -44,6 +44,33 @@ export function SettingsScreen() {
     setApiBaseUrlInput(apiBaseUrlOverride ?? "");
   }, [apiBaseUrlOverride]);
 
+  type VersionInfo = {
+    ok: boolean;
+    nodeEnv?: string;
+    gitSha?: string;
+    release?: string;
+  };
+
+  const versionQuery = useQuery({
+    queryKey: ["dev", "apiVersion", apiBaseUrl],
+    enabled: __DEV__,
+    staleTime: 30_000,
+    queryFn: async (): Promise<VersionInfo | null> => {
+      const url = `${apiBaseUrl.replace(/\/+$/, "")}/v1/version`;
+      const res = await fetch(url);
+      const text = await res.text();
+      if (!text.trim()) return null;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return null;
+      }
+      if (!res.ok) return parsed as VersionInfo;
+      return parsed as VersionInfo;
+    },
+  });
+
   async function applyApiBaseUrlOverride(next: string | null) {
     try {
       await setApiBaseUrlOverride(next);
@@ -384,7 +411,40 @@ export function SettingsScreen() {
         <View style={styles.card}>
           <Title style={styles.sectionTitle}>Dev</Title>
           <Body>API: {apiBaseUrl}</Body>
+          <Body>Override: {apiBaseUrlOverride ?? "(none)"}</Body>
           <Body>Env: {config.appEnv}</Body>
+          <Body>
+            Backend:{" "}
+            {versionQuery.isFetching
+              ? "…"
+              : versionQuery.data && typeof versionQuery.data === "object"
+                ? [
+                    typeof versionQuery.data.nodeEnv === "string" ? versionQuery.data.nodeEnv : null,
+                    typeof versionQuery.data.gitSha === "string" ? versionQuery.data.gitSha : null,
+                    typeof versionQuery.data.release === "string" ? versionQuery.data.release : null,
+                  ]
+                    .filter((v): v is string => Boolean(v))
+                    .join(" / ") || "(unknown)"
+                : "(unavailable)"}
+          </Body>
+          <AppButton
+            title={busy === "api_version_refresh" ? "…" : "Rafraîchir /v1/version"}
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => {
+              setBusy("api_version_refresh");
+              setError(null);
+              void (async () => {
+                try {
+                  await versionQuery.refetch();
+                } catch {
+                  // ignore
+                } finally {
+                  setBusy(null);
+                }
+              })();
+            }}
+          />
           <TextField
             placeholder="Override API baseUrl (ex: http://10.0.2.2:3000)"
             value={apiBaseUrlInput}
