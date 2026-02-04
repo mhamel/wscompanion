@@ -63,6 +63,10 @@ Raccourcis:
 - `Dev: Full stack (Infra + Backend + Mobile)` (si tu veux aussi Metro)
 - `Dev: Fresh clone (Bootstrap + Run)` (infra + migrate puis watchers)
 
+Checks (VS Code tasks):
+- `Backend: Check /v1/health`
+- `Backend: Check /v1/ready`
+
 ## 6) Commandes utiles
 
 - Health endpoints:
