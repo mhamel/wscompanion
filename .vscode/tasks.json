@@ -429,6 +429,15 @@
       "label": "Dev: Fresh clone (Bootstrap + Run)",
       "dependsOn": ["Dev: Bootstrap DB (Infra + Prisma)", "Dev: Run stack (Backend + Mobile)"],
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Fresh clone (Bootstrap + Seed + Run)",
+      "dependsOn": [
+        "Dev: Bootstrap DB (Infra + Prisma)",
+        "Backend: Seed dev data (demo user)",
+        "Dev: Run stack (Backend + Mobile)"
+      ],
+      "dependsOrder": "sequence"
     }
   ],
   "inputs": [
