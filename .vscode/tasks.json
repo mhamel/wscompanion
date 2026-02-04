@@ -42,6 +42,19 @@
       "problemMatcher": []
     },
     {
+      "label": "Mobile: Android (Expo, Tunnel)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "android", "--", "--tunnel"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Android: List AVDs",
       "type": "shell",
       "command": "powershell",
@@ -146,10 +159,35 @@
       "problemMatcher": []
     },
     {
+      "label": "Mobile: iOS (Expo, Tunnel)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "ios", "--", "--tunnel"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Mobile: Metro (Expo)",
       "type": "shell",
       "command": "npm",
       "args": ["--workspace", "apps/mobile", "run", "start"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: Metro (Expo, Tunnel)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/mobile", "run", "start", "--", "--tunnel"],
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
