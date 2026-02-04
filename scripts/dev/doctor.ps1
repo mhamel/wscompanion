@@ -61,6 +61,35 @@ FileStatus "apps/backend/.env.example"
 FileStatus "apps/mobile/.env"
 FileStatus "apps/mobile/.env.example"
 
+Section "Mobile API baseUrl (.env)"
+if (Test-Path "apps/mobile/.env") {
+  try {
+    $rawMobileEnv = Get-Content -Raw -Path "apps/mobile/.env"
+    $m = [regex]::Match($rawMobileEnv, "(?m)^\s*EXPO_PUBLIC_API_BASE_URL\s*=\s*(.+)\s*$")
+    if ($m.Success) {
+      $value = $m.Groups[1].Value.Trim()
+      Ok ("EXPO_PUBLIC_API_BASE_URL={0}" -f $value)
+      if ($value -match "(?i)^(https?://)?(localhost|127\\.0\\.0\\.1|\\[::1\\])") {
+        Warn "Mobile baseUrl is localhost. Android emulator needs 10.0.2.2; physical devices need your LAN IP."
+        Write-Host "  - VS Code: Dev: Set Mobile API baseUrl (Android emulator 10.0.2.2)"
+        Write-Host "  - VS Code: Dev: Set Mobile API baseUrl (LAN IP first)"
+        Write-Host "  - VS Code: Dev: Set Mobile API baseUrl (prompt)"
+      } elseif ($value -match "(?i)^(https?://)?10\\.0\\.(2|3)\\.2") {
+        Warn "Mobile baseUrl is 10.0.2.2/10.0.3.2 (Android emulator alias). If you're on a physical device, use your PC LAN IP."
+        Write-Host "  - VS Code: Dev: Show LAN IP (for iOS device)"
+        Write-Host "  - VS Code: Dev: Set Mobile API baseUrl (LAN IP first)"
+      }
+    } else {
+      Warn "apps/mobile/.env exists but EXPO_PUBLIC_API_BASE_URL is not set."
+      Write-Host "  - VS Code: Dev: Set Mobile API baseUrl (prompt)"
+    }
+  } catch {
+    Warn "Failed to read apps/mobile/.env"
+  }
+} else {
+  Warn "apps/mobile/.env missing (run env bootstrap task)."
+}
+
 Section "Infra ports (localhost)"
 CheckTcpPort "localhost" 5432 "Postgres"
 CheckTcpPort "localhost" 6379 "Redis"
