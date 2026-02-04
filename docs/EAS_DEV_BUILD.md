@@ -4,6 +4,8 @@ Repo: `D:\DEVS\JUSTLOVETHESTOCKS`
 
 Pourquoi: Expo Go ne supporte pas tous les modules natifs (ex: `react-native-purchases` / RevenueCat). Pour tester les achats sur iPhone, il faut un **dev build** (Expo Dev Client) ou une build App Store/TestFlight.
 
+Note: `expo-dev-client` est déjà ajouté dans `apps/mobile/package.json` (SDK 54 compatible).
+
 ## TL;DR
 
 Dans `apps/mobile`:
