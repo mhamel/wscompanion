@@ -45,6 +45,9 @@ Optionnel (jobs/queues):
 Ou via VS Code: `Terminal` -> `Run Task...` -> `Mobile: Metro (Expo)`.
 Astuce: si Metro est "stuck", utiliser `Mobile: Metro (Expo, Clear Cache)`.
 
+Raccourci (VS Code):
+- task `Dev: Full stack (Infra + Backend + Mobile)` (lance plusieurs tasks en parallèle)
+
 ## 4) Android emulator
 
 Avec un emulateur Android operationnel (Android Studio):

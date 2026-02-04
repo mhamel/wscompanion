@@ -169,6 +169,11 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "Dev: Backend (API + Worker)",
+      "dependsOn": ["Backend: API (dev)", "Backend: Worker (dev)"],
+      "dependsOrder": "parallel"
+    },
+    {
       "label": "Backend: Worker (dev)",
       "type": "shell",
       "command": "npm",
@@ -233,6 +238,16 @@
         "clear": true
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Dev: Full stack (Infra + Backend + Mobile)",
+      "dependsOn": [
+        "Infra: Up (docker compose)",
+        "Backend: API (dev)",
+        "Backend: Worker (dev)",
+        "Mobile: Metro (Expo)"
+      ],
+      "dependsOrder": "parallel"
     }
   ]
 }
