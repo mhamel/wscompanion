@@ -99,3 +99,4 @@ Expo Go n’embarque pas tous les modules natifs.
 Notes:
 - Les push notifications iOS requierent un device physique; le simulateur iOS ne recoit pas de push APNs.
 - En mode dev, l’app affiche un petit banner si `EXPO_PUBLIC_API_BASE_URL` est sur `localhost` (aide a corriger emulator/device).
+- Le bouton `Diagnostics API` dans `Paramètres -> Dev` permet aussi de **copier** le diagnostic dans le clipboard.

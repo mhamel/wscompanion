@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Linking, StyleSheet, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import * as Clipboard from "expo-clipboard";
 import { useApiBaseUrl, useApiClient } from "../api/apiHooks";
 import { ApiError } from "../api/http";
 import { useBillingEntitlementQuery } from "../billing/entitlements";
@@ -135,7 +136,16 @@ export function SettingsScreen() {
       }
     }
 
-    Alert.alert("API diagnostics", lines.join("\n"));
+    const message = lines.join("\n");
+    Alert.alert("API diagnostics", message, [
+      {
+        text: "Copier",
+        onPress: () => {
+          void Clipboard.setStringAsync(message);
+        },
+      },
+      { text: "OK" },
+    ]);
   }
 
   const prefsQuery = useQuery({
