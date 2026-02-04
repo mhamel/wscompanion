@@ -206,6 +206,42 @@
       "problemMatcher": []
     },
     {
+      "label": "Infra: Open Mailhog (8025)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:8025'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Open Jaeger (16686)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:16686'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Open MinIO Console (9001)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-Command", "Start-Process 'http://localhost:9001'"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Backend: API (dev)",
       "type": "shell",
       "command": "npm",

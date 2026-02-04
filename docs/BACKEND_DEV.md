@@ -19,6 +19,11 @@ Le repo fournit `docker-compose.yml` avec:
 - Mailhog (1025/8025)
 - Jaeger (16686/4317/4318)
 
+UIs (dans ton navigateur):
+- Mailhog: `http://localhost:8025` (VS Code: `Infra: Open Mailhog (8025)`)
+- Jaeger: `http://localhost:16686` (VS Code: `Infra: Open Jaeger (16686)`)
+- MinIO Console: `http://localhost:9001` (VS Code: `Infra: Open MinIO Console (9001)`)
+
 Lancer:
 - CLI: `docker compose up -d`
 - VS Code: `Run Task...` -> `Infra: Up (docker compose)`
