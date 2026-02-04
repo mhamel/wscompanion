@@ -326,7 +326,7 @@ export function SettingsScreen() {
             </View>
           </View>
           <AppButton
-            title={busy === "api_test" ? "Test…" : "Tester /health"}
+            title={busy === "api_test" ? "Test…" : "Tester /v1/health"}
             variant="secondary"
             disabled={busy !== null}
             onPress={() => {
@@ -335,12 +335,10 @@ export function SettingsScreen() {
 
               void (async () => {
                 try {
-                  const res = await fetch(`${apiBaseUrl}/health`);
+                  const url = `${apiBaseUrl.replace(/\/+$/, "")}/v1/health`;
+                  const res = await fetch(url);
                   const text = await res.text();
-                  Alert.alert(
-                    "API",
-                    `${res.status} ${res.ok ? "OK" : "ERROR"}\n\n${text.slice(0, 400)}`,
-                  );
+                  Alert.alert("API", `${res.status} ${res.ok ? "OK" : "ERROR"}\n\n${text.slice(0, 400)}`);
                 } catch {
                   setError(
                     "Impossible de joindre l’API. Vérifie EXPO_PUBLIC_API_BASE_URL (10.0.2.2 sur Android emulator / IP LAN sur device).",
@@ -352,10 +350,53 @@ export function SettingsScreen() {
             }}
           />
           <AppButton
-            title="Ouvrir /health"
+            title={busy === "api_ready" ? "Test…" : "Tester /v1/ready"}
             variant="secondary"
             disabled={busy !== null}
-            onPress={() => void Linking.openURL(`${apiBaseUrl}/health`)}
+            onPress={() => {
+              setBusy("api_ready");
+              setError(null);
+
+              void (async () => {
+                try {
+                  const url = `${apiBaseUrl.replace(/\/+$/, "")}/v1/ready`;
+                  const res = await fetch(url);
+                  const text = await res.text();
+
+                  let body: unknown = text;
+                  try {
+                    body = JSON.parse(text);
+                  } catch {
+                    // ignore
+                  }
+
+                  const msg =
+                    typeof body === "string"
+                      ? body.slice(0, 400)
+                      : JSON.stringify(body, null, 2).slice(0, 800);
+
+                  Alert.alert("API", `${res.status} ${res.ok ? "READY" : "NOT READY"}\n\n${msg}`);
+                } catch {
+                  setError(
+                    "Impossible de joindre l’API. Vérifie EXPO_PUBLIC_API_BASE_URL (10.0.2.2 sur Android emulator / IP LAN sur device).",
+                  );
+                } finally {
+                  setBusy(null);
+                }
+              })();
+            }}
+          />
+          <AppButton
+            title="Ouvrir /v1/health"
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => void Linking.openURL(`${apiBaseUrl.replace(/\/+$/, "")}/v1/health`)}
+          />
+          <AppButton
+            title="Ouvrir /v1/ready"
+            variant="secondary"
+            disabled={busy !== null}
+            onPress={() => void Linking.openURL(`${apiBaseUrl.replace(/\/+$/, "")}/v1/ready`)}
           />
         </View>
       ) : null}
