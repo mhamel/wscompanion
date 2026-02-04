@@ -68,6 +68,10 @@ Option dev (pour tester features gatees sans RevenueCat):
 - `--acceptDisclaimer` (marque le risk disclaimer comme accepte)
 - VS Code: `Backend: Seed dev data (demo user, pro+disclaimer)` / `Backend: Seed dev data (prompt email, pro+disclaimer)`
 
+Raccourcis (VS Code, pro+disclaimer):
+- `Dev: Fresh clone (Bootstrap + Seed Prompt pro+disclaimer + Run)`
+- `Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Run`
+
 ## 5) Lancer l’API + le worker
 
 API (Fastify):

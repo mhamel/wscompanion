@@ -51,9 +51,11 @@ Raccourci (VS Code):
   - `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
   - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data pour éviter un UI vide)
   - `Dev: Fresh clone (Bootstrap + Seed Prompt + Run)` (idem, mais seed pour ton email)
+  - (si tu veux aussi déverrouiller les features Pro/Ask) `Dev: Fresh clone (Bootstrap + Seed Prompt pro+disclaimer + Run)`
   - (si tu veux juste bootstrap DB + seed) `Dev: Bootstrap DB + Seed (Infra + Prisma + Seed)`
   - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed + Run`
   - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed Prompt + Run`
+  - (si ta DB locale est brisée) `Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Run`
 
 ## 4) Android emulator
 

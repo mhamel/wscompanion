@@ -597,6 +597,15 @@
       "dependsOrder": "sequence"
     },
     {
+      "label": "Dev: Fresh clone (Bootstrap + Seed Prompt pro+disclaimer + Run)",
+      "dependsOn": [
+        "Dev: Bootstrap DB (Infra + Prisma)",
+        "Backend: Seed dev data (prompt email, pro+disclaimer)",
+        "Dev: Run stack (Backend + Mobile)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "Dev: Reset DB (DANGEROUS) + Run",
       "dependsOn": [
         "Infra: Up (docker compose)",
@@ -621,6 +630,16 @@
         "Infra: Up (docker compose)",
         "Backend: DB reset (DANGEROUS)",
         "Backend: Seed dev data (prompt email)",
+        "Dev: Run stack (Backend + Mobile)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Dev: Reset DB (DANGEROUS) + Seed Prompt pro+disclaimer + Run",
+      "dependsOn": [
+        "Infra: Up (docker compose)",
+        "Backend: DB reset (DANGEROUS)",
+        "Backend: Seed dev data (prompt email, pro+disclaimer)",
         "Dev: Run stack (Backend + Mobile)"
       ],
       "dependsOrder": "sequence"
