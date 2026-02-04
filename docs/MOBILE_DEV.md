@@ -49,6 +49,7 @@ Option: `Mobile: Metro (Expo, Tunnel)` si ton iPhone n’est pas sur le même r�
 Raccourci (VS Code):
 - task `Dev: Full stack (Infra + Backend + Mobile)` (lance plusieurs tasks en parallèle)
 - task `Dev: Full stack (Seed Prompt pro+disclaimer + Dashboards)` (stack + UIs + seed + unlock Pro/Ask)
+- task `Dev: Doctor (preflight checks)` (check rapide: node/npm, docker, ports, .env, etc.)
 - Premier setup (fresh clone):
   - `Dev: Fresh clone (Bootstrap + Run)` (démarre Docker, fait migrate, puis lance API/worker/Metro)
   - `Dev: Fresh clone (Bootstrap + Seed + Run)` (idem + seed dev data pour éviter un UI vide)

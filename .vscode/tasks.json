@@ -91,6 +91,24 @@
       "problemMatcher": []
     },
     {
+      "label": "Dev: Doctor (preflight checks)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/dev/doctor.ps1"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Android: Start Emulator (prompt AVD)",
       "type": "shell",
       "command": "powershell",

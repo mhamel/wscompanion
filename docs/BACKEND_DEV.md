@@ -25,6 +25,9 @@ UIs (dans ton navigateur):
 - MinIO Console: `http://localhost:9001` (VS Code: `Infra: Open MinIO Console (9001)`)
 - Raccourci: `Infra: Open All UIs (Mailhog + Jaeger + MinIO)`
 
+Preflight (VS Code):
+- `Dev: Doctor (preflight checks)` (vérifie node/npm, docker, ports, fichiers .env)
+
 Lancer:
 - CLI: `docker compose up -d`
 - VS Code: `Run Task...` -> `Infra: Up (docker compose)`
