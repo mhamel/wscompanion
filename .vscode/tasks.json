@@ -64,6 +64,66 @@
         "clear": true
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Infra: Up (docker compose)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "up", "-d"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Infra: Down (docker compose)",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "down"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: API (dev)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/backend", "run", "dev"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Worker (dev)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--workspace", "apps/backend", "run", "dev:worker"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Generate mobile client (OpenAPI)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "api:generate"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
     }
   ]
 }

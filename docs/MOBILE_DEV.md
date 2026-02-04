@@ -16,6 +16,7 @@ L’app mobile consomme l’API Fastify.
 
 1) Demarrer les deps locales:
 - `docker compose up -d`
+- Ou VS Code task: `Infra: Up (docker compose)`
 
 2) Configurer l’API:
 - Copier `apps/backend/.env.example` -> `apps/backend/.env`
@@ -24,6 +25,11 @@ L’app mobile consomme l’API Fastify.
 
 3) Lancer l’API:
 - `npm --workspace apps/backend run dev`
+- Ou VS Code task: `Backend: API (dev)`
+
+Optionnel (jobs/queues):
+- `npm --workspace apps/backend run dev:worker`
+- Ou VS Code task: `Backend: Worker (dev)`
 
 ## 3) Mobile — Expo dev server
 
@@ -34,12 +40,14 @@ L’app mobile consomme l’API Fastify.
 - `npm --workspace apps/mobile run start`
 
 Ou via VS Code: `Terminal` -> `Run Task...` -> `Mobile: Metro (Expo)`.
+Astuce: si Metro est "stuck", utiliser `Mobile: Metro (Expo, Clear Cache)`.
 
 ## 4) Android emulator
 
 Avec un emulateur Android operationnel (Android Studio):
 
 - VS Code task: `Mobile: Android (Expo)`
+- (debug) `Mobile: Android (Expo, Clear Cache)`
 - ou CLI: `npm --workspace apps/mobile run android`
 
 ## 5) iOS (premier device cible)
@@ -64,4 +72,3 @@ Expo Go n’embarque pas tous les modules natifs.
 
 Notes:
 - Les push notifications iOS requierent un device physique; le simulateur iOS ne recoit pas de push APNs.
-
