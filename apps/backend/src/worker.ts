@@ -846,18 +846,24 @@ async function main() {
 
   const prisma = new PrismaClient();
   const connection = new IORedis(config.REDIS_URL, { maxRetriesPerRequest: null });
-  const syncQueue = new Queue("sync", { connection });
-  const dlq = new Queue("sync-dlq", { connection });
-  const analyticsQueue = new Queue<AnalyticsJob>("analytics", { connection });
-  const analyticsDlq = new Queue("analytics-dlq", { connection });
-  const newsQueue = new Queue<NewsJob>("news", { connection });
-  const newsDlq = new Queue("news-dlq", { connection });
-  const alertsQueue = new Queue<AlertsJob>("alerts", { connection });
-  const alertsDlq = new Queue("alerts-dlq", { connection });
-  const exportsQueue = new Queue<ExportsJob>("exports", { connection });
-  const exportsDlq = new Queue("exports-dlq", { connection });
-  const maintenanceQueue = new Queue<MaintenanceJob>("maintenance", { connection });
-  const maintenanceDlq = new Queue("maintenance-dlq", { connection });
+
+  const defaultJobOptions = {
+    removeOnComplete: { count: 500 },
+    removeOnFail: { count: 2000 },
+  } as const;
+
+  const syncQueue = new Queue("sync", { connection, defaultJobOptions });
+  const dlq = new Queue("sync-dlq", { connection, defaultJobOptions });
+  const analyticsQueue = new Queue<AnalyticsJob>("analytics", { connection, defaultJobOptions });
+  const analyticsDlq = new Queue("analytics-dlq", { connection, defaultJobOptions });
+  const newsQueue = new Queue<NewsJob>("news", { connection, defaultJobOptions });
+  const newsDlq = new Queue("news-dlq", { connection, defaultJobOptions });
+  const alertsQueue = new Queue<AlertsJob>("alerts", { connection, defaultJobOptions });
+  const alertsDlq = new Queue("alerts-dlq", { connection, defaultJobOptions });
+  const exportsQueue = new Queue<ExportsJob>("exports", { connection, defaultJobOptions });
+  const exportsDlq = new Queue("exports-dlq", { connection, defaultJobOptions });
+  const maintenanceQueue = new Queue<MaintenanceJob>("maintenance", { connection, defaultJobOptions });
+  const maintenanceDlq = new Queue("maintenance-dlq", { connection, defaultJobOptions });
 
   const scheduleEverySeconds = Number(process.env.SYNC_SCHEDULE_EVERY_SECONDS ?? "3600");
   if (Number.isFinite(scheduleEverySeconds) && scheduleEverySeconds > 0) {

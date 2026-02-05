@@ -74,7 +74,40 @@ describe("version", () => {
       const res = await app.inject({ method: "GET", url: "/v1/version" });
       expect(res.statusCode).toBe(200);
       expect(res.headers["x-request-id"]).toBeTruthy();
+      expect(res.headers["cache-control"]).toBe("no-store");
       expect(res.json()).toMatchObject({ ok: true, nodeEnv: expect.any(String) });
+    } finally {
+      await app.close();
+    }
+  }, 15_000);
+});
+
+describe("cache-control", () => {
+  it("sets private cache headers for generic /v1 GET routes", async () => {
+    const app = buildServer({ logger: false });
+    app.get(
+      "/v1/test-cache",
+      {
+        schema: {
+          response: {
+            200: {
+              type: "object",
+              additionalProperties: false,
+              properties: { ok: { type: "boolean" } },
+              required: ["ok"],
+            },
+          },
+        },
+      },
+      async () => ({ ok: true }),
+    );
+
+    await app.ready();
+    try {
+      const res = await app.inject({ method: "GET", url: "/v1/test-cache" });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["cache-control"]).toBe("private, max-age=30");
+      expect(res.headers["vary"]).toBe("Authorization");
     } finally {
       await app.close();
     }

@@ -67,6 +67,21 @@ function normalizeRequestId(value: string | string[] | undefined): string | null
   return trimmed;
 }
 
+function requestPathForCache(req: FastifyRequest): string {
+  return req.url.split("?")[0];
+}
+
+function shouldNoStore(path: string): boolean {
+  if (path === "/health" || path === "/ready" || path === "/docs") return true;
+  if (path === "/v1/health" || path === "/v1/ready" || path === "/v1/version") return true;
+  if (path === "/v1/me") return true;
+  if (path.startsWith("/v1/auth/")) return true;
+  if (path.startsWith("/v1/billing/")) return true;
+  if (path.startsWith("/v1/disclaimer")) return true;
+  if (path.startsWith("/v1/exports/") && path.endsWith("/download")) return true;
+  return false;
+}
+
 export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
   const app = Fastify({
     trustProxy: parseTrustProxyEnv(process.env.TRUST_PROXY),
@@ -105,6 +120,31 @@ export function buildServer(options: BuildServerOptions = {}): FastifyInstance {
     if (span) {
       span.setAttribute("http.request_id", req.id);
     }
+  });
+
+  app.addHook("onSend", async (req, reply, payload) => {
+    if (req.method !== "GET") return payload;
+    if (reply.getHeader("cache-control") || reply.getHeader("Cache-Control")) return payload;
+
+    if (reply.statusCode >= 400) {
+      reply.header("Cache-Control", "no-store");
+      return payload;
+    }
+
+    const path = requestPathForCache(req);
+    if (shouldNoStore(path)) {
+      reply.header("Cache-Control", "no-store");
+      return payload;
+    }
+
+    if (path.startsWith("/v1/")) {
+      reply.header("Cache-Control", "private, max-age=30");
+      if (!reply.getHeader("vary") && !reply.getHeader("Vary")) {
+        reply.header("Vary", "Authorization");
+      }
+    }
+
+    return payload;
   });
 
   if (options.prisma) {

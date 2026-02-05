@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { Prisma } from "@prisma/client";
 import { AppError } from "../errors";
 import { enqueueWithTrace } from "../observability/bullmqTracing";
 
@@ -105,12 +106,45 @@ async function syncStatusHandler(req: FastifyRequest) {
     take: 50,
   });
 
+  const connectionIds = connections.map((c) => c.id);
+
+  const lastRuns =
+    connectionIds.length > 0
+      ? await prisma.$queryRaw<
+          Array<{
+            id: string;
+            brokerConnectionId: string;
+            status: string;
+            createdAt: Date;
+            startedAt: Date | null;
+            finishedAt: Date | null;
+            error: string | null;
+          }>
+        >(
+          Prisma.sql`
+            SELECT DISTINCT ON ("brokerConnectionId")
+              "id",
+              "brokerConnectionId",
+              "status",
+              "createdAt",
+              "startedAt",
+              "finishedAt",
+              "error"
+            FROM "SyncRun"
+            WHERE "brokerConnectionId" IN (${Prisma.join(connectionIds)})
+            ORDER BY "brokerConnectionId" ASC, "createdAt" DESC
+          `,
+        )
+      : [];
+
+  const lastRunByConnectionId = new Map<string, (typeof lastRuns)[number]>();
+  for (const run of lastRuns) {
+    lastRunByConnectionId.set(run.brokerConnectionId, run);
+  }
+
   const items = [];
   for (const connection of connections) {
-    const lastRun = await prisma.syncRun.findFirst({
-      where: { brokerConnectionId: connection.id },
-      orderBy: { createdAt: "desc" },
-    });
+    const lastRun = lastRunByConnectionId.get(connection.id) ?? null;
 
     items.push({
       brokerConnectionId: connection.id,
